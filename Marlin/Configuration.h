@@ -139,8 +139,8 @@
 // Choose your own or use a service like https://www.uuidgenerator.net/version4
 //#define MACHINE_UUID "00000000-0000-0000-0000-000000000000"
 
-#define USE_SWITCH_POWER_200W  0 //默认1 ：使用的200w的电源，喷嘴和热床不能同时加热。 0： 使用的>200w的电源，功率足够，可以同时加热
-#define CREALITY_LEVEL_COMPENSATION_ALGORITHM   1 //1 使用算法  0 不适用算法
+#define USE_SWITCH_POWER_200W  0 //Default 1: Using a 200W power supply, the nozzle and heating bed cannot be heated at the same time. 0: The >200w power supply used has sufficient power and can be heated at the same time.
+#define CREALITY_LEVEL_COMPENSATION_ALGORITHM   1 //1 Use algorithm 0 Algorithm not applicable
 #if ENABLED(CREALITY_LEVEL_COMPENSATION_ALGORITHM)
   #define COMPEN_FACTOR_15   0.15
   #define COMPEN_FACTOR_10   0.10
@@ -149,19 +149,19 @@
   #define COMPEN_FACTOR_3    0.03
   #define COMPEN_FACTOR_2    0.02
   #define COMPEN_FACTOR_1    0.01
-  #define ALGORITHM_INFO_PRINT  0 //调平算法信息打印
-  #define LEVEL_ALGORITHM_MIN  -0.7 //使用自动调平算法下边界
-  #define LEVEL_ALGORITHM_MAX   0.7 //使用自动调平算法上边界
+  #define ALGORITHM_INFO_PRINT  0 //Print leveling algorithm information
+  #define LEVEL_ALGORITHM_MIN  -0.7 //Use auto-leveling algorithm lower bound
+  #define LEVEL_ALGORITHM_MAX   0.7 //Use the upper boundary of the automatic leveling algorithm
 #endif
 #define USE_BEEPER 1
-#define PLATFORM_OFFSET         1 //1:结构件背板2.5mm，固件需要做偏移适配 0：结构件背板没有做偏移
-#define HIGH_SPEED              1 //高速模式 1：打开高速模式 150mm/s; 0：低速模式 80mm/s 
-#define HIGH_SPEED_1            1 //只开关高速的宏  
-#define SHOW_GRID_VALUES        1 //1 显示自动调平网格值  0 不显示自动调平网格值 
+#define PLATFORM_OFFSET         1 //1: The structural part backplate is 2.5mm, and the firmware needs to be offset. 0: The structural part backplate is not offset.
+#define HIGH_SPEED              1 //High speed mode 1: Turn on high speed mode 150mm/s; 0: Low speed mode 80mm/s
+#define HIGH_SPEED_1            1 //Only switch high-speed macros
+#define SHOW_GRID_VALUES        1 //1 displays the automatic leveling grid value 0 does not display the automatic leveling grid value
 #define COMPACT_GRID_VALUES     1 // 0 - original Creality style, 1 - compact style for tight grids
-#define K8_EXTRUDER             0 //1 是K8挤出机   0 是精灵挤出机
-#define USER_LEVEL_CHECK        1 // 调平校准使能
-#define WUHAN_CHENGE_PLATFORM   1 // 武汉改平台板  20230913_Rock
+#define K8_EXTRUDER             0 //1 is K8 extruder 0 is Elf extruder
+#define USER_LEVEL_CHECK        1 //Leveling calibration enable
+#define WUHAN_CHENGE_PLATFORM   1 //Wuhan changed platform board 20230913_Rock
 
 
 
@@ -993,13 +993,13 @@
 // #define USE_YMIN_PLUG
 // #define USE_ZMIN_PLUG
 
-#define X_MIN_ENDSTOP_HIT_STATE HIGH  // Set to true to invert the logic of the endstop.
-#define Y_MIN_ENDSTOP_HIT_STATE HIGH  // Set to true to invert the logic of the endstop.
-#define Z_MIN_ENDSTOP_HIT_STATE HIGH // Set to true to invert the logic of the endstop.
-#define X_MAX_ENDSTOP_HIT_STATE LOW // Set to true to invert the logic of the endstop.
-#define Y_MAX_ENDSTOP_HIT_STATE LOW // Set to true to invert the logic of the endstop.
-#define Z_MAX_ENDSTOP_HIT_STATE LOW // Set to true to invert the logic of the endstop.
-#define Z_MIN_PROBE_ENDSTOP_HIT_STATE HIGH // Set to true to invert the logic of the probe.
+#define X_MIN_ENDSTOP_HIT_STATE LOW
+#define Y_MIN_ENDSTOP_HIT_STATE LOW
+#define Z_MIN_ENDSTOP_HIT_STATE HIGH
+#define X_MAX_ENDSTOP_HIT_STATE HIGH
+#define Y_MAX_ENDSTOP_HIT_STATE HIGH
+#define Z_MAX_ENDSTOP_HIT_STATE HIGH
+#define Z_MIN_PROBE_ENDSTOP_HIT_STATE HIGH
 
 //
 // MarkForged Kinematics
@@ -2434,7 +2434,7 @@
 #endif
 
 // Homing speeds (linear=mm/min, rotational=°/min)
-#define HOMING_FEEDRATE_MM_M { (50*60), (50*60), (30*60) }
+#define HOMING_FEEDRATE_MM_M { (50*60), (50*60), (12*60) }
 
 // Edit homing feedrates with M210 and MarlinUI menu items
 //#define EDITABLE_HOMING_FEEDRATE
@@ -2575,6 +2575,7 @@
 #define PREHEAT_4_TEMP_HOTEND 260
 #define PREHEAT_4_TEMP_BED    110
 #define PREHEAT_4_TEMP_CHAMBER 35
+#define PREHEAT_4_FAN_SPEED    0//255 // Value from 0 to 255
 
 /**
  * @section nozzle park
