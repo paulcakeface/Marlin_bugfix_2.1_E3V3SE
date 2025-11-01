@@ -334,6 +334,8 @@
 #define BOARD_BTT_MANTA_M8P_V1_1      4006  // BigTreeTech Manta M8P V1.1 (STM32G0B1VE)
 #define BOARD_BTT_SKRAT_V1_0          4007  // BigTreeTech SKRat V1.0 (STM32G0B1VE)
 
+#define BOARD_CREALITY_V3_GD303       4050  // Creality GD303 (STM32F103RE)
+
 //
 // STM32 ARM Cortex-M0
 //
