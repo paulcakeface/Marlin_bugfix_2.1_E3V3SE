@@ -134,7 +134,7 @@ void GcodeSuite::M600() {
   // Initial retract before move to filament change position
   const float retract = -ABS(parser.axisunitsval('E', E_AXIS, PAUSE_PARK_RETRACT_LENGTH));
 
-  xyz_pos_t park_point NOZZLE_PARK_POINT;
+  xyz_pos_t park_point  { (0), (0), 40 };
 
   // Move XY axes to filament change position or given position
   NUM_AXIS_CODE(
