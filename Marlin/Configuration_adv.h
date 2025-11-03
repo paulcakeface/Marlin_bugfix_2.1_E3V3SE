@@ -2350,9 +2350,9 @@
   #endif
 #endif
 
-#define USE_AUTOZ_TOOL_2  //一键对高第二种方式
+#define USE_AUTOZ_TOOL_2  //一The second method of key pair height
 #if ENABLED(USE_AUTOZ_TOOL_2)  //20 31
-  #if ENABLED(PLATFORM_OFFSET)  //需要平台偏移
+  #if ENABLED(PLATFORM_OFFSET)  //Requires platform offset
   #define AUTOZ_TOOL_X    25//31 + X_MIN_POS               // The distance between the center of the AUTOZ tool sensing area and the X direction of the nozzle is mm
   #define AUTOZ_TOOL_Y    28//35 + Y_MIN_POS               // The distance between the center of the AUTOZ tool sensing area and the Y direction of the nozzle is mm
   #else

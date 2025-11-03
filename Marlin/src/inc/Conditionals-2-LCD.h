@@ -504,6 +504,13 @@
   #define STD_ENCODER_PULSES_PER_STEP 4
 #endif
 
+#if ENABLED(DWIN_CREALITY_LCD)
+  #define SERIAL_CATCHALL 0
+  #ifndef LCD_SERIAL_PORT
+    #define LCD_SERIAL_PORT 2 // Creality 4.x board
+  #endif
+#endif
+
 // Encoder behavior
 #ifndef STD_ENCODER_PULSES_PER_STEP
   #if ENABLED(TOUCH_SCREEN)

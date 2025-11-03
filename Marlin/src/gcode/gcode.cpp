@@ -464,6 +464,8 @@ void GcodeSuite::process_parsed_command(bool no_ok/*=false*/) {
 
       case 92: G92(); break;                                      // G92: Set current axis position(s)
 
+      case 212: G212(); break;                                  // G212: Test Probe Mesurements
+
       #if ENABLED(CALIBRATION_GCODE)
         case 425: G425(); break;                                  // G425: Perform calibration with calibration cube
       #endif
@@ -1160,6 +1162,10 @@ void GcodeSuite::process_parsed_command(bool no_ok/*=false*/) {
       #if ENABLED(HAS_MCP3426_ADC)
         case 3426: M3426(); break;                                // M3426: Read MCP3426 ADC (over i2c)
       #endif
+
+      // #if ENABLED(USE_AUTOZ_TOOL_2)
+        case 8015: M8015(); break; // M8015: One key to obtain the Z offset value
+      // #endif
 
       default: parser.unknown_command_warning(); break;
     }

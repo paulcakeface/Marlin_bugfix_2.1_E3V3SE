@@ -638,6 +638,8 @@ private:
 
   static void G92();
 
+  static void G212();
+
   #if ENABLED(CALIBRATION_GCODE)
     static void G425();
   #endif
@@ -1357,6 +1359,11 @@ private:
     static void M710();
     static void M710_report(const bool forReplay=true);
   #endif
+
+
+  // #if ENABLED(USE_AUTOZ_TOOL_2)
+    static void M8015();
+  // #endif
 
   static void T(const int8_t tool_index) IF_DISABLED(HAS_TOOLCHANGE, { UNUSED(tool_index); });
 
