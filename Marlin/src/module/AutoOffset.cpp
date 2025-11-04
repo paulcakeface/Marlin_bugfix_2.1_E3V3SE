@@ -204,8 +204,8 @@ bool ProbeAcq::checHx711()
 float ProbeAcq::probeTimes(int max_times, xyz_float_t rdy_pos, float step_mm, float min_dis_mm, float max_z_err, int min_hold, int max_hold)
 {
 
-    SERIAL_ECHOLNPGM("***Starting probeTimes at position: ", rdy_pos.x, ", ", rdy_pos.y, ", ", rdy_pos.z, "*** with step mm: ", step_mm);
-    SERIAL_ECHOLNPGM(" min_dis_mm: ", min_dis_mm, ", max_z_err: ", max_z_err, ", min_hold: ", min_hold, ", max_hold: ", max_hold);
+    SERIAL_ECHOLNPGM("***Starting probeTimes***");
+    // SERIAL_ECHOLNPGM(" min_dis_mm: ", min_dis_mm, ", max_z_err: ", max_z_err, ", min_hold: ", min_hold, ", max_hold: ", max_hold);
     ProbeAcq pa;
     float mm0 = 0, mm1 = 0;
     pa.hx711.init(HX711_SCK_PIN, HX711_SDO_PIN);
@@ -217,7 +217,7 @@ float ProbeAcq::probeTimes(int max_times, xyz_float_t rdy_pos, float step_mm, fl
     pa.minHold = min_hold;
     pa.maxHold = max_hold;
 
-    SERIAL_ECHOLNPGM("***Starting probe loop***");
+    // SERIAL_ECHOLNPGM("***Starting probe loop***");
     FOR_LOOP_TIMES(i, 0, (max_times <= 0 ? 1 : max_times), {
       mm0 = pa.probePointByStep()->outVal_mm;
       CHECK_AND_RETURN(max_times <= 0, mm0);
@@ -232,24 +232,16 @@ float ProbeAcq::probeTimes(int max_times, xyz_float_t rdy_pos, float step_mm, fl
 *Purpose: Vibrate the Z-axis to eliminate gap stress
 *Params: (int)times the number of vibrations
 */
-void ProbeAcq::shakeZAxis(int times)
-{
-  float steps[] = STEPS_PRE_UNIT;
-  int runStep = 0.01* steps[2];       //Get the distance of each step step mm, corresponding to the number of pulses of the motor
-  runStep = runStep <= 0 ? 1 : runStep;
-
-  int delayUs = (11.0f * 1000 / runStep) / 2;   //It is guaranteed that the z-axis motor moves step mm in about 12ms.
-  delayUs = delayUs <= 10 ? 10 : delayUs;
-  int dir = AXIS_Z_DIR_GET();
+void ProbeAcq::shakeZAxis(int times) {
+  // Version compatible with 2.1.x using scheduler (not raw STEP)
+  const float z0  = current_position[Z_AXIS];
+  const float amp = 0.20f; // 0.2 mm up/down per cycle
   FOR_LOOP_TIMES(i, 0, times, {
-    AXIS_Z_DIR_SET(Z_DIR_ADD);        
-    FOR_LOOP_TIMES(j, 0, 4 * runStep, AXIS_Z_STEP_PLUS(delayUs / 2));
-    AXIS_Z_DIR_SET(Z_DIR_DIV); 
-    FOR_LOOP_TIMES(j, 0, 4 * runStep, AXIS_Z_STEP_PLUS(delayUs / 2));
-    MARLIN_CORE_IDLE();
+    DO_BLOCKING_MOVE_TO_Z(z0 + amp, 120);
+    DO_BLOCKING_MOVE_TO_Z(z0,       120);
   });
-  AXIS_Z_DIR_SET(dir);
 }
+
 
 /*
 *Function Name: calMinZ()
@@ -303,7 +295,7 @@ void ProbeAcq::calMinZ()
 */
 bool ProbeAcq::checkTrigger()
 {
-  SERIAL_ECHOLNPGM("***Starting checkTrigger***");
+  // SERIAL_ECHOLNPGM("***Starting checkTrigger***");
   static double vp_t[PI_COUNT * 2] = {0};
   static double *valP_t = &vp_t[PI_COUNT]; //Rock 20230204
   
@@ -358,71 +350,86 @@ bool ProbeAcq::checkTrigger()
 *Params: None
 *Return: (ProbeAcq) this pointer
 */
-ProbeAcq* ProbeAcq::probePointByStep()
-{
+ProbeAcq* ProbeAcq::probePointByStep() {
   SERIAL_ECHOLNPGM("***Starting probePointByStep***");
-  static char msg[128] = {0};
-  int unfitAvgVal = 0, nowVal = 0,  runSteped = 0;
 
-  this->outIndex = PI_COUNT - 1;
+  // Split Output
+  this->outIndex  = PI_COUNT - 1;
   this->outVal_mm = 0;
 
+  // (Optional) Parameter log
   #if ENABLED(SHOW_MSG)
     PRINTF("\nPROBE: rdyX=%s, rdyY=%s, rdyZ=%s, spdXY_mm_s=%s, spdZ_mm_s=%s",
-                          getStr(this->basePos_mm.x), getStr(this->basePos_mm.y), getStr(this->basePos_mm.z), getStr(this->baseSpdXY_mm_s), getStr(this->baseSpdZ_mm_s));
+           getStr(this->basePos_mm.x), getStr(this->basePos_mm.y), getStr(this->basePos_mm.z),
+           getStr(this->baseSpdXY_mm_s), getStr(this->baseSpdZ_mm_s));
     PRINTF("len_mm=%s, baseCount=%d, minHold=%d, maxHold=%d, step_mm=%s\n\n",
-                          getStr(this->minZ_mm), PI_COUNT, this->minHold, this->maxHold, getStr(this->step_mm)); 
+           getStr(this->minZ_mm), PI_COUNT, this->minHold, this->maxHold, getStr(this->step_mm));
   #endif
 
-  memset(this->posZ, 0, sizeof(this->posZ));
-  memset(this->valP, 0, sizeof(this->valP));
+  // 0) Ensure home position in XY and Z base
+  DO_BLOCKING_MOVE_TO_XY(this->basePos_mm.x, this->basePos_mm.y, this->baseSpdXY_mm_s);
+  DO_BLOCKING_MOVE_TO_Z (this->basePos_mm.z, this->baseSpdZ_mm_s);
 
-  memset(msg, 0, sizeof(msg));
-  sprintf(msg, "G1 F%s X%s Y%s Z%s", getStr(this->baseSpdXY_mm_s * 60), getStr(this->basePos_mm.x), getStr(this->basePos_mm.y), getStr(this->basePos_mm.z));
-  SERIAL_ECHOLNPGM("Moving to probe position: ", msg);
-  RUN_AND_WAIT_GCODE_CMD(msg, true);                  //Move to the waiting measurement point (preparation point)
+  // 1) Small vibration with planner to release slack
+  {
+    const float z0   = current_position[Z_AXIS];
+    const float ampZ = 0.20f;
+    DO_BLOCKING_MOVE_TO_Z(z0 + ampZ, 120);
+    DO_BLOCKING_MOVE_TO_Z(z0,        120);
+  }
 
-  int oldBedTmp = GET_BED_TAR_TEMP();
-  int oldHotTmp = GET_HOTEND_TAR_TEMP(0);
-  SET_BED_TEMP(0);
-  SET_HOTEND_TEMP(0, 0);
+  // 2) Fast baseline (simple average) of HX711 to subtract offset
+  int unfitAvgVal = 0;
+  {
+    const uint8_t S = 8;
+    long acc = 0;
+    FOR_LOOP_TIMES(i, 0, S, { acc += this->hx711.getVal(false); MARLIN_CORE_IDLE(); });
+    unfitAvgVal = (int)(acc / (long)S);
+  }
 
-  unfitAvgVal = readBase().y;                   //Get clean data
+  // 3) Enable negative Z: disable soft-endstops only during search
+  #if ENABLED(SOFT_ENDSTOPS)
+    extern bool soft_endstops_enabled;
+    const bool prev_soft = soft_endstops_enabled;
+    soft_endstops_enabled = false;   // = M211 S0
+  #endif
 
-  float steps[] = STEPS_PRE_UNIT;               // { 80, 80, 400, 424.9 }
-  int runStep = this->step_mm * steps[2];       //Get the distance of each step step mm, corresponding to the number of pulses of the motor
-  runStep = runStep <= 0 ? 1 : runStep;
-  int delayUs = (12.0f * 1000 / runStep) / 2;   //It is guaranteed that the z-axis motor moves step mm in about 12ms.
-  delayUs = delayUs <= 10 ? 10 : delayUs;
+  // 4) Initialize pressure/height queues
+  FOR_LOOP_TIMES(i, 0, PI_COUNT * 2, { this->valP[i] = 0; this->posZ[i] = 0; });
 
-  this->shakeZAxis(20);
+  // 5) Step descent with the planner (PORTABLE in 2.1.x)
+  const float step_mm = this->step_mm;     // p.e. 0.03
+  const float z_limit = this->minZ_mm;     // P.ej. -10 (Proletvo a Basepos_mm.z)
+  float relZ = 0.0f;
 
-  AXIS_Z_ENABLE();
-  int dir = AXIS_Z_DIR_GET();
-  AXIS_Z_DIR_SET(Z_DIR_DIV);
-  do{
-    FOR_LOOP_TIMES(i, 0, runStep, AXIS_Z_STEP_PLUS(delayUs)); //Move a given step distance in a given direction
-    runSteped += runStep;
-    MARLIN_CORE_IDLE();
-    nowVal = this->hx711.getVal(0);
-    FOR_LOOP_TIMES(i, 0, PI_COUNT * 2 - 1, this->valP[i] = this->valP[i + 1]);  
+  while (relZ > z_limit) {
+    // take a step down
+    DO_BLOCKING_MOVE_TO_Z(current_position[Z_AXIS] - step_mm, max(2.0f, this->baseSpdZ_mm_s));
+    relZ = current_position[Z_AXIS] - this->basePos_mm.z;
+
+    // takes reading and feeds queues
+    const int nowVal = this->hx711.getVal(false);
+    FOR_LOOP_TIMES(i, 0, PI_COUNT * 2 - 1, this->valP[i] = this->valP[i + 1]);
     FOR_LOOP_TIMES(i, 0, PI_COUNT * 2 - 1, this->posZ[i] = this->posZ[i + 1]);
-    this->valP[PI_COUNT * 2 - 1] = nowVal - unfitAvgVal;                 //Put the pressure value into the queue
-    this->posZ[PI_COUNT * 2 - 1] = current_position[2] - (float)runSteped / steps[2];   //Put the z position corresponding to the pressure value into the queue
+    this->valP[PI_COUNT * 2 - 1] = nowVal - unfitAvgVal;
+    this->posZ[PI_COUNT * 2 - 1] = relZ;
 
-    if (checkTrigger() == true) //Trigger condition detection
-    {
-      calMinZ();          //Data sorting and calculation
-      AXIS_Z_DIR_SET(Z_DIR_ADD);
-      FOR_LOOP_TIMES(i, 0, runSteped, AXIS_Z_STEP_PLUS(delayUs / 4)); //Return to trigger point or preparation point
-      AXIS_Z_DIR_SET(dir);
-      break;
-    }
-  } while (1);
-  SET_BED_TEMP(oldBedTmp);
-  SET_HOTEND_TEMP(oldHotTmp, 0);
+    // Contact condition or abort due to limits of your check?
+    if (checkTrigger()) { calMinZ(); break; }
+
+    MARLIN_CORE_IDLE();
+  }
+
+  // 6) Restore soft-endstops
+  #if ENABLED(SOFT_ENDSTOPS)
+    soft_endstops_enabled = prev_soft;     // = M211 S1
+  #endif
+
+  
+
   return this;
 }
+
 
 /*
 *Function Name: clearByBrush(xyz_float_t basePos_mm, float norm, float minTemp, float maxTemp)
@@ -437,8 +444,8 @@ ProbeAcq* ProbeAcq::probePointByStep()
 bool clearByBed(xyz_float_t startPos, xyz_float_t endPos, float minTemp, float maxTemp)
 {
   SERIAL_ECHOLNPGM_P("=== Starting Clear by Bed ===");
-  SERIAL_ECHOLNPGM("startPos xyz: ", startPos.x, ", ", startPos.y, ", ", startPos.z);
-  SERIAL_ECHOLNPGM("endPos xyz: ", endPos.x, ", ", endPos.y, ", ", endPos.z);
+  // SERIAL_ECHOLNPGM("startPos xyz: ", startPos.x, ", ", startPos.y, ", ", startPos.z);
+  // SERIAL_ECHOLNPGM("endPos xyz: ", endPos.x, ", ", endPos.y, ", ", endPos.z);
   ProbeAcq pa;
   pa.hx711.init(HX711_SCK_PIN, HX711_SDO_PIN);
   DO_BLOCKING_MOVE_TO_Z(startPos.z, 5);
@@ -446,9 +453,9 @@ bool clearByBed(xyz_float_t startPos, xyz_float_t endPos, float minTemp, float m
   // Popup_Window_Height(Nozz_Hot); //Refresh the height page display_nozzle heating
   SERIAL_ECHOLNPGM_P("Heating nozzle & bed for wiping...");
   SET_HOTEND_TEMP(maxTemp, 0);
-  SET_BED_TEMP(33);  //Temporarily cancel bed heating
+  SET_BED_TEMP(60);  //Temporarily cancel bed heating
  
-  SERIAL_ECHOLNPGM_P("Waiting for nozzle to reach target temperature...");
+  // SERIAL_ECHOLNPGM_P("Waiting for nozzle to reach target temperature...");
   WAIT_HOTEND_TEMP(60 * 5 * 1000, 5);//Wait for the temperature to reach the set value
   WAIT_BED_TEMP(60 * 5 * 1000, 2);
   // >>> Popup_Window_Height(Nozz_Clear); //Refresh the high page display_wipe the nozzle
@@ -456,9 +463,9 @@ bool clearByBed(xyz_float_t startPos, xyz_float_t endPos, float minTemp, float m
   SERIAL_ECHOLNPGM_P("Starting nozzle wipe...");
   DO_BLOCKING_MOVE_TO_XY(startPos.x, startPos.y, 50);
   float start_mm = ProbeAcq::probeTimes(3, startPos, 0.03, -10, 0.2, MIN_HOLD, MAX_HOLD/2);
-  SERIAL_ECHOLNPGM_P("clear_nozzle_start_z:",start_mm);
+  // Serial echolnpgm p("clear nozzle start z:",start mm);
   float end_mm=    ProbeAcq::probeTimes(3, endPos, 0.03, -10, 0.2, MIN_HOLD, MAX_HOLD/2);
-  SERIAL_ECHOLNPGM_P("clear_nozzle_end_z:",end_mm);
+  // Serial echolnpgm p("clear nozzle end z:",end mm);
   startPos.z=start_mm;endPos.z=end_mm;
   // Print log("clear nozzle start z:",start mm,"clear nozzle start z:",end mm);
   SERIAL_ECHOLNPGM_P("Wiping action...");
@@ -474,50 +481,7 @@ bool clearByBed(xyz_float_t startPos, xyz_float_t endPos, float minTemp, float m
   DO_BLOCKING_MOVE_TO_XYZ(endPos.x, endPos.y, endPos.z-0.1, 5);//Pull it back 45° and remove the remaining material
   SERIAL_ECHOLNPGM_P("Wiping complete. Returning to home position...");
   RUN_AND_WAIT_GCODE_CMD("G28 Z", true);
-  /*
-  int unfitAvgVal = pa.readBase().y; 
-
-  // RUN_AND_WAIT_GCODE_STR("G1 F100 X%s Y%s z%s", false, getStr(startPos.x), getStr(startPos.y),getStr(start_mm));
-  DO_BLOCKING_MOVE_TO_XY(startPos.x, startPos.y, 50);
-  DO_BLOCKING_MOVE_TO_Z(start_mm+0.2 , 5);
-  SET_HOTEND_TEMP(minTemp, 0);
   
-  // RUN_AND_WAIT_GCODE_STR("G1 F100 X%s Y%s", false, getStr(endPos.x), getStr(endPos.y));
-  RUN_AND_WAIT_GCODE_STR("G1 F200 X%s Y%s z%s", false, getStr(endPos.x), getStr(endPos.y),getStr(end_mm));
-  
-  SET_HOTEND_TEMP(minTemp, 0);
-  SET_FAN_SPD(255);
-
-  float steps[] = STEPS_PRE_UNIT;
-  int runStep = 0.02 *steps[2];
-  int delayUs = (12.0f *1000 /runStep) /2;
-
-  int oldDir = AXIS_Z_DIR_GET();
-  AXIS_Z_ENABLE();
-
-  while (AXIS_XYZE_STATUS()){
-    int nowVal = pa.hx711.getVal(0);
-    // PRINT_LOG("nowVal:",nowVal,"unfitAvgVal:",unfitAvgVal,"nowVal -unfitAvgVal:",abs(nowVal -unfitAvgVal));
-    CHECK_AND_RUN_AND_ELSE((abs(nowVal -unfitAvgVal) < (MIN_HOLD)), AXIS_Z_DIR_SET(Z_DIR_DIV), AXIS_Z_DIR_SET(Z_DIR_ADD));  
-    FOR_LOOP_TIMES(i, 0, runStep, AXIS_Z_STEP_PLUS(delayUs));
-    MARLIN_CORE_IDLE();
-  }
-  AXIS_Z_DIR_SET(oldDir);
-  SET_HOTEND_TEMP(minTemp, 0);
-  SET_FAN_SPD(255); //Turn on the model cooling fan to ensure faster cooling
-  WAIT_HOTEND_TEMP(60 *5 *1000, 5); //Wait for the temperature to reach the set value
-  AXIS_Z_DIR_SET(Z_DIR_ADD);
-  // PRINT_LOG("endPos.x = ", endPos.x + (endPos.x -startPos.x) /5," endPos.y = ", endPos.y + (endPos.y -startPos.y) /5," GET_CURRENT_POS().z + 3.5 = ",GET_CURRENT_POS().z + 3.5); 
-  RUN_AND_WAIT_GCODE_STR("G1 F300 X%s Y%s Z%s", true, getStr(endPos.x + (endPos.x -startPos.x) /5), getStr(endPos.y + (endPos.y -startPos.y) /5), getStr(GET_CURRENT_POS().z + 3));
-
-  
-  pa.shakeZAxis(100);
-  AXIS_Z_DIR_SET(Z_DIR_ADD);
-  RUN_AND_WAIT_GCODE_CMD("G28 Z", true);
-
-  SET_HOTEND_TEMP(minTemp, 0);
-  // SET_BED_TEMP(60);
-  */
   return true;
 }
 
@@ -531,14 +495,7 @@ bool clearByBed(xyz_float_t startPos, xyz_float_t endPos, float minTemp, float m
 */
 bool probeByPress(xyz_float_t basePos_mm, float* outZ)
 {
-  /*
-  float outZ_mm[5] = {0};
-  //CHECK_AND_RETURN((!(pa.checHx711() || pa.checHx711())), false); //Check whether the module is working normally
-  FOR_LOOP_TIMES(i, 0, 5, outZ_mm[i] = ProbeAcq::probeTimes(0, basePos_mm, 0.02, -10, 0, MIN_HOLD, MAX_HOLD));
-  ARY_SORT(outZ_mm, 5);
-  PRINTF("\n***PROBE BY PRESS: z=%s, zs={%s, %s, %s, %s, %s}***\n", getStr(outZ_mm[2]), getStr(outZ_mm[0]), getStr(outZ_mm[1]), getStr(outZ_mm[2]), getStr(outZ_mm[3]), getStr(outZ_mm[4]));
-  *outZ = outZ_mm[2];
-  */
+  
  //In order to save time, it was changed from 5 times to 3 times.
    float outZ_mm[3] = {0};
   //CHECK_AND_RETURN((!(pa.checHx711() || pa.checHx711())), false); //Check whether the module is working normally
@@ -720,31 +677,28 @@ bool getZOffset(bool isNozzleClr, bool isRunProByPress, bool isRunProByTouch, fl
   xyz_float_t touchOftPos = CRTOUCH_OFT_POS;
   xyz_float_t rdyPos[3] = {{0, 0, HIGHT_UPRAISE_Z}, {0, 0, HIGHT_UPRAISE_Z}, {0, 0, HIGHT_UPRAISE_Z}};
   rdyPos[0].x = rdyPos[2].x = (pressPos.x < (BED_SIZE_X_MM / 2) ? (touchOftPos.x < 0) : (touchOftPos.x > 0)) ? pressPos.x : touchOftPos.x + 10;
-  // rdyPos[0].x = ((pressPos.x < (BED_SIZE_X_MM /2) ? (touchOftPos.x < 0) : (touchOftPos.x > 0)) ? pressPos.x : touchOftPos.x + 10);//-30
   rdyPos[0].x -= 9; 
   rdyPos[0].y = rdyPos[1].y = ((pressPos.y < (BED_SIZE_Y_MM / 2) ? (touchOftPos.y < 0) : (touchOftPos.y > 0)) ? pressPos.y : touchOftPos.y + 10);//15
   rdyPos[0].y = rdyPos[1].y-=17;
   rdyPos[1].x = rdyPos[0].x + (pressPos.x < (BED_SIZE_X_MM / 2) ? +1 : -1) * BED_SIZE_X_MM / 5;
   rdyPos[2].y = rdyPos[0].y + (pressPos.y < (BED_SIZE_Y_MM / 2) ? +1 : -1) * BED_SIZE_Y_MM / 5;
   rdyPos[2].x = (rdyPos[0].x+(rdyPos[1].x-rdyPos[0].x)/2); 
-//  PRINT_LOG("(rdyPos[1].x-rdyPos[0].x)/2:",(rdyPos[1].x-rdyPos[0].x)/2);
-//   PRINT_LOG("rdyPos[0].x:",rdyPos[0].x,"rdyPos[1].x:",rdyPos[1].x,"rdyPos[2].x:",rdyPos[2].x);
-   bool SoftEndstopEnable = soft_endstop._enabled;
+  bool SoftEndstopEnable = soft_endstop._enabled;
   bool reenable = planner.leveling_active;
   //0. Preparation before measurement
 
-  SERIAL_ECHOLNPGM("pressPos xyz: ", pressPos.x, ", ", pressPos.y, ", ", pressPos.z);
-  SERIAL_ECHOLNPGM("touchOftPos xyz: ", touchOftPos.x, ", ", touchOftPos.y, ", ", touchOftPos.z);
-  SERIAL_ECHOLNPGM_P("=== Reseting Z Offset ===");
+  // SERIAL_ECHOLNPGM("pressPos xyz: ", pressPos.x, ", ", pressPos.y, ", ", pressPos.z);
+  // SERIAL_ECHOLNPGM("touchOftPos xyz: ", touchOftPos.x, ", ", touchOftPos.y, ", ", touchOftPos.z);
+  // SERIAL_ECHOLNPGM_P("=== Reseting Z Offset ===");
   SET_Z_OFFSET(0, false);                               //Clear the z offset to 0 first to prevent the z offset from affecting the measurement results.
-  SERIAL_ECHOLNPGM_P("=== Moving to Home Position ===");
+  // SERIAL_ECHOLNPGM_P("=== Moving to Home Position ===");
   RUN_AND_WAIT_GCODE_CMD("G28", true);                        //Get the home point first before measuring  
-  RUN_AND_WAIT_GCODE_CMD("M211 S0", true);                    // Disable negative values
+  RUN_AND_WAIT_GCODE_CMD("M211 S0", true);                    // Enable negative values
 
 
   //1. Nozzle wiping for PLA consumables
   srand(millis());
-  float ret1 = rand() % 15 + 2; //Generate random numbers from 1 to 10
+  // float ret1 = rand() % 15 + 2; //Generate random numbers from 1 to 10
   // SERIAL_ECHOLNPAIR(" ret1=: ",ret1);
   xyz_float_t startPos = {rdyPos[0].x + (rdyPos[1].x - rdyPos[0].x) * 1 / 5-10, rdyPos[0].y + (rdyPos[2].y - rdyPos[0].y) * 2 / 5 + random(0, 9) - 4, 6};
   // xyz_float_t startPos = {rdyPos[0].x + (rdyPos[1].x -rdyPos[0].x) *1 /5-10, rdyPos[0].y + (rdyPos[2].y -rdyPos[0].y) *2 /5 + 9 -4, 6};
@@ -755,98 +709,28 @@ bool getZOffset(bool isNozzleClr, bool isRunProByPress, bool isRunProByTouch, fl
    endPos.x=CLEAR_NOZZL_END_X;endPos.y=CLEAR_NOZZL_END_Y;
   startPos.z=0;
   endPos.z=0;
-  SERIAL_ECHOLNPGM("Calling clearByBed with startPos: ");
-  CHECK_AND_RUN(isNozzleClr, clearByBed(startPos, endPos, 140, 140)); 
-  // >> Popup_Window_Height(Nozz_Hight); //Refresh the height page display_height measurement in progress
-
-  //2. Use CR-TOUCCH to measure trigger height
-/*
-  float zTouch[3] = {0};
-  SET_BED_LEV_ENABLE(false);  
-  // CHECK_AND_RUN(isRunProByTouch, {FOR_LOOP_TIMES(i, 0, 3, {probeByTouch(rdyPos[i], &zTouch[i]); rdyPos[i].z = zTouch[i];})});       
-  CHECK_AND_RUN(isRunProByTouch, {FOR_LOOP_TIMES(i, 0, 1, {probeByTouch(pressPos, &zTouch[0]); pressPos.z = zTouch[0];})});
-  //3. Use a pressure sensor to measure the height of the nozzle
-  float zPress[3] = {0};
-  SET_BED_LEV_ENABLE(false);                                     
-  // CHECK_AND_RUN(isRunProByPress, FOR_LOOP_TIMES(i, 0, 3, {probeByPress(rdyPos[i], &zPress[i]); zPress[i] += NOZ_TEMP_OFT_MM;})); 
-  CHECK_AND_RUN(isRunProByPress, FOR_LOOP_TIMES(i, 0, 1, {probeByPress(pressPos, &zPress[0]); zPress[0] += NOZ_TEMP_OFT_MM;}));      
-  Popup_Window_Height(Nozz_Finish); //Refresh the page when the height is completed
-  //4. Processing results
-  float zt_avg = 0, zp_avg = 0;
-  //No need to average once
-  // ARY_AVG(zt_avg, zTouch, 3);
-  // ARY_AVG(zp_avg, zPress, 3);
- 
-  ARY_AVG(zt_avg, zTouch, 1);
-  ARY_AVG(zp_avg, zPress, 1);
-  printTestResult(zTouch, zPress);  
-  SET_BED_LEVE_ENABLE(true);
-  DO_BLOCKING_MOVE_TO_Z(5, 5);
-  // DO_BLOCKING_MOVE_TO_XY(BED_SIZE_X_MM /2, BED_SIZE_Y_MM /2, 50);  //取消无用的步骤 rock_20230528
-  *outOffset = (zp_avg -zt_avg);
-*/
+  CHECK_AND_RUN(isNozzleClr, clearByBed(startPos, endPos, 140, 175)); 
+  
   *outOffset=Multiple_Hight(isRunProByPress,isRunProByTouch);  //Get the data after measuring twice
   SERIAL_ECHOLNPGM_P("=== Z Offset Measurement Completed ===");
-  SERIAL_ECHOLNPGM("OUTPUT_ZOFFSET: ", *outOffset);
+  
   PRINTF("\n***OUTPUT_ZOFFSET: zOffset=%s***\n", getStr(*outOffset));
   
-  //LIMIT(*outOffset, ZOFFSET_VALUE_MIN, ZOFFSET_VALUE_MAX);
-  
   soft_endstop._enabled = SoftEndstopEnable;
-  RUN_AND_WAIT_GCODE_CMD("M211 S1", true);                    // Enable negative values
+  RUN_AND_WAIT_GCODE_CMD("M211 S1", true);                    // Disable negative values
 
 
   planner.leveling_active = reenable;
-  if((*outOffset>ZOFFSET_VALUE_MAX)||(*outOffset<ZOFFSET_VALUE_MIN))return false; //If the high value is too outrageous, just don’t do it. 
+  if((*outOffset>ZOFFSET_VALUE_MAX)||(*outOffset<ZOFFSET_VALUE_MIN)){
+    SERIAL_ECHOLNPGM_P("=== Z Offset Measurement Failed: Out of Range ===");
+    SERIAL_ECHOLNPGM("OUTPUT_ZOFFSET: ", *outOffset);
+    return false; //If the high value is too outrageous, just don’t do it.
+  }
+  
+  SERIAL_ECHOLNPGM("OUTPUT_ZOFFSET: ", *outOffset);
+  SET_Z_OFFSET(*outOffset, true);  //Set the measured Z-OFFSET to the system
   return (isRunProByPress && isRunProByTouch);  //The data is valid only if both the nozzle and cr touch are measured.
 }
 
-/*
-*Function Name: gcodeG212()
-*Purpose: Used for the host computer to send test instructions, such as G212 C128 B P T, C128 = measure 128 times; B = perform head wipe operation; P = perform pressure sensor measurement operation; T = perform CR-TOUCH measurement operation
-*Params: None
-*Return: None
-*Attention: You need to add #include "../module/AutoOffset.h" to gcode.h, and insert case 212:gcodeG212();break; before the break of case 'G': in gcode.cpp.
-*/
-void gcodeG212()
-{
-  int count = 1;
-  if(GET_PARSER_SEEN('C')) count = GET_PARSER_INT_VAL();
-
-  if(GET_PARSER_SEEN('H'))
-  {
-    HX711 hx711;
-    hx711.init(HX711_SCK_PIN, HX711_SDO_PIN);
-    FOR_LOOP_TIMES(i, 0, count, hx711.getVal(1)); 
-    return;
-  }
-
-  if(GET_PARSER_SEEN('K'))
-  {
-    ProbeAcq pa;
-    xyz_pos_t cp = PRESS_XYZ_POS;
-    pa.hx711.init(HX711_SCK_PIN, HX711_SDO_PIN);
-    pa.minZ_mm = -10;    //Drop up to 10mm
-    pa.basePos_mm.x = cp.x;
-    pa.basePos_mm.y = cp.y;
-    pa.basePos_mm.z = 3;
-    pa.baseSpdXY_mm_s = 100;        
-    pa.baseSpdZ_mm_s = 5;
-    pa.step_mm = 0.02;  //Rock             
-    pa.minHold = MIN_HOLD;
-    pa.maxHold = MAX_HOLD;
-    pa.probePointByStep();
-    return;
-  }
-
-  bool isRunClearNozzle = GET_PARSER_SEEN('B'); //Do you need to wipe the nozzle?
-  bool isRunTestByPress = GET_PARSER_SEEN('P'); //Is it necessary to use a pressure sensor to measure the height of the nozzle?
-  bool isRunTestByTouch = GET_PARSER_SEEN('T'); //Do I need to use CT touch to measure?
-  float zOffset = 0;
-  CHECK_AND_RUN((isRunClearNozzle || isRunTestByPress || isRunTestByTouch), FOR_LOOP_TIMES(i, 0, count, getZOffset(isRunClearNozzle, isRunTestByPress, isRunTestByTouch, &zOffset)));
-
-}
-
-//Re-encapsulate high-level operations
 
 #endif

@@ -172,7 +172,11 @@
 #define PROBE_PPINT_BY_TOUCH(x, y)      probe.probe_at_point(x, y, PROBE_PT_RAISE, 0, false, true)
 //Set z offset and save eeprom
 // #define SET_Z_OFFSET(zOffset, isSave)   {dwin_zoffset = last_zoffset = probe.offset.z = zOffset; HMI_ValueStruct.offset_value = zOffset * 100;DWIN_UpdateLCD(); babystep.add_mm(Z_AXIS, zOffset);}
-#define SET_Z_OFFSET(zOffset, isSave)   {probe.offset.z = zOffset; babystep.add_mm(Z_AXIS, zOffset);}
+#define SET_Z_OFFSET(zOffset, isSave){ \
+  probe.offset.z = zOffset; \
+  babystep.add_mm(Z_AXIS, zOffset); \
+  if(isSave) settings.save(); \
+}
 
 //Block and perform xy axis movement to the given position
 #define DO_BLOCKING_MOVE_TO_XY(x_mm, y_mm, spd_mm_s)    do_blocking_move_to_xy((x_mm), (y_mm), (spd_mm_s))
