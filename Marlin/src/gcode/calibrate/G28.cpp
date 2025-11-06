@@ -587,4 +587,10 @@ void GcodeSuite::G28() {
     gcode.process_subcommands_now(F(EVENT_GCODE_AFTER_HOMING));
   #endif
 
+  if(!HMI_flag.abort_end_flag)  TERN_(DWIN_CREALITY_LCD, DWIN_CompletedHoming());  //Return to zero completion flag
+  
+  home_flag = false;
+  // rock_21211104, Prevent back to zero operation after automatic leveling.
+  HMI_flag.power_back_to_zero_flag = true;
+
 }

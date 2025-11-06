@@ -244,7 +244,10 @@ void GcodeSuite::M18_M84() {
       }
     }
     else
+     {
+      HMI_flag.power_back_to_zero_flag=false;
       planner.finish_and_disable();
+    }
 
     TERN_(AUTO_BED_LEVELING_UBL, bedlevel.steppers_were_disabled());
   }
