@@ -5837,6 +5837,8 @@ void HMI_Confirm()
 {
   ENCODER_DiffState encoder_diffState = get_encoder_state();
   // ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+  SERIAL_ECHOLNPGM("HMI_Confirm");
+  SERIAL_ECHOLNPGM("HMI_flag.boot_step:", HMI_flag.boot_step);
   if (encoder_diffState == ENCODER_DIFF_NO)
     return;
   if (encoder_diffState == ENCODER_DIFF_ENTER)
@@ -5844,6 +5846,7 @@ void HMI_Confirm()
     if (Set_language == HMI_flag.boot_step)
     {
       HMI_flag.boot_step = Set_high;   // The current step switches to the high state
+      SERIAL_ECHOLNPGM("HMI_flag.boot_step Language:", HMI_flag.boot_step);
       Popup_Window_Height(Nozz_Start); // Jump to height page
       checkkey = ONE_HIGH;             // Enter the high logic
 #if ANY(USE_AUTOZ_TOOL, USE_AUTOZ_TOOL_2)
@@ -5854,6 +5857,7 @@ void HMI_Confirm()
     else if (Set_high == HMI_flag.boot_step) // Boot boot failed.
     {
       HMI_flag.boot_step = Set_high;   // After the current height adjustment fails, repeat the height adjustment operation.
+      SERIAL_ECHOLNPGM("HMI_flag.boot_step set Offset:", HMI_flag.boot_step);
       Popup_Window_Height(Nozz_Start); // Jump to height page
       checkkey = ONE_HIGH;             // Enter the high logic
 #if ANY(USE_AUTOZ_TOOL, USE_AUTOZ_TOOL_2)
@@ -5863,6 +5867,7 @@ void HMI_Confirm()
     else if (Set_levelling == HMI_flag.boot_step) // Boot boot leveling successful
     {
       HMI_flag.boot_step = Boot_Step_Max; // Set the current step to the boot completion flag and save it
+      SERIAL_ECHOLNPGM("HMI_flag.boot_step set Leveling:", HMI_flag.boot_step);
       Save_Boot_Step_Value();             // Save boot steps
       HMI_flag.Need_boot_flag = false;    // No need to boot in the future
       // HMI_flag.G29_finish_flag=false; //Exit the editing page and enter the leveling page. Turning the knob is not allowed at the beginning.
@@ -5871,6 +5876,7 @@ void HMI_Confirm()
     }
     else if (Boot_Step_Max == HMI_flag.boot_step) // After normal high altitude failure
     {
+      SERIAL_ECHOLNPGM("HMI_flag.boot_step step Max:", HMI_flag.boot_step);
       Popup_Window_Height(Nozz_Start); // Jump to height page
       checkkey = ONE_HIGH;             // Enter the high logic
 #if ANY(USE_AUTOZ_TOOL, USE_AUTOZ_TOOL_2)
@@ -9104,6 +9110,8 @@ void HMI_Step()
 
 void HMI_Boot_Set() // Boot settings
 {
+  SERIAL_ECHOLNPGM("HMI_Boot_Set");
+  SERIAL_ECHOLNPGM("HMI_flag.boot_step:", HMI_flag.boot_step);
   switch (HMI_flag.boot_step)
   {
   case Set_language:

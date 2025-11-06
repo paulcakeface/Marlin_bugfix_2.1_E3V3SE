@@ -64,6 +64,8 @@ void GcodeSuite::M8015()
     // }
     SERIAL_ECHOLNPGM("M8015 succeeded in getting Z offset.");
     SERIAL_ECHOLN("Z Offset: ", probe.offset.z);
+    Goto_MainMenu();
+
   }
   else //Failed against high
   {
