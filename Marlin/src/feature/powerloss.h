@@ -88,6 +88,8 @@ typedef struct {
     uint8_t active_extruder;
   #endif
 
+  bool sd_printing_flag;
+
   #if DISABLED(NO_VOLUMETRICS)
     float filament_size[EXTRUDERS];
   #endif
@@ -165,6 +167,11 @@ class PrintJobRecovery {
     #if HAS_PLR_UI_FLAG
       static bool ui_flag_resume;     //!< Flag the UI to show a dialog to Resume (M1000) or Cancel (M1000C)
     #endif
+
+     #if ENABLED(DWIN_CREALITY_LCD)
+      static bool dwin_flag;
+    #endif
+
 
     static void init();
     static void prepare();

@@ -450,7 +450,7 @@ bool clearByBed(xyz_float_t startPos, xyz_float_t endPos, float minTemp, float m
   pa.hx711.init(HX711_SCK_PIN, HX711_SDO_PIN);
   DO_BLOCKING_MOVE_TO_Z(startPos.z, 5);
   DO_BLOCKING_MOVE_TO_XY(startPos.x, startPos.y-10, 50);
-  // Popup_Window_Height(Nozz_Hot); //Refresh the height page display_nozzle heating
+  Popup_Window_Height(Nozz_Hot); //Refresh the height page display_nozzle heating
   SERIAL_ECHOLNPGM_P("Heating nozzle & bed for wiping...");
   SET_HOTEND_TEMP(maxTemp, 0);
   SET_BED_TEMP(60);  //Temporarily cancel bed heating
@@ -458,7 +458,7 @@ bool clearByBed(xyz_float_t startPos, xyz_float_t endPos, float minTemp, float m
   // SERIAL_ECHOLNPGM_P("Waiting for nozzle to reach target temperature...");
   WAIT_HOTEND_TEMP(60 * 5 * 1000, 5);//Wait for the temperature to reach the set value
   WAIT_BED_TEMP(60 * 5 * 1000, 2);
-  // >>> Popup_Window_Height(Nozz_Clear); //Refresh the high page display_wipe the nozzle
+  Popup_Window_Height(Nozz_Clear); //Refresh the high page display_wipe the nozzle
   // >>> In_out_feedtock_level(LEVEL_DISTANCE,FEEDING_DEF_SPEED,false); //Withdraw 50mm
   SERIAL_ECHOLNPGM_P("Starting nozzle wipe...");
   DO_BLOCKING_MOVE_TO_XY(startPos.x, startPos.y, 50);
@@ -610,7 +610,7 @@ float Multiple_Hight(bool isRunProByPress, bool isRunProByTouch)
      SET_HOTEND_TEMP(140, 0);
      SET_FAN_SPD(255);                             //Turn on the model cooling fan to ensure faster cooling
      WAIT_HOTEND_TEMP(60 * 5 * 1000, 5);           //Wait for the temperature to reach the set value
-    //  >>> Popup_Window_Height(Nozz_Finish); //Refresh the page when the height is completed 
+     Popup_Window_Height(Nozz_Finish); //Refresh the page when the height is completed 
      return zoffset_avg; 
    }  
    else //If it is not consistent, debug it a few more times.
@@ -641,7 +641,7 @@ float Multiple_Hight(bool isRunProByPress, bool isRunProByTouch)
           SET_HOTEND_TEMP(140, 0);
           SET_FAN_SPD(255);                             //Turn on the model cooling fan to ensure faster cooling
           WAIT_HOTEND_TEMP(60 * 5 * 1000, 5);           //Wait for the temperature to reach the set value
-          //  >>> Popup_Window_Height(Nozz_Finish); //Refresh the page when the height is completed 
+          Popup_Window_Height(Nozz_Finish); //Refresh the page when the height is completed
           return zoffset_avg; 
         }        
       }

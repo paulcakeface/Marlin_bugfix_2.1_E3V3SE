@@ -49,6 +49,11 @@ uint8_t PrintJobRecovery::queue_index_r;
 uint32_t PrintJobRecovery::cmd_sdpos, // = 0
          PrintJobRecovery::sdpos[BUFSIZE];
 
+
+#if ENABLED(DWIN_CREALITY_LCD)
+  bool PrintJobRecovery::dwin_flag; // = false
+#endif         
+
 #if HAS_PLR_UI_FLAG
   bool PrintJobRecovery::ui_flag_resume; // = false
 #endif

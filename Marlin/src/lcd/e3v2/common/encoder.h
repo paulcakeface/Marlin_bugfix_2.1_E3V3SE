@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (c) 2021 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2020 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
@@ -22,7 +22,10 @@
 #pragma once
 
 /*****************************************************************************
-  * @file     lcd/e3v2/common/encoder.h
+  * @file     rotary_encoder.h
+  * @author   LEO / Creality3D
+  * @date     2019/07/06
+  * @version  2.0.1
   * @brief    Rotary encoder functions
   ****************************************************************************/
 
@@ -34,39 +37,35 @@ typedef struct {
   bool enabled = false;
   int encoderMoveValue = 0;
   millis_t lastEncoderTime = 0;
-} EncoderRate;
+} ENCODER_Rate;
 
-extern EncoderRate encoderRate;
+extern ENCODER_Rate EncoderRate;
 
 typedef enum {
   ENCODER_DIFF_NO    = 0,  // no state
   ENCODER_DIFF_CW    = 1,  // clockwise rotation
   ENCODER_DIFF_CCW   = 2,  // counterclockwise rotation
-  ENCODER_DIFF_ENTER = 3   // click
-} EncoderState;
+  ENCODER_DIFF_ENTER = 3,   // click
+  ENCODER_DIFF_LONG_PRESS = 4//Long press  rock_20210910
+} ENCODER_DiffState;
 
-#define ENCODER_WAIT_MS TERN(DWIN_LCD_PROUI, 10, 20)
+// Encoder initialization
+void Encoder_Configuration();
+void Generic_BeepAlert();
+
+#if ENABLED(DWIN_LCD_BEEP)
+ extern uint8_t toggle_LCDBeep;
+ extern uint8_t toggle_PreHAlert;
+ extern bool restore_brightness_active; 
+ //void restore_brightness();
+#endif
+
+#if ENABLED(DWIN_LCD_BEEP)
+ extern uint8_t toggle_LCDBeep;
+#endif
 
 // Analyze encoder value and return state
-EncoderState encoderReceiveAnalyze();
-
-inline EncoderState get_encoder_state() {
-  static millis_t Encoder_ms = 0;
-  const millis_t ms = millis();
-  if (PENDING(ms, Encoder_ms)) return ENCODER_DIFF_NO;
-  const EncoderState state = encoderReceiveAnalyze();
-  if (state != ENCODER_DIFF_NO) Encoder_ms = ms + ENCODER_WAIT_MS;
-  return state;
-}
-
-template<typename T>
-inline bool applyEncoder(const EncoderState &encoder_diffState, T &valref) {
-  if (encoder_diffState == ENCODER_DIFF_CW)
-    valref += encoderRate.encoderMoveValue;
-  else if (encoder_diffState == ENCODER_DIFF_CCW)
-    valref -= encoderRate.encoderMoveValue;
-  return encoder_diffState == ENCODER_DIFF_ENTER;
-}
+ENCODER_DiffState Encoder_ReceiveAnalyze();
 
 /*********************** Encoder LED ***********************/
 

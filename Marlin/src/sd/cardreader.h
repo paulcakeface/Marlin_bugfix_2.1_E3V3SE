@@ -281,6 +281,14 @@ public:
    */
   static const char* diveToFile(const bool update_cwd, MediaFile* &inDirPtr, const char * const path, const bool echo=false);
 
+
+  #if ENABLED(SDCARD_RATHERRECENTFIRST) && DISABLED(SDCARD_SORT_ALPHA)
+  #define SD_ORDER(N,C) ((C) - 1 - (N))
+#else
+  #define SD_ORDER(N,C) N
+#endif
+
+
   #if ENABLED(SDCARD_SORT_ALPHA)
     static void presort();
     static void selectFileByIndexSorted(const int16_t nr);
@@ -293,6 +301,7 @@ public:
     FORCE_INLINE static void selectFileByIndexSorted(const int16_t nr) {
       selectFileByIndex(TERN(SDCARD_RATHERRECENTFIRST, get_num_items() - 1 - nr, (nr)));
     }
+     FORCE_INLINE static void getfilename_sorted(const uint16_t nr) { selectFileByIndex(nr); }
   #endif
 
   static void ls(const uint8_t lsflags=0);

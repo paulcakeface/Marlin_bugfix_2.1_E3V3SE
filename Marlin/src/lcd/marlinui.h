@@ -210,6 +210,13 @@ public:
     TERN_(HAS_MARLINUI_MENU, currentScreen = status_screen);
   }
 
+  static uint32_t model_total_time_s;
+
+  FORCE_INLINE static void set_total_time(const uint32_t t) { model_total_time_s = t; }
+  FORCE_INLINE static uint32_t get_total_time() { return model_total_time_s; }
+  FORCE_INLINE static void total_time_reset() { model_total_time_s = 0; }
+
+
   static void init();
 
   static void reinit_lcd() { TERN_(REINIT_NOISY_LCD, init_lcd()); }
@@ -239,6 +246,8 @@ public:
     static void buzz(const long duration, const uint16_t freq=0);
   #endif
 
+  
+
   static void chirp() {
     TERN_(HAS_CHIRP, TERN(USE_MARLINUI_BUZZER, buzz, BUZZ)(LCD_FEEDBACK_FREQUENCY_DURATION_MS, LCD_FEEDBACK_FREQUENCY_HZ));
   }
@@ -265,22 +274,22 @@ public:
     static void media_changed(const MediaPresence old_stat, const MediaPresence stat);
   #endif
 
-  #if HAS_LCD_BRIGHTNESS
-    #ifndef LCD_BRIGHTNESS_MIN
-      #define LCD_BRIGHTNESS_MIN   1
-    #endif
-    #ifndef LCD_BRIGHTNESS_MAX
-      #define LCD_BRIGHTNESS_MAX 255
-    #endif
-    #ifndef LCD_BRIGHTNESS_DEFAULT
-      #define LCD_BRIGHTNESS_DEFAULT LCD_BRIGHTNESS_MAX
-    #endif
-    static uint8_t brightness;
-    static bool backlight;
-    static void _set_brightness(); // Implementation-specific
-    static void set_brightness(const uint8_t value);
-    FORCE_INLINE static void refresh_brightness() { set_brightness(brightness); }
-  #endif
+  // #if HAS_LCD_BRIGHTNESS
+  //   #ifndef LCD_BRIGHTNESS_MIN
+  //     #define LCD_BRIGHTNESS_MIN   1
+  //   #endif
+  //   #ifndef LCD_BRIGHTNESS_MAX
+  //     #define LCD_BRIGHTNESS_MAX 255
+  //   #endif
+  //   #ifndef LCD_BRIGHTNESS_DEFAULT
+  //     #define LCD_BRIGHTNESS_DEFAULT LCD_BRIGHTNESS_MAX
+  //   #endif
+  //   static uint8_t brightness;
+  //   static bool backlight;
+  //   static void _set_brightness(); // Implementation-specific
+  //   static void set_brightness(const uint8_t value);
+  //   FORCE_INLINE static void refresh_brightness() { set_brightness(brightness); }
+  // #endif
 
   #if HAS_BACKLIGHT_TIMEOUT
     #if ENABLED(EDITABLE_DISPLAY_TIMEOUT)
@@ -327,6 +336,7 @@ public:
       static void progress_reset() { if (progress_override & (PROGRESS_MASK + 1U)) set_progress(0); }
     #endif
     #if ANY(SHOW_REMAINING_TIME, SET_PROGRESS_MANUALLY)
+     
       static uint32_t _calculated_remaining_time() {
         const duration_t elapsed = print_job_timer.duration();
         const progress_t progress = _get_progress();
@@ -337,6 +347,9 @@ public:
         FORCE_INLINE static void set_remaining_time(const uint32_t r) { remaining_time = r; }
         FORCE_INLINE static uint32_t get_remaining_time() { return remaining_time ?: _calculated_remaining_time(); }
         FORCE_INLINE static void reset_remaining_time() { set_remaining_time(0); }
+
+        
+
       #else
         FORCE_INLINE static uint32_t get_remaining_time() { return _calculated_remaining_time(); }
       #endif
@@ -508,6 +521,17 @@ public:
   FORCE_INLINE static void refresh() {
     TERN_(HAS_WIRED_LCD, refresh(LCDVIEW_CLEAR_CALL_REDRAW));
   }
+
+
+  #if ENABLED(DWIN_CREALITY_LCD)
+    // static void refresh();
+    void kill_screen(PGM_P lcd_error, PGM_P lcd_component);
+  #else
+    FORCE_INLINE static void refresh() {
+      TERN_(HAS_WIRED_LCD, refresh(LCDVIEW_CLEAR_CALL_REDRAW));
+    }
+  #endif
+
 
   #if HAS_DISPLAY
 

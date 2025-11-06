@@ -949,7 +949,8 @@
  * Note: For Bowden Extruders make this large enough to allow load/unload.
  */
 #define PREVENT_LENGTHY_EXTRUDE
-#define EXTRUDE_MAXLENGTH 200
+#define EXTRUDE_MAXLENGTH 1000
+#define EXTRUDE_MAXLENGTH_e 999.9
 
 //===========================================================================
 //======================== Thermal Runaway Protection =======================
@@ -1784,7 +1785,7 @@
 #define Z_CLEARANCE_BETWEEN_PROBES  3 // (mm) Z Clearance between probe points
 #define Z_CLEARANCE_MULTI_PROBE     3 // (mm) Z Clearance between multiple probes
 #define Z_PROBE_ERROR_TOLERANCE     3 // (mm) Tolerance for early trigger (<= -probe.offset.z + ZPET)
-//#define Z_AFTER_PROBING           5 // (mm) Z position after probing is done
+#define Z_AFTER_PROBING            10 // (mm) Z position after probing is done
 
 #define Z_PROBE_LOW_POINT          -2 // (mm) Farthest distance below the trigger-point to go before stopping
 
@@ -1905,6 +1906,7 @@
                                       // You'll need this much clearance above Z_MAX_POS to avoid grinding.
 
 #define Z_AFTER_HOMING         10   // (mm) Height to move to after homing (if Z was homed)
+extern uint8_t CZ_AFTER_HOMING; 
 //#define XY_AFTER_HOMING { 10, 10 }  // (mm) Move to an XY position after homing (and raising Z)
 
 //#define EVENT_GCODE_AFTER_HOMING "M300 P440 S200"  // Commands to run after G28 (and move to XY_AFTER_HOMING)

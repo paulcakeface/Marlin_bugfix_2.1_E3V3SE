@@ -36,7 +36,7 @@
  */
 
 // Change EEPROM version if the structure changes
-#define EEPROM_VERSION "V90"
+#define EEPROM_VERSION "V91"
 #define EEPROM_OFFSET 100
 
 // Check the integrity of data offsets.
@@ -427,26 +427,26 @@ typedef struct SettingsDataStruct {
   //
   uint8_t power_monitor_flags;                          // M430 I V W
 
-  //
+  
   // HAS_LCD_CONTRAST
   //
-  uint8_t lcd_contrast;                                 // M250 C
+  // uint8_t lcd_contrast;                                 // M250 C
 
   //
   // HAS_LCD_BRIGHTNESS
   //
-  uint8_t lcd_brightness;                               // M256 B
+  // uint8_t lcd_brightness;                               // M256 B
 
   //
   // Display Sleep
   //
-  #if ENABLED(EDITABLE_DISPLAY_TIMEOUT)
-    #if HAS_BACKLIGHT_TIMEOUT
-      uint8_t backlight_timeout_minutes;                // M255 S
-    #elif HAS_DISPLAY_SLEEP
-      uint8_t sleep_timeout_minutes;                    // M255 S
-    #endif
-  #endif
+  // #if ENABLED(EDITABLE_DISPLAY_TIMEOUT)
+  //   #if HAS_BACKLIGHT_TIMEOUT
+  //     uint8_t backlight_timeout_minutes;                // M255 S
+  //   #elif HAS_DISPLAY_SLEEP
+  //     uint8_t sleep_timeout_minutes;                    // M255 S
+  //   #endif
+  // #endif
 
   //
   // Controller fan settings
@@ -705,6 +705,24 @@ typedef struct SettingsDataStruct {
     // uint32_t material_changes
   #endif
 
+  // LCD Sound
+  #if ENABLED(DWIN_LCD_BEEP)
+    uint8_t toggleLCDBeep;
+    uint8_t toggle_PreHAlert;
+
+  #endif     
+
+  // LCD Brightness settings
+  #if ENABLED(ENABLE_AUTO_OFF_DISPLAY)
+   uint8_t lcdtime;                
+   int16_t lcddimm;             
+   int16_t lcdbright;       
+   uint8_t czheight;       
+  #endif
+  #if ENABLED(ADVANCED_HELP_MESSAGES)
+    bool advanced_help_messages_enabled;
+  #endif
+
 } SettingsData;
 
 //static_assert(sizeof(SettingsData) <= MARLIN_EEPROM_SIZE, "EEPROM too small to contain SettingsData!");
@@ -766,10 +784,10 @@ void MarlinSettings::postprocess() {
     report_current_position();
 
   // Moved as last update due to interference with NeoPixel init
-  TERN_(HAS_LCD_CONTRAST, ui.refresh_contrast());
-  TERN_(HAS_LCD_BRIGHTNESS, ui.refresh_brightness());
-  TERN_(HAS_BACKLIGHT_TIMEOUT, ui.refresh_backlight_timeout());
-  TERN_(HAS_DISPLAY_SLEEP, ui.refresh_screen_timeout());
+  // TERN_(HAS_LCD_CONTRAST, ui.refresh_contrast());
+  // TERN_(HAS_LCD_BRIGHTNESS, ui.refresh_brightness());
+  // TERN_(HAS_BACKLIGHT_TIMEOUT, ui.refresh_backlight_timeout());
+  // TERN_(HAS_DISPLAY_SLEEP, ui.refresh_screen_timeout());
 }
 
 #if ALL(PRINTCOUNTER, EEPROM_SETTINGS)
@@ -1311,31 +1329,31 @@ void MarlinSettings::postprocess() {
     //
     // LCD Contrast
     //
-    {
-      _FIELD_TEST(lcd_contrast);
-      const uint8_t lcd_contrast = TERN(HAS_LCD_CONTRAST, ui.contrast, 127);
-      EEPROM_WRITE(lcd_contrast);
-    }
+    // {
+    //   _FIELD_TEST(lcd_contrast);
+    //   const uint8_t lcd_contrast = TERN(HAS_LCD_CONTRAST, ui.contrast, 127);
+    //   EEPROM_WRITE(lcd_contrast);
+    // }
 
     //
     // LCD Brightness
     //
-    {
-      _FIELD_TEST(lcd_brightness);
-      const uint8_t lcd_brightness = TERN(HAS_LCD_BRIGHTNESS, ui.brightness, 255);
-      EEPROM_WRITE(lcd_brightness);
-    }
+    // {
+    //   _FIELD_TEST(lcd_brightness);
+    //   // const uint8_t lcd_brightness = TERN(HAS_LCD_BRIGHTNESS, ui.brightness, 255);
+    //   // EEPROM_WRITE(lcd_brightness);
+    // }
 
     //
     // LCD Backlight / Sleep Timeout
     //
-    #if ENABLED(EDITABLE_DISPLAY_TIMEOUT)
-      #if HAS_BACKLIGHT_TIMEOUT
-        EEPROM_WRITE(ui.backlight_timeout_minutes);
-      #elif HAS_DISPLAY_SLEEP
-        EEPROM_WRITE(ui.sleep_timeout_minutes);
-      #endif
-    #endif
+    // #if ENABLED(EDITABLE_DISPLAY_TIMEOUT)
+    //   #if HAS_BACKLIGHT_TIMEOUT
+    //     EEPROM_WRITE(ui.backlight_timeout_minutes);
+    //   #elif HAS_DISPLAY_SLEEP
+    //     EEPROM_WRITE(ui.sleep_timeout_minutes);
+    //   #endif
+    // #endif
 
     //
     // Controller Fan
@@ -1821,6 +1839,40 @@ void MarlinSettings::postprocess() {
       EEPROM_WRITE(mmu3.cutter_mode); // EEPROM_MMU_CUTTER_ENABLED
       EEPROM_WRITE(mmu3.stealth_mode); // EEPROM_MMU_STEALTH
       EEPROM_WRITE(mmu3.mmu_hw_enabled); // EEPROM_MMU_ENABLED
+    #endif
+
+     // Save LCD Beeper settings
+    #if ENABLED(DWIN_LCD_BEEP)
+    {
+      uint8_t beep = toggle_LCDBeep;
+      EEPROM_WRITE(beep);
+
+      uint8_t prealert = toggle_PreHAlert;
+      EEPROM_WRITE(prealert);
+    }
+    #endif
+
+     //Save LCD Brightness settings
+     #if ENABLED(ENABLE_AUTO_OFF_DISPLAY)
+     {
+       uint8_t sleep = TURN_OFF_TIME;                
+       int16_t dimmBright = DIMM_SCREEN_BRIGHTNESS;
+       int16_t bright = MAX_SCREEN_BRIGHTNESS;
+       uint8_t zheight = CZ_AFTER_HOMING;
+       EEPROM_WRITE(sleep);              
+       EEPROM_WRITE(dimmBright);         
+       EEPROM_WRITE(bright);             
+       EEPROM_WRITE(zheight); 
+     }             
+     #endif
+
+    #if ENABLED(ADVANCED_HELP_MESSAGES)
+    {
+      bool advanced_help_messages_enabled = true;
+
+      advanced_help_messages_enabled = HMI_flag.advanced_help_enabled_flag;
+      EEPROM_WRITE(advanced_help_messages_enabled);
+    }
     #endif
 
     //
@@ -2388,33 +2440,33 @@ void MarlinSettings::postprocess() {
       //
       // LCD Contrast
       //
-      {
-        uint8_t lcd_contrast;
-        _FIELD_TEST(lcd_contrast);
-        EEPROM_READ(lcd_contrast);
-        TERN_(HAS_LCD_CONTRAST, if (!validating) ui.contrast = lcd_contrast);
-      }
+      // {
+      //   uint8_t lcd_contrast;
+      //   _FIELD_TEST(lcd_contrast);
+      //   // EEPROM_READ(lcd_contrast);
+      //   // TERN_(HAS_LCD_CONTRAST, if (!validating) ui.contrast = lcd_contrast);
+      // }
 
       //
       // LCD Brightness
       //
-      {
-        uint8_t lcd_brightness;
-        _FIELD_TEST(lcd_brightness);
-        EEPROM_READ(lcd_brightness);
-        TERN_(HAS_LCD_BRIGHTNESS, if (!validating) ui.brightness = lcd_brightness);
-      }
+      // {
+      //   uint8_t lcd_brightness;
+      //   _FIELD_TEST(lcd_brightness);
+      //   // EEPROM_READ(lcd_brightness);
+      //   // TERN_(HAS_LCD_BRIGHTNESS, if (!validating) ui.brightness = lcd_brightness);
+      // }
 
       //
       // LCD Backlight / Sleep Timeout
       //
-      #if ENABLED(EDITABLE_DISPLAY_TIMEOUT)
-        #if HAS_BACKLIGHT_TIMEOUT
-          EEPROM_READ(ui.backlight_timeout_minutes);
-        #elif HAS_DISPLAY_SLEEP
-          EEPROM_READ(ui.sleep_timeout_minutes);
-        #endif
-      #endif
+      // #if ENABLED(EDITABLE_DISPLAY_TIMEOUT)
+      //   #if HAS_BACKLIGHT_TIMEOUT
+      //     EEPROM_READ(ui.backlight_timeout_minutes);
+      //   #elif HAS_DISPLAY_SLEEP
+      //     EEPROM_READ(ui.sleep_timeout_minutes);
+      //   #endif
+      // #endif
 
       //
       // Controller Fan
@@ -2981,6 +3033,47 @@ void MarlinSettings::postprocess() {
         EEPROM_READ(mmu3.mmu_hw_enabled); // EEPROM_MMU_ENABLED
       #endif
 
+      #if ENABLED(DWIN_LCD_BEEP)
+      {
+        uint8_t beep;
+
+        EEPROM_READ(beep); //Read LCD_Beeper state
+        toggle_LCDBeep = (beep > 0) ? 1 : 0;
+
+        uint8_t prealert;
+        EEPROM_READ(prealert); //Read LCD_Beeper state
+        toggle_PreHAlert = (prealert > 0) ? 1 : 0;
+
+      }
+      #endif
+
+    //Read LCD Brightness settings
+    #if ENABLED(ENABLE_AUTO_OFF_DISPLAY)
+    {
+      uint8_t sleep;                 
+      int16_t dimmBright;
+      int16_t bright;
+      uint8_t zheight;
+      EEPROM_READ(sleep);
+      TURN_OFF_TIME = (sleep > 60) ? 5 : sleep;              
+      EEPROM_READ(dimmBright);
+      DIMM_SCREEN_BRIGHTNESS = (dimmBright > 175) ? 175  : dimmBright;         
+      EEPROM_READ(bright);             
+      MAX_SCREEN_BRIGHTNESS = ( bright > 230) ? 230 : bright;
+      EEPROM_READ(zheight);
+      CZ_AFTER_HOMING = (zheight >= 10) ? zheight : 10; //Set default value
+    }
+    #endif
+
+    #if ENABLED(ADVANCED_HELP_MESSAGES)
+    {
+      bool advanced_help_messages_enabled;
+      EEPROM_READ(advanced_help_messages_enabled);
+
+      HMI_flag.advanced_help_enabled_flag = advanced_help_messages_enabled;
+    }
+    #endif
+
       //
       // Validate Final Size and CRC
       //
@@ -3527,26 +3620,26 @@ void MarlinSettings::reset() {
   //
   TERN_(POWER_MONITOR, power_monitor.reset());
 
-  //
-  // LCD Contrast
-  //
-  TERN_(HAS_LCD_CONTRAST, ui.contrast = LCD_CONTRAST_DEFAULT);
+  // //
+  // // LCD Contrast
+  // //
+  // TERN_(HAS_LCD_CONTRAST, ui.contrast = LCD_CONTRAST_DEFAULT);
 
   //
   // LCD Brightness
   //
-  TERN_(HAS_LCD_BRIGHTNESS, ui.brightness = LCD_BRIGHTNESS_DEFAULT);
+  // TERN_(HAS_LCD_BRIGHTNESS, ui.brightness = LCD_BRIGHTNESS_DEFAULT);
 
   //
   // LCD Backlight / Sleep Timeout
   //
-  #if ENABLED(EDITABLE_DISPLAY_TIMEOUT)
-    #if HAS_BACKLIGHT_TIMEOUT
-      ui.backlight_timeout_minutes = LCD_BACKLIGHT_TIMEOUT_MINS;
-    #elif HAS_DISPLAY_SLEEP
-      ui.sleep_timeout_minutes = DISPLAY_SLEEP_MINUTES;
-    #endif
-  #endif
+  // #if ENABLED(EDITABLE_DISPLAY_TIMEOUT)
+  //   #if HAS_BACKLIGHT_TIMEOUT
+  //     ui.backlight_timeout_minutes = LCD_BACKLIGHT_TIMEOUT_MINS;
+  //   #elif HAS_DISPLAY_SLEEP
+  //     ui.sleep_timeout_minutes = DISPLAY_SLEEP_MINUTES;
+  //   #endif
+  // #endif
 
   //
   // Controller Fan
@@ -3996,20 +4089,20 @@ void MarlinSettings::reset() {
         thermalManager.M305_report(i, forReplay);
     #endif
 
-    //
-    // LCD Contrast
-    //
-    TERN_(HAS_LCD_CONTRAST, gcode.M250_report(forReplay));
+    // //
+    // // LCD Contrast
+    // //
+    // TERN_(HAS_LCD_CONTRAST, gcode.M250_report(forReplay));
 
-    //
-    // Display Sleep
-    //
-    TERN_(EDITABLE_DISPLAY_TIMEOUT, gcode.M255_report(forReplay));
+    // //
+    // // Display Sleep
+    // //
+    // TERN_(EDITABLE_DISPLAY_TIMEOUT, gcode.M255_report());
 
-    //
-    // LCD Brightness
-    //
-    TERN_(HAS_LCD_BRIGHTNESS, gcode.M256_report(forReplay));
+    // //
+    // // LCD Brightness
+    // //
+    // TERN_(HAS_LCD_BRIGHTNESS, gcode.M256_report());
 
     //
     // Controller Fan
@@ -4144,6 +4237,16 @@ void MarlinSettings::reset() {
     // MMU3
     //
     TERN_(HAS_PRUSA_MMU3, gcode.MMU3_report(forReplay));
+
+     #if ENABLED(ENABLE_AUTO_OFF_DISPLAY)  
+      SERIAL_ECHOLN("DISPLAY Settings:");
+      SERIAL_ECHOLNPGM("   Buzzer ON/OFF: ", toggle_LCDBeep);
+      SERIAL_ECHOLNPGM("   Preheat Alert ON/OFF: ", toggle_PreHAlert);
+      SERIAL_ECHOLNPGM("   MAX BRIGHTNESS: ", ((MAX_SCREEN_BRIGHTNESS-164)*100)/66);
+      SERIAL_ECHOLNPGM("   DIMM BRIGHTNESS: ", ((DIMM_SCREEN_BRIGHTNESS-164)*100)/66);
+      SERIAL_ECHOLNPGM("   AUTO OFF TIME: ", TURN_OFF_TIME);
+      SERIAL_ECHOLNPGM("CUSTOM Z Height After Homing: ", CZ_AFTER_HOMING);
+    #endif
   }
 
 #endif // !DISABLE_M503

@@ -21,25 +21,48 @@
  */
 #include "../../inc/MarlinConfig.h"
 
-#if HAS_LCD_BRIGHTNESS
+#if ENABLED(DWIN_CREALITY_LCD)
 
 #include "../gcode.h"
 #include "../../lcd/marlinui.h"
+#include "../../lcd/e3v2/creality/dwin.h"
+
+void GcodeSuite::M256_report() {
+    SERIAL_ECHOLNPGM("Display Max Brightness: ", ((MAX_SCREEN_BRIGHTNESS-164)*100)/66);
+    SERIAL_ECHOLNPGM("Display Dimm Brightness: ", ((DIMM_SCREEN_BRIGHTNESS-164)*100)/66);
+  }
 
 /**
  * M256: Set the LCD brightness
  */
 void GcodeSuite::M256() {
-  if (parser.seenval('B'))
-    ui.set_brightness(parser.value_int());
-  else
+  if (parser.seenval('B')){
+    const int b = parser.value_int();
+    if(b < 0 || b > 100){
+      SERIAL_ECHOLNPGM("Invalid value for M256 B<percentage>! (0-100)");    
+      return;
+    }
+    int16_t luminance = 164 + ((b * 66) / 100);
+    MAX_SCREEN_BRIGHTNESS = luminance;
+    DWIN_Backlight_SetLuminance(luminance);
+    settings.save();
+    
+  } else if (parser.seenval('D')) {
+    const int d = parser.value_int();
+    if(d < 0 || d > 100){
+      SERIAL_ECHOLNPGM("Invalid value for M256 D<percentage>! (0-100)");    
+      return;
+    }
+    int16_t luminance = 164 + ((d * 66) / 100);
+    DIMM_SCREEN_BRIGHTNESS = luminance;
+    settings.save();
+    
+  } 
+  
+  else{
     M256_report();
+  }
 }
 
-void GcodeSuite::M256_report(const bool forReplay/*=true*/) {
-  TERN_(MARLIN_SMALL_BUILD, return);
-  report_heading_etc(forReplay, F(STR_LCD_BRIGHTNESS));
-  SERIAL_ECHOLNPGM("  M256 B", ui.brightness);
-}
 
 #endif // HAS_LCD_BRIGHTNESS

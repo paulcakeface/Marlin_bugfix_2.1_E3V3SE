@@ -117,16 +117,21 @@ constexpr uint8_t epps = ENCODER_PULSES_PER_STEP;
 #endif
 
 #if HAS_LCD_BRIGHTNESS
-  uint8_t MarlinUI::brightness = LCD_BRIGHTNESS_DEFAULT;
-  bool MarlinUI::backlight = true;
+  #if ENABLED(DWIN_CREALITY_LCD)
+    
+  #else
+    uint8_t MarlinUI::brightness = LCD_BRIGHTNESS_DEFAULT;
+    bool MarlinUI::backlight = true;
+    uint32_t MarlinUI::model_total_time_s = 0;
 
-  void MarlinUI::set_brightness(const uint8_t value) {
-    backlight = !!value;
-    if (backlight) brightness = constrain(value, LCD_BRIGHTNESS_MIN, LCD_BRIGHTNESS_MAX);
-    #if DISABLED(SOVOL_SV06_RTS)
-      _set_brightness();
-    #endif
-  }
+    void MarlinUI::set_brightness(const uint8_t value) {
+      backlight = !!value;
+      if (backlight) brightness = constrain(value, LCD_BRIGHTNESS_MIN, LCD_BRIGHTNESS_MAX);
+      #if DISABLED(SOVOL_SV06_RTS)
+        _set_brightness();
+      #endif
+    }
+  #endif
 #endif
 
 #if ENABLED(SOUND_MENU_ITEM)
@@ -263,8 +268,8 @@ void MarlinUI::init() {
     Wire.begin(uint8_t(I2C_SDA_PIN), uint8_t(I2C_SCL_PIN));
   #endif
 
-  init_lcd();
-  clear_lcd();
+  // init_lcd();
+  // clear_lcd();
 
   #if BUTTON_EXISTS(EN1)
     SET_INPUT_PULLUP(BTN_EN1);
@@ -1706,7 +1711,7 @@ uint8_t expand_u8str_P(char * const outstr, PGM_P const ptpl, const int8_t ind, 
     TERN_(STATUS_MESSAGE_SCROLLING, reset_status_scroll());
 
     TERN_(EXTENSIBLE_UI, ExtUI::onStatusChanged(status_message));
-    TERN_(DWIN_CREALITY_LCD, dwinStatusChanged(status_message));
+    // TERN_(DWIN_CREALITY_LCD, dwinStatusChanged(status_message));
     TERN_(DWIN_CREALITY_LCD_JYERSUI, jyersDWIN.updateStatus(status_message));
   }
 

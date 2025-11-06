@@ -25,7 +25,7 @@
  * Release version. Leave the Marlin version or apply a custom scheme.
  */
 #ifndef SHORT_BUILD_VERSION
-  #define SHORT_BUILD_VERSION "MBF21.FTADV.T1 E3V3SE"
+  #define SHORT_BUILD_VERSION "MBF21.LCD_WIP E3V3SE"
 #endif
 
 /**

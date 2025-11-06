@@ -957,13 +957,23 @@ private:
   #endif
 
   #if ENABLED(EDITABLE_DISPLAY_TIMEOUT)
-    static void M255();
-    static void M255_report(const bool forReplay=true);
+    #if ENABLED(DWIN_CREALITY_LCD)
+      static void M255();
+      static void M255_report();
+    #else
+      static void M255();
+      static void M255_report(const bool forReplay=true);
+    #endif  
   #endif
 
   #if HAS_LCD_BRIGHTNESS
-    static void M256();
-    static void M256_report(const bool forReplay=true);
+    #if ENABLED(DWIN_CREALITY_LCD)
+      static void M256();
+      static void M256_report();
+    #else
+      static void M256();
+      static void M256_report(const bool forReplay=true);
+    #endif  
   #endif
 
   #if ENABLED(EXPERIMENTAL_I2CBUS)

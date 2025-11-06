@@ -239,6 +239,7 @@ typedef struct { float p, i, d, c, f; } raw_pidcf_t;
 
   };
 
+
 #endif // HAS_PID_HEATING
 
 #if ENABLED(PIDTEMP)
@@ -380,6 +381,17 @@ typedef struct { float p, i, d, c, f; } raw_pidcf_t;
   #if ENABLED(PID_PARAMS_PER_HOTEND)
     #define SET_HOTEND_PID(F,H,V) thermalManager.temp_hotend[H].pid.set_##F(V)
   #else
+    #define PID_PARAM(F,H) _PID_##F(TERN(PID_PARAMS_PER_HOTEND, H, 0 & H)) // Always use 'H' to suppress warning
+#define _PID_Kp(H) TERN(PIDTEMP, Temperature::temp_hotend[H].pid.Kp, NAN)
+#define _PID_Ki(H) TERN(PIDTEMP, Temperature::temp_hotend[H].pid.Ki, NAN)
+#define _PID_Kd(H) TERN(PIDTEMP, Temperature::temp_hotend[H].pid.Kd, NAN)
+#if ENABLED(PIDTEMP)
+  #define _PID_Kc(H) TERN(PID_EXTRUSION_SCALING, Temperature::temp_hotend[H].pid.Kc, 1)
+  #define _PID_Kf(H) TERN(PID_FAN_SCALING,       Temperature::temp_hotend[H].pid.Kf, 0)
+#else
+  #define _PID_Kc(H) 1
+  #define _PID_Kf(H) 0
+#endif
     #define SET_HOTEND_PID(F,_,V) do{ HOTEND_LOOP() thermalManager.temp_hotend[e].pid.set_##F(V); }while(0)
   #endif
 

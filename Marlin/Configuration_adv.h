@@ -1719,7 +1719,7 @@
 #if HAS_DISPLAY && ANY(HAS_MEDIA, SET_PROGRESS_MANUALLY)
   #define SHOW_PROGRESS_PERCENT           // Show print progress percentage (doesn't affect progress bar)
   #define SHOW_ELAPSED_TIME               // Display elapsed printing time (prefix 'E')
-  //#define SHOW_REMAINING_TIME           // Display estimated time to completion (prefix 'R')
+  #define SHOW_REMAINING_TIME           // Display estimated time to completion (prefix 'R')
   #if ENABLED(SET_INTERACTION_TIME)
     #define SHOW_INTERACTION_TIME         // Display time until next user interaction ('C' = filament change)
   #endif
@@ -1870,6 +1870,7 @@
 
   #define SCROLL_LONG_FILENAMES         // Scroll long filenames in the SD card menu
   #define DWIN_LCD_BEEP
+  
   //#define SD_ABORT_NO_COOLDOWN          // Leave the heaters on after Stop Print (not recommended!)
 
   /**
@@ -2280,8 +2281,8 @@
  * LCD Backlight Timeout
  * Requires a display with a controllable backlight
  */
-//#define LCD_BACKLIGHT_TIMEOUT_MINS 1  // (minutes) Timeout before turning off the backlight
-
+// #define LCD_BACKLIGHT_TIMEOUT_MINS 5  // (minutes) Timeout before turning off the backlight
+#define EDITABLE_DISPLAY_TIMEOUT
 #if defined(DISPLAY_SLEEP_MINUTES) || defined(LCD_BACKLIGHT_TIMEOUT_MINS)
   #define EDITABLE_DISPLAY_TIMEOUT      // Edit sleep / backlight timeout with M255 S<minutes> and a menu item
 #endif
@@ -2517,7 +2518,7 @@
    * Specify the GCODE commands that will be executed when leveling succeeds,
    * between attempts, and after the maximum number of retries have been tried.
    */
-  #define G29_SUCCESS_COMMANDS "M117 Bed leveling done."
+  // #define G29_SUCCESS_COMMANDS "M117 Bed leveling done."
   #define G29_RECOVER_COMMANDS "M117 Probe failed. Rewiping.\nG28\nG12 P0 S12 T0"
   #define G29_FAILURE_COMMANDS "M117 Bed leveling failed.\nG0 Z10\nM300 P25 S880\nM300 P50 S0\nM300 P25 S880\nM300 P50 S0\nM300 P25 S880\nM300 P50 S0\nG4 S1"
 

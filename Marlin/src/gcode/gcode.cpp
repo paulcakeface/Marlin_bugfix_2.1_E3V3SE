@@ -292,27 +292,29 @@ void GcodeSuite::dwell(const millis_t time) {
 
   void GcodeSuite::G29_with_retry() {
     uint8_t retries = G29_MAX_RETRIES;
-    bool fail = false;
-    for (;;) {
-      fail = G29(); // G29 should return true for failed probes ONLY
-      if (!fail || !retries) break;
+    while (G29())
+  {
+    // G29 should return true for failed probes ONLY
+    if (retries)
+    {
       event_probe_recover();
       --retries;
     }
-
-    if (fail) {
+    else
+    {
+      // Leveling_Error();//调平失败弹出报错界面
+      Popup_window_boot(Level_faild_QR); // 弹出调平失败二维码界面
+      delay(10);
       event_probe_failure();
-      TERN_(G29_HALT_ON_FAILURE, return);
+      return;
     }
-    else {
-      TERN_(HOST_PROMPT_SUPPORT, hostui.prompt_end());
-      #ifdef G29_SUCCESS_COMMANDS
-        process_subcommands_now(F(G29_SUCCESS_COMMANDS));
-      #endif
-    }
+  }
 
-    TERN_(HAS_DWIN_E3V2_BASIC, dwinLevelingDone());
-    TERN_(EXTENSIBLE_UI, ExtUI::onLevelingDone());
+  TERN_(HOST_PROMPT_SUPPORT, hostui.prompt_end());
+
+#ifdef G29_SUCCESS_COMMANDS
+  process_subcommands_now_P(PSTR(G29_SUCCESS_COMMANDS));
+#endif
   }
 
 #endif // G29_RETRY_AND_RECOVER

@@ -24,7 +24,8 @@
 #include "../inc/MarlinConfig.h"
 
 #if ((!HAS_ADC_BUTTONS && IS_NEWPANEL) || BUTTONS_EXIST(EN1, EN2)) && !IS_TFTGLCD_PANEL
-  #define HAS_MARLINUI_ENCODER 1
+  // #define HAS_MARLINUI_ENCODER 1
+  #define HAS_ENCODER_WHEEL 1
 #endif
 #if (HAS_MARLINUI_ENCODER || ANY_BUTTON(ENC, BACK, UP, DOWN, LEFT, RIGHT)) && DISABLED(TOUCH_UI_FTDI_EVE)
   #define HAS_DIGITAL_BUTTONS 1
@@ -36,6 +37,14 @@
 // I2C buttons must be read in the main thread
 #if ANY(LCD_I2C_VIKI, LCD_I2C_PANELOLU2, IS_TFTGLCD_PANEL)
   #define HAS_SLOW_BUTTONS 1
+#endif
+
+
+#if HAS_ENCODER_WHEEL
+  #define ENCODER_PHASE_0 0
+  #define ENCODER_PHASE_1 2
+  #define ENCODER_PHASE_2 3
+  #define ENCODER_PHASE_3 1
 #endif
 
 #if ANY(HAS_DIGITAL_BUTTONS, HAS_DWIN_E3V2)
