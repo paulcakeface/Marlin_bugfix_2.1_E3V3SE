@@ -79,8 +79,8 @@ lin 3D Printer Firmware
 #define CORP_WEBSITE WEBSITE_URL
 #endif
 
-#define CORP_WEBSITE_C "https://github.com/navaismo/"
-#define CORP_WEBSITE_E "https://github.com/navaismo/"
+#define CORP_WEBSITE_C "github.com/navaismo"
+#define CORP_WEBSITE_E "github.com/navaismo"
 #define PAUSE_HEAT
 #define CHECKFILAMENT true
 
@@ -5161,14 +5161,14 @@ void HMI_MainMenu()
 
     case 3: // Leveling or Info
 #if HAS_ONESTEP_LEVELING
-            // checkkey = Leveling;
-      // HMI_Leveling();
-      checkkey = ONE_HIGH;
-#if ANY(USE_AUTOZ_TOOL, USE_AUTOZ_TOOL_2)
-      queue.inject_P(PSTR("M8015"));
-      // Popup window home();
-      Popup_Window_Height(Nozz_Start);
-#endif
+      // Just Leveling
+      Clear_Main_Window();
+      RUN_AND_WAIT_GCODE_CMD("G28", true); // Home all axes
+      HMI_flag.leveling_offset_flag = false; //Disable Offset Flag
+      HMI_flag.Pressure_Height_end = true; // Enable Leveling Flag
+      
+   
+
 #else
       checkkey = Info;
       Draw_Info_Menu();
@@ -6737,7 +6737,7 @@ void HMI_Prepare()
       Popup_Window_Home();
       gcode.process_subcommands_now(PSTR("G28")); // home
       delay(200);
-      gcode.process_subcommands_now(PSTR("G1 X-15 Z40 F1300")); // raise Z
+      gcode.process_subcommands_now(PSTR("G1 X-15 Z40 F3500")); // raise Z
       checkkey = CExtrude_Menu;
       select_cextr.reset();
       Draw_CExtrude_Menu();
