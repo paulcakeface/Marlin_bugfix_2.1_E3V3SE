@@ -718,7 +718,7 @@ G29_TYPE GcodeSuite::G29() {
         // Inner loop is Y with PROBE_Y_FIRST enabled
         // Inner loop is X with PROBE_Y_FIRST disabled
         for (PR_INNER_VAR = inStart; PR_INNER_VAR != inStop; pt_index++, PR_INNER_VAR += inInc) {
-
+          G29_level_num++;
           abl.probePos = abl.probe_position_lf + abl.gridSpacing * abl.meshCount.asFloat();
 
           TERN_(AUTO_BED_LEVELING_LINEAR, abl.indexIntoAB[abl.meshCount.x][abl.meshCount.y] = ++abl.abl_probe_index); // 0...
