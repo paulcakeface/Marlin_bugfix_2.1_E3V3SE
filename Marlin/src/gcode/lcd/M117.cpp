@@ -30,13 +30,39 @@
 /**
  * M117: Set LCD Status Message
  */
-void GcodeSuite::M117() {
+void GcodeSuite::M117()
+{
+  if ENABLED (HOST_ACTION_COMMANDS)
 
-  if (parser.has_string())
-    ui.set_status_no_expire(parser.string_arg);
+    if (parser.string_arg && parser.string_arg[0] != '\0')
+    {
+      char *my_string = parser.string_arg;
+
+      // Supress INDICATOR messages from Octoprint
+      if (strstr(parser.string_arg, "INDICATOR-") != NULL)
+      {
+        SERIAL_ECHOLN("Indicator Layer, not showing in LCD");
+      }
+      else
+      {
+        TERN_(DWIN_CREALITY_LCD, DWIN_Show_M117(my_string));
+      }
+
+    }
+    else
+    {
+      SERIAL_ECHOLN("Warning: No string provided with M117");
+    }
+
+
+  if (parser.string_arg && parser.string_arg[0])
+  {
+    ui.set_status(parser.string_arg);
+  }
   else
+  {
     ui.reset_status();
-
+  }
 }
 
 #endif // HAS_STATUS_MESSAGE

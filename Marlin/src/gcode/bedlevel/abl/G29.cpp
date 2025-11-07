@@ -1052,20 +1052,20 @@ G29_TYPE GcodeSuite::G29() {
   #else
     if(((GRID_MAX_POINTS_Y*GRID_MAX_POINTS_X)==G29_level_num)&&(!HMI_flag.G29_level_not_normal))
     {
-      SERIAL_ECHOLNPGM("G29 Leveling Normal");
+      // SERIAL_ECHOLNPGM("G29 Leveling Normal");
       HMI_flag.G29_finish_flag=true; //If the leveling values ​​at 16 points are all normal
     } else {
-      SERIAL_ECHOLNPGM("G29 Leveling Abnormal");
+      // SERIAL_ECHOLNPGM("G29 Leveling Abnormal");
       //HMI_flag.G29_finish_flag=false; //If the leveling values ​​at 16 points are all normal
     }
     G29_level_num=0;
   
     if(HMI_flag.G29_finish_flag && !HMI_flag.Need_g29_flag && HMI_flag.local_leveling_flag)
     {
-      SERIAL_ECHOLNPGM("Show Leveling Complete Interface");
+      // SERIAL_ECHOLNPGM("Show Leveling Complete Interface");
       if(HMI_flag.Need_boot_flag)//If the boot-up leveling
       {
-        SERIAL_ECHOLNPGM("Show Boot Leveling Complete Interface");
+        // SERIAL_ECHOLNPGM("Show Boot Leveling Complete Interface");
         DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_LEVELING_CONFIRM,BUTTON_BOOT_LEVEL_X, BUTTON_BOOT_LEVEL_Y);// Confirm button
         DWIN_Draw_Rectangle(0, Button_Select_Color, BUTTON_BOOT_LEVEL_X-1, BUTTON_BOOT_LEVEL_Y-1, BUTTON_BOOT_LEVEL_X+82, BUTTON_BOOT_LEVEL_Y+32);
         DWIN_Draw_Rectangle(0, Button_Select_Color, BUTTON_BOOT_LEVEL_X-2, BUTTON_BOOT_LEVEL_Y-2, BUTTON_BOOT_LEVEL_X+83, BUTTON_BOOT_LEVEL_Y+33);
@@ -1084,7 +1084,7 @@ G29_TYPE GcodeSuite::G29() {
           } else
         #endif
           {
-            SERIAL_ECHOLNPGM("Got into ELSE to edit leveling values");
+            // SERIAL_ECHOLNPGM("Got into ELSE to edit leveling values");
             DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_LEVELING_EDIT, BUTTON_EDIT_X, BUTTON_EDIT_Y);  //0x97   edit button
             DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_LEVELING_CONFIRM,BUTTON_OK_X, BUTTON_OK_Y);// Confirm button
             Draw_Leveling_Highlight(0); //Default selection is 0

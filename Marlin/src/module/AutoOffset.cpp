@@ -203,7 +203,7 @@ bool ProbeAcq::checHx711()
 float ProbeAcq::probeTimes(int max_times, xyz_float_t rdy_pos, float step_mm, float min_dis_mm, float max_z_err, int min_hold, int max_hold)
 {
 
-  SERIAL_ECHOLNPGM("***Starting probeTimes***");
+  // SERIAL_ECHOLNPGM("***Starting probeTimes***");
   // SERIAL_ECHOLNPGM(" min_dis_mm: ", min_dis_mm, ", max_z_err: ", max_z_err, ", min_hold: ", min_hold, ", max_hold: ", max_hold);
   ProbeAcq pa;
   float mm0 = 0, mm1 = 0;
@@ -351,7 +351,7 @@ bool ProbeAcq::checkTrigger()
  */
 ProbeAcq *ProbeAcq::probePointByStep()
 {
-  SERIAL_ECHOLNPGM("***Starting probePointByStep***");
+  // SERIAL_ECHOLNPGM("***Starting probePointByStep***");
 
   // Split Output
   this->outIndex = PI_COUNT - 1;
@@ -445,7 +445,7 @@ ProbeAcq *ProbeAcq::probePointByStep()
  */
 bool clearByBed(xyz_float_t startPos, xyz_float_t endPos, float minTemp, float maxTemp)
 {
-  SERIAL_ECHOLNPGM_P("=== Starting Clear by Bed ===");
+  // SERIAL_ECHOLNPGM_P("=== Starting Clear by Bed ===");
   // SERIAL_ECHOLNPGM("startPos xyz: ", startPos.x, ", ", startPos.y, ", ", startPos.z);
   // SERIAL_ECHOLNPGM("endPos xyz: ", endPos.x, ", ", endPos.y, ", ", endPos.z);
   ProbeAcq pa;
@@ -453,7 +453,7 @@ bool clearByBed(xyz_float_t startPos, xyz_float_t endPos, float minTemp, float m
   DO_BLOCKING_MOVE_TO_Z(startPos.z, 5);
   DO_BLOCKING_MOVE_TO_XY(startPos.x, startPos.y - 10, 50);
   Popup_Window_Height(Nozz_Hot); // Refresh the height page display_nozzle heating
-  SERIAL_ECHOLNPGM_P("Heating nozzle & bed for wiping...");
+  // SERIAL_ECHOLNPGM_P("Heating nozzle & bed for wiping...");
   SET_HOTEND_TEMP(maxTemp, 0);
   SET_BED_TEMP(60); // Temporarily cancel bed heating
 
@@ -462,7 +462,7 @@ bool clearByBed(xyz_float_t startPos, xyz_float_t endPos, float minTemp, float m
   WAIT_BED_TEMP(60 * 5 * 1000, 2);
   Popup_Window_Height(Nozz_Clear); // Refresh the high page display_wipe the nozzle
   In_out_feedtock_level(LEVEL_DISTANCE,FEEDING_DEF_SPEED,false); //Withdraw 50mm
-  SERIAL_ECHOLNPGM_P("Starting nozzle wipe...");
+  // SERIAL_ECHOLNPGM_P("Starting nozzle wipe...");
   DO_BLOCKING_MOVE_TO_XY(startPos.x, startPos.y, 50);
   float start_mm = ProbeAcq::probeTimes(3, startPos, 0.03, -10, 0.2, MIN_HOLD, MAX_HOLD / 2);
   // Serial echolnpgm p("clear nozzle start z:",start mm);
@@ -471,19 +471,19 @@ bool clearByBed(xyz_float_t startPos, xyz_float_t endPos, float minTemp, float m
   startPos.z = start_mm;
   endPos.z = end_mm;
   // Print log("clear nozzle start z:",start mm,"clear nozzle start z:",end mm);
-  SERIAL_ECHOLNPGM_P("Wiping action...");
+  // SERIAL_ECHOLNPGM_P("Wiping action...");
   DO_BLOCKING_MOVE_TO_XYZ(startPos.x, startPos.y + 3, startPos.z, 50);
   // SET_HOTEND_TEMP(maxTemp, 0);
   // WAIT_HOTEND_TEMP(60 *5 *1000, 5);//Wait for the temperature to reach the set value
   // RUN_AND_WAIT_GCODE_STR("G1 F500 X%s Y%s z%s", true, getStr(startPos.x), getStr(startPos.y),getStr(startPos.z));
   // DO_BLOCKING_MOVE_TO_XYZ(endPos.x, endPos.y, endPos.z-0.1, 5); //Move forward 3mm to prevent consumables from the last time. adhesion again
-  SERIAL_ECHOLNPGM_P("Wiping forward...");
+  // SERIAL_ECHOLNPGM_P("Wiping forward...");
   DO_BLOCKING_MOVE_TO_XYZ(endPos.x, endPos.y - 3, endPos.z - 0.1, 5);
   endPos.x -= 10;
   endPos.y -= 10;
-  SERIAL_ECHOLNPGM_P("Wiping backward...");
+  // SERIAL_ECHOLNPGM_P("Wiping backward...");
   DO_BLOCKING_MOVE_TO_XYZ(endPos.x, endPos.y, endPos.z - 0.1, 5); // Pull it back 45° and remove the remaining material
-  SERIAL_ECHOLNPGM_P("Wiping complete. Returning to home position...");
+  // SERIAL_ECHOLNPGM_P("Wiping complete. Returning to home position...");
   RUN_AND_WAIT_GCODE_CMD("G28 Z", true);
 
   return true;

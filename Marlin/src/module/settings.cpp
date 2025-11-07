@@ -710,7 +710,7 @@ typedef struct SettingsDataStruct {
   // LCD Sound
   #if ENABLED(DWIN_LCD_BEEP)
     uint8_t toggleLCDBeep;
-    uint8_t toggle_PreHAlert;
+    // uint8_t toggle_PreHAlert;
 
   #endif     
 
@@ -1849,8 +1849,8 @@ void MarlinSettings::postprocess() {
       uint8_t beep = toggle_LCDBeep;
       EEPROM_WRITE(beep);
 
-      uint8_t prealert = toggle_PreHAlert;
-      EEPROM_WRITE(prealert);
+      // uint8_t prealert = toggle_PreHAlert;
+      // EEPROM_WRITE(prealert);
     }
     #endif
 
@@ -3042,9 +3042,9 @@ void MarlinSettings::postprocess() {
         EEPROM_READ(beep); //Read LCD_Beeper state
         toggle_LCDBeep = (beep > 0) ? 1 : 0;
 
-        uint8_t prealert;
-        EEPROM_READ(prealert); //Read LCD_Beeper state
-        toggle_PreHAlert = (prealert > 0) ? 1 : 0;
+        // uint8_t prealert;
+        // EEPROM_READ(prealert); //Read LCD_Beeper state
+        // toggle_PreHAlert = (prealert > 0) ? 1 : 0;
 
       }
       #endif
@@ -4243,7 +4243,7 @@ void MarlinSettings::reset() {
      #if ENABLED(ENABLE_AUTO_OFF_DISPLAY)  
       SERIAL_ECHOLN("DISPLAY Settings:");
       SERIAL_ECHOLNPGM("   Buzzer ON/OFF: ", toggle_LCDBeep);
-      SERIAL_ECHOLNPGM("   Preheat Alert ON/OFF: ", toggle_PreHAlert);
+      // SERIAL_ECHOLNPGM("   Preheat Alert ON/OFF: ", toggle_PreHAlert);
       SERIAL_ECHOLNPGM("   MAX BRIGHTNESS: ", ((MAX_SCREEN_BRIGHTNESS-164)*100)/66);
       SERIAL_ECHOLNPGM("   DIMM BRIGHTNESS: ", ((DIMM_SCREEN_BRIGHTNESS-164)*100)/66);
       SERIAL_ECHOLNPGM("   AUTO OFF TIME: ", TURN_OFF_TIME);

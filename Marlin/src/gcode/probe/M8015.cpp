@@ -24,7 +24,7 @@
  */
 void GcodeSuite::M8015()
 {
-  SERIAL_ECHOLNPGM("M8015: Trying to get Z offset value...");
+  // SERIAL_ECHOLNPGM("M8015: Trying to get Z offset value...");
   float zOffset = 0;
   for (int x = 0; x < GRID_MAX_POINTS_X; x++)
   {
