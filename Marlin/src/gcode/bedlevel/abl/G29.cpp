@@ -52,6 +52,8 @@
   #include "../../../lcd/extui/ui_api.h"
 #elif ENABLED(DWIN_CREALITY_LCD)
   #include "../../../lcd/e3v2/creality/dwin.h"
+  #include "../../../lcd/e3v2/creality/ui_position.h"
+  
 #elif ENABLED(SOVOL_SV06_RTS)
   #include "../../../lcd/sovol_rts/sovol_rts.h"
 #endif
@@ -233,6 +235,15 @@ G29_TYPE GcodeSuite::G29() {
   // Keep powered steppers from timing out
   reset_stepper_timeout();
 
+  G29_flag = true;
+  for(int x = 0; x < GRID_MAX_POINTS_X; x ++)
+  {
+    for(int y = 0; y < GRID_MAX_POINTS_Y; y ++)
+    {
+      bedlevel.z_values[x][y] = 0;
+    }
+  }
+
   // Q = Query leveling and G29 state
   const bool seenQ = ANY(DEBUG_LEVELING_FEATURE, PROBE_MANUALLY) && parser.seen_test('Q');
 
@@ -259,7 +270,14 @@ G29_TYPE GcodeSuite::G29() {
     process_subcommands_now(TERN(CAN_SET_LEVELING_AFTER_G28, F("G28L0"), FPSTR(G28_STR)));
 
   // Don't allow auto-leveling without homing first
-  if (homing_needed_error()) G29_RETURN(false, false);
+  if (homing_needed_error()){
+    // Fixed a bug where the leveling interface would not disappear when not connected to BLtouch
+    // rock_20211013 Solved the problem that the automatic leveling card does not exit to the main interface when there is no crtouch.
+    #if ENABLED(DWIN_CREALITY_LCD)
+      DWIN_CompletedLeveling();
+    #endif
+    G29_RETURN(false, false);
+  }
 
   // 3-point leveling gets points from the probe class
   #if ENABLED(AUTO_BED_LEVELING_3POINT)
@@ -773,11 +791,12 @@ G29_TYPE GcodeSuite::G29() {
 
           #endif
 
-          if (isnan(abl.measured_z)) {
+            if (isnan(abl.measured_z)) {  
+            HMI_flag.G29_level_not_normal=true; //g29 leveling is abnormal          
             set_bed_leveling_enabled(abl.reenable);
+            Popup_Window_Leveling(); //Clear leveling interface
             break; // Breaks out of both loops
           }
-
           #if ENABLED(AUTO_BED_LEVELING_LINEAR)
 
             abl.mean += abl.measured_z;
@@ -793,6 +812,9 @@ G29_TYPE GcodeSuite::G29() {
             const float z = abl.measured_z + abl.Z_offset;
             abl.z_values[abl.meshCount.x][abl.meshCount.y] = z;
             TERN_(EXTENSIBLE_UI, ExtUI::onMeshUpdate(abl.meshCount, z));
+            #if ENABLED(SHOW_GRID_VALUES)  //Show grid values 
+             Draw_Dots_On_Screen(&abl.meshCount, 0, 0);
+            #endif 
 
             #if ENABLED(SOVOL_SV06_RTS)
               if (pt_index <= GRID_MAX_POINTS) rts.sendData(pt_index, AUTO_BED_LEVEL_ICON_VP);
@@ -803,6 +825,7 @@ G29_TYPE GcodeSuite::G29() {
           #endif
 
           abl.reenable = false; // Don't re-enable after modifying the mesh
+          HMI_flag.G29_level_not_normal=false; //g29 leveling is abnormal
           idle_no_sleep();
 
         } // inner
@@ -1015,6 +1038,63 @@ G29_TYPE GcodeSuite::G29() {
     if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("After G29 G-code: ", EVENT_GCODE_AFTER_G29);
     planner.synchronize();
     process_subcommands_now(F(EVENT_GCODE_AFTER_G29));
+  #endif
+
+   settings.save();
+  // auto home
+  process_subcommands_now(PSTR("G28"));
+  process_subcommands_now(PSTR("G1 Z10"));  //After leveling is completed, go to the stage to 10mm
+
+  #if DISABLED(SHOW_GRID_VALUES)  //Do not display grid values
+    #if ENABLED(DWIN_CREALITY_LCD)
+      DWIN_CompletedLeveling();  
+    #endif
+  #else
+    if(((GRID_MAX_POINTS_Y*GRID_MAX_POINTS_X)==G29_level_num)&&(!HMI_flag.G29_level_not_normal))
+    {
+      SERIAL_ECHOLNPGM("G29 Leveling Normal");
+      HMI_flag.G29_finish_flag=true; //If the leveling values ​​at 16 points are all normal
+    } else {
+      SERIAL_ECHOLNPGM("G29 Leveling Abnormal");
+      //HMI_flag.G29_finish_flag=false; //If the leveling values ​​at 16 points are all normal
+    }
+    G29_level_num=0;
+  
+    if(HMI_flag.G29_finish_flag && !HMI_flag.Need_g29_flag && HMI_flag.local_leveling_flag)
+    {
+      SERIAL_ECHOLNPGM("Show Leveling Complete Interface");
+      if(HMI_flag.Need_boot_flag)//If the boot-up leveling
+      {
+        SERIAL_ECHOLNPGM("Show Boot Leveling Complete Interface");
+        DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_LEVELING_CONFIRM,BUTTON_BOOT_LEVEL_X, BUTTON_BOOT_LEVEL_Y);// Confirm button
+        DWIN_Draw_Rectangle(0, Button_Select_Color, BUTTON_BOOT_LEVEL_X-1, BUTTON_BOOT_LEVEL_Y-1, BUTTON_BOOT_LEVEL_X+82, BUTTON_BOOT_LEVEL_Y+32);
+        DWIN_Draw_Rectangle(0, Button_Select_Color, BUTTON_BOOT_LEVEL_X-2, BUTTON_BOOT_LEVEL_Y-2, BUTTON_BOOT_LEVEL_X+83, BUTTON_BOOT_LEVEL_Y+33);
+        
+        checkkey=POPUP_CONFIRM;
+        //Save_Boot_Step_Value();//Save boot steps
+        DWIN_ICON_Show(HMI_flag.language ,LANGUAGE_LEVEL_FINISH ,  WORD_TITLE_X, WORD_TITLE_Y);  //Leveling completion title
+      }
+      else
+      {
+        #if ENABLED(ADVANCED_HELP_MESSAGES)
+          if (HMI_flag.advanced_help_enabled_flag) {
+            HMI_flag.local_leveling_flag = false;
+            // checkkey = POPUP_OK;
+            DWIN_RenderMesh(Leveling);
+          } else
+        #endif
+          {
+            SERIAL_ECHOLNPGM("Got into ELSE to edit leveling values");
+            DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_LEVELING_EDIT, BUTTON_EDIT_X, BUTTON_EDIT_Y);  //0x97   edit button
+            DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_LEVELING_CONFIRM,BUTTON_OK_X, BUTTON_OK_Y);// Confirm button
+            Draw_Leveling_Highlight(0); //Default selection is 0
+
+            DWIN_ICON_Show(HMI_flag.language ,LANGUAGE_LEVEL_FINISH ,  WORD_TITLE_X, WORD_TITLE_Y);  //Leveling completion title
+
+          }
+      }
+      HMI_flag.local_leveling_flag = false;
+    }
   #endif
 
   TERN_(SOVOL_SV06_RTS, RTS_AutoBedLevelPage());

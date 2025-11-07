@@ -249,8 +249,7 @@ int16_t temphot = 0;
 uint8_t afterprobe_fan0_speed = 0;
 bool home_flag = false;
 bool G29_flag = false;
-
- bed_mesh_t z_values;
+ 
 
 #define DWIN_BOOT_STEP_EEPROM_ADDRESS 0x01 // Set up boot steps
 #define DWIN_LANGUAGE_EEPROM_ADDRESS 0x02  // Between 0x01 and 0x63 (EEPROM_OFFSET-1)
@@ -388,11 +387,11 @@ static void Custom_Extrude_Process(uint16_t temp, uint16_t length) // Extrude ma
     char str[25];  // Sufficient buffer for string and number
     snprintf(str, sizeof(str), "Extruding %u mm", length);
     Popup_Window_Feedstork_Tip(1); // Feeding tips
-    // SERIAL_ECHOLNPAIR("Extruding: ", str);
-    // SERIAL_ECHOLNPAIR("CurrTEMP: ", thermalManager.degHotend(0));
-    // SERIAL_ECHOLNPAIR("TargetTEMP: ", temp);
-    // SERIAL_ECHOLNPAIR("Length: ", length);
-    // SERIAL_ECHOLNPAIR("Termal Temp", thermalManager.degTargetHotend(0));
+    // SERIAL_ECHOLNPGM("Extruding: ", str);
+    // SERIAL_ECHOLNPGM("CurrTEMP: ", thermalManager.degHotend(0));
+    // SERIAL_ECHOLNPGM("TargetTEMP: ", temp);
+    // SERIAL_ECHOLNPGM("Length: ", length);
+    // SERIAL_ECHOLNPGM("Termal Temp", thermalManager.degTargetHotend(0));
     SET_HOTEND_TEMP(temp, 0); // First heat to Target Temp
     WAIT_HOTEND_TEMP(60 * 5 * 1000, 3);// Wait until the hotend temperature reaches the target temperature
     
@@ -455,12 +454,15 @@ static void HMI_ResetDevice()
 }
 static void Read_Boot_Step_Value()
 {
+  SERIAL_ECHOLNPGM(" >>> Read_Boot_Step_Value");
 #if ENABLED(EEPROM_SETTINGS) && ENABLED(IIC_BL24CXX_EEPROM)
   // First read the value of hmi flag.boot step to determine whether booting is required.
   BL24CXX::read(DWIN_BOOT_STEP_EEPROM_ADDRESS, (uint8_t *)&HMI_flag.boot_step, sizeof(HMI_flag.boot_step));
   // Read language configuration items
   BL24CXX::read(DWIN_LANGUAGE_EEPROM_ADDRESS, (uint8_t *)&HMI_flag.language, sizeof(HMI_flag.language));
 #endif
+  SERIAL_ECHOLNPGM(" HMI_flag.boot_step: ", HMI_flag.boot_step);
+  SERIAL_ECHOLNPGM(" HMI_flag.language: ", HMI_flag.language);
   if (HMI_flag.boot_step != Boot_Step_Max)
   {
     HMI_flag.Need_boot_flag = true; // Requires booting
@@ -476,8 +478,12 @@ static void Read_Boot_Step_Value()
 
 void Save_Boot_Step_Value()
 {
+  SERIAL_ECHOLNPGM(" >>> Save_Boot_Step_Value");
+  SERIAL_ECHOLNPGM(" HMI_flag.boot_step: ", HMI_flag.boot_step);
 #if ENABLED(EEPROM_SETTINGS) && ENABLED(IIC_BL24CXX_EEPROM)
+
   BL24CXX::write(DWIN_BOOT_STEP_EEPROM_ADDRESS, (uint8_t *)&HMI_flag.boot_step, sizeof(HMI_flag.boot_step));
+  SERIAL_ECHOLNPGM(" Saved HMI_flag.boot_step to EEPROM ", HMI_flag.boot_step);
 #endif
 }
 static void Read_Auto_PID_Value()
@@ -570,7 +576,7 @@ static uint8_t Move_Language(uint8_t curr_language)
 void HMI_ToggleLanguage()
 {
   HMI_flag.language = Move_Language(HMI_flag.language);
-  // SERIAL_ECHOLNPAIR("HMI_flag.language=: ", HMI_flag.language);
+  // SERIAL_ECHOLNPGM("HMI_flag.language=: ", HMI_flag.language);
 // HMI_flag.language = HMI_IsJapanese() ? DWIN_ENGLISH : DACAI_JAPANESE;
 
 // Hmi set language cache();
@@ -2656,11 +2662,11 @@ void Draw_Dots_On_Screen(xy_int8_t *mesh_Count, uint8_t Set_En, uint16_t Set_BG_
   uint16_t rec_LU_x, rec_LU_y, rec_RD_x, rec_RD_y;
   uint16_t rec_fill_color;
   float z_offset_value = 0;
-  static float first_num = 0;
+  // static float first_num = 0;
   if (HMI_flag.Need_boot_flag)
     z_offset_value = G29_level_num;
   else
-    z_offset_value = z_values[mesh_Count->x][mesh_Count->y];
+    z_offset_value = bedlevel.z_values[mesh_Count->x][mesh_Count->y];
   if (checkkey != Leveling && checkkey != Level_Value_Edit)
     return; // The leveling value is displayed only when running in the leveling interface.
 
@@ -2971,22 +2977,6 @@ void Draw_Print_ProgressBar()
 #endif
 }
 
-void Draw_Print_ProgressBarOcto(int progress)
-{
-// DWIN_ICON_Not_Filter_Show(ICON, ICON_Bar, 15, 98);
-// DWIN_Draw_Rectangle(1, BarFill_Color, 16 + ui.get_progress_percent() *240 /100, 98, 256, 110); //rock_20210917
-#if ENABLED(DWIN_CREALITY_480_LCD)
-  DWIN_ICON_Not_Filter_Show(Background_ICON, Background_min + progress, 15, 98);
-
-  DWIN_Draw_IntValue(true, true, 0, font8x16, Percent_Color, Color_Bg_Black, 3, 109, 133, ui.get_progress_percent());
-  DWIN_Draw_String(false, false, font8x16, Percent_Color, Color_Bg_Black, 133 + 15, 133 - 3, F("%")); // Rock 20220728
-#elif ENABLED(DWIN_CREALITY_320_LCD)
-  DWIN_ICON_Not_Filter_Show(Background_ICON, BG_PRINTING_CIRCLE_MIN + progress, 125, 27);
-  // DWIN_Draw_IntValue(true, true, 0, font8x16, Percent_Color, Color_Bg_Black, 3, NUM_PRECENT_X, NUM_PRECENT_Y, ui.get_progress_percent());
-  // DWIN_Draw_String(false, false, font8x16, Percent_Color, Color_Bg_Black, PRECENT_X, PRECENT_Y, F("%"));
-#endif
-}
-
 void Draw_Print_ProgressElapsed()
 {
   bool temp_flash_elapsed_time = false;
@@ -3160,7 +3150,7 @@ static void G29_small(void) //
   const xy_int8_t grid_temp[4] = {{GRID_MAX_POINTS_X - 1, 0}, {0, 0}, {0, GRID_MAX_POINTS_Y - 1}, {GRID_MAX_POINTS_X - 1, GRID_MAX_POINTS_Y - 1}};
   // //Z values[grid temp[0].x][grid temp[0].y]=0;
   RUN_AND_WAIT_GCODE_CMD(G28_STR, 1);
-  SET_BED_LEVE_ENABLE(false);
+  set_bed_leveling_enabled(false);
   SET_BED_TEMP(65); // heated bed
   WAIT_BED_TEMP(60 * 5 * 1000, 2);
   DO_BLOCKING_MOVE_TO_Z(5, 5); // Lift the z-axis to 5mm
@@ -3169,8 +3159,8 @@ static void G29_small(void) //
     probeByTouch(position_arr[loop_j], &temp_z_arr[loop_j]);
     // temp_z_arr[loop_j]=PROBE_PPINT_BY_TOUCH(position_arr[loop_j].x, position_arr[loop_j].y);
     // PRINT_LOG("temp_z_arr[]:", temp_z_arr[loop_j]);
-    // PRINT_LOG("z_values[]:", z_values[grid_temp[loop_j].x][grid_temp[loop_j].y]);
-    temp_crtouch_z = fabs(temp_z_arr[loop_j] - z_values[grid_temp[loop_j].x][grid_temp[loop_j].y]); // Find the absolute value of a floating point number
+    // PRINT_LOG("bedlevel.z_values[]:", bedlevel.z_values[grid_temp[loop_j].x][grid_temp[loop_j].y]);
+    temp_crtouch_z = fabs(temp_z_arr[loop_j] - bedlevel.z_values[grid_temp[loop_j].x][grid_temp[loop_j].y]); // Find the absolute value of a floating point number
     // PRINT_LOG("temp_crtouch_z:", temp_crtouch_z);
     // DO_BLOCKING_MOVE_TO_Z(10, 5); //Lift the z-axis to 5mm
     if (temp_crtouch_z >= CHECK_ERROR_MIN_VALUE)
@@ -3190,7 +3180,7 @@ static void G29_small(void) //
     // PRINT_LOG("loop_index:", loop_index);
   }
 
-  SET_BED_LEVE_ENABLE(true);
+  set_bed_leveling_enabled(true);
   // Calculate the coordinates of the four points that need to be verified
   // Calibrate the heights of the four points respectively and save them in a temporary array.
   // Compare the coordinates of the four points in the temporary array with the coordinates of the four points tested last time. If the coordinates of more than two points exceed 0.05, re-G29.
@@ -3445,7 +3435,7 @@ void HMI_Zoffset()
       // millis_t start = millis();
       TERN_(EEPROM_SETTINGS, settings.save());
       // millis_t end = millis();
-      // SERIAL_ECHOLNPAIR("pl write time:", end -start);
+      // SERIAL_ECHOLNPGM("pl write time:", end -start);
 #endif
       checkkey = HMI_ValueStruct.show_mode == -4 ? Prepare : Tune;
       DWIN_Draw_Signed_Float(font8x16, Color_Bg_Black, 2, 2, VALUERANGE_X - 14, MBASE(zoff_line), TERN(HAS_BED_PROBE, BABY_Z_VAR * 100, HMI_ValueStruct.offset_value));
@@ -3873,14 +3863,14 @@ void HMI_InputShaping_Values()
 //     EncoderRate.enabled = false;   
 //     LIMIT(HMI_ValueStruct.LinearAdv_KFactor, 0.000f, 500.0000f); 
 //     planner.extruder_advance_K[0] = HMI_ValueStruct.LinearAdv_KFactor / 1000.0f;
-//     //SERIAL_ECHOLNPAIR("Saved Value: ", planner.extruder_advance_K[0]);
+//     //SERIAL_ECHOLNPGM("Saved Value: ", planner.extruder_advance_K[0]);
 
 //     // Display the saved value (multiplied by 100 for correct rendering)
 //     DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 2, 3, (VALUERANGE_X - 10 ), MBASE(1) + 3, _MAX(HMI_ValueStruct.LinearAdv_KFactor, 0.0));
 //     return;
 //   }
   
-//   //SERIAL_ECHOLNPAIR("HMI_LinAdv_KFactor Editing: ", HMI_ValueStruct.LinearAdv_KFactor);
+//   //SERIAL_ECHOLNPGM("HMI_LinAdv_KFactor Editing: ", HMI_ValueStruct.LinearAdv_KFactor);
 //   // Ensure the value is within limits **before** displaying
 //   LIMIT(HMI_ValueStruct.LinearAdv_KFactor, 0.000f, 500.000f);  // Assuming the real range
 
@@ -4606,9 +4596,9 @@ void HMI_SDCardUpdate()
     // static uint8_t stat = uint8_t(card.isSDCardInserted());
     // if(stat)
     // {
-    //   SERIAL_ECHOLNPAIR("HMI_SDCardUpdate: ", DWIN_lcd_sd_status);
+    //   SERIAL_ECHOLNPGM("HMI_SDCardUpdate: ", DWIN_lcd_sd_status);
     //   card.mount();
-    //   SERIAL_ECHOLNPAIR("card.isMounted(): ", card.isMounted());
+    //   SERIAL_ECHOLNPGM("card.isMounted(): ", card.isMounted());
     // }
 
     // Flag.mounted
@@ -4957,8 +4947,8 @@ void HMI_Select_language()
     return;
   if (encoder_diffState == ENCODER_DIFF_CW)
   {
-    // SERIAL_ECHOLNPAIR("select_language.now1=: ", select_language.now);
-    // SERIAL_ECHOLNPAIR("index_language=: ", index_language);
+    // SERIAL_ECHOLNPGM("select_language.now1=: ", select_language.now);
+    // SERIAL_ECHOLNPGM("index_language=: ", index_language);
     if (select_language.inc(1 + LANGUAGE_TOTAL))
     {
       if (select_language.now > (MROWS + 2) && select_language.now > index_language)
@@ -5701,7 +5691,7 @@ void HMI_Filament()
   }
   else if (encoder_diffState == ENCODER_DIFF_ENTER)
   {
-    // SERIAL_ECHOLNPAIR("HMI_flag.select_flag=: ", HMI_flag.select_flag);
+    // SERIAL_ECHOLNPGM("HMI_flag.select_flag=: ", HMI_flag.select_flag);
     if (HMI_flag.select_flag)
     {
       // If(read(checkfilament pin))
@@ -5837,16 +5827,18 @@ void HMI_Confirm()
 {
   ENCODER_DiffState encoder_diffState = get_encoder_state();
   // ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
-  SERIAL_ECHOLNPGM("HMI_Confirm");
-  SERIAL_ECHOLNPGM("HMI_flag.boot_step:", HMI_flag.boot_step);
+  // SERIAL_ECHOLNPGM("#### HMI_Confirm");
+  // SERIAL_ECHOLNPGM("#### HMI_flag.boot_step:", HMI_flag.boot_step);
   if (encoder_diffState == ENCODER_DIFF_NO)
     return;
   if (encoder_diffState == ENCODER_DIFF_ENTER)
   {
     if (Set_language == HMI_flag.boot_step)
     {
+
+      SERIAL_ECHOLNPGM("#### HMI_Confirm 1st IF ", Set_language, " ", HMI_flag.boot_step);
       HMI_flag.boot_step = Set_high;   // The current step switches to the high state
-      SERIAL_ECHOLNPGM("HMI_flag.boot_step Language:", HMI_flag.boot_step);
+      // SERIAL_ECHOLNPGM(" #### HMI_flag.boot_step Language:", HMI_flag.boot_step);
       Popup_Window_Height(Nozz_Start); // Jump to height page
       checkkey = ONE_HIGH;             // Enter the high logic
 #if ANY(USE_AUTOZ_TOOL, USE_AUTOZ_TOOL_2)
@@ -5856,8 +5848,9 @@ void HMI_Confirm()
     }
     else if (Set_high == HMI_flag.boot_step) // Boot boot failed.
     {
+      SERIAL_ECHOLNPGM("#### HMI_Confirm 2nd IF ", Set_high, " ", HMI_flag.boot_step);
       HMI_flag.boot_step = Set_high;   // After the current height adjustment fails, repeat the height adjustment operation.
-      SERIAL_ECHOLNPGM("HMI_flag.boot_step set Offset:", HMI_flag.boot_step);
+      SERIAL_ECHOLNPGM("### HMI_flag.boot_step set Offset:", HMI_flag.boot_step);
       Popup_Window_Height(Nozz_Start); // Jump to height page
       checkkey = ONE_HIGH;             // Enter the high logic
 #if ANY(USE_AUTOZ_TOOL, USE_AUTOZ_TOOL_2)
@@ -5866,8 +5859,8 @@ void HMI_Confirm()
     }
     else if (Set_levelling == HMI_flag.boot_step) // Boot boot leveling successful
     {
+      SERIAL_ECHOLNPGM("### HMI_Confirm 3rd IF ", Set_levelling, " ", HMI_flag.boot_step);
       HMI_flag.boot_step = Boot_Step_Max; // Set the current step to the boot completion flag and save it
-      SERIAL_ECHOLNPGM("HMI_flag.boot_step set Leveling:", HMI_flag.boot_step);
       Save_Boot_Step_Value();             // Save boot steps
       HMI_flag.Need_boot_flag = false;    // No need to boot in the future
       // HMI_flag.G29_finish_flag=false; //Exit the editing page and enter the leveling page. Turning the knob is not allowed at the beginning.
@@ -5876,7 +5869,8 @@ void HMI_Confirm()
     }
     else if (Boot_Step_Max == HMI_flag.boot_step) // After normal high altitude failure
     {
-      SERIAL_ECHOLNPGM("HMI_flag.boot_step step Max:", HMI_flag.boot_step);
+      SERIAL_ECHOLNPGM("### HMI_Confirm 4th IF ", Boot_Step_Max, " ", HMI_flag.boot_step);
+      SERIAL_ECHOLNPGM("### HMI_flag.boot_step step Max:", HMI_flag.boot_step);
       Popup_Window_Height(Nozz_Start); // Jump to height page
       checkkey = ONE_HIGH;             // Enter the high logic
 #if ANY(USE_AUTOZ_TOOL, USE_AUTOZ_TOOL_2)
@@ -5888,6 +5882,7 @@ void HMI_Confirm()
     }
     else // If you are not in the booting step, the height setting failure interface pops up and you click the "OK" button to restart the height setting.
     {
+      SERIAL_ECHOLNPGM("### HMI_Confirm ELSE IF ", HMI_flag.boot_step);
       Popup_Window_Height(Nozz_Start); // Jump to height page
       checkkey = ONE_HIGH;             // Enter the high logic
 #if ANY(USE_AUTOZ_TOOL, USE_AUTOZ_TOOL_2)
@@ -5910,7 +5905,7 @@ void HMI_Auto_In_Feedstock()
     //  checkkey = Prepare;
     //  select_prepare.set(PREPARE_CASE_INSTORK);
     //  Draw_Prepare_Menu();
-    // SERIAL_ECHOLNPAIR("HMI_flag.Auto_inout_end_flag:", HMI_flag.Auto_inout_end_flag);
+    // SERIAL_ECHOLNPGM("HMI_flag.Auto_inout_end_flag:", HMI_flag.Auto_inout_end_flag);
     // if (planner.has_blocks_queued())return;
     HMI_flag.Auto_inout_end_flag = false;
     In_out_feedtock(50, FEEDING_DEF_SPEED * 2, true);               // 40mm/s feeding 30mm
@@ -6667,7 +6662,7 @@ void HMI_Prepare()
       Popup_Window_Home();
       gcode.process_subcommands_now(PSTR("G28")); //home
       delay(200);
-      gcode.process_subcommands_now(PSTR("G1 Z35 F300")); // raise Z
+      gcode.process_subcommands_now(PSTR("G1 X-10 Z40 F800")); // raise Z
       checkkey = CExtrude_Menu;
       select_cextr.reset();
       Draw_CExtrude_Menu();
@@ -7009,16 +7004,16 @@ void HMI_Levling_Change()
       checkkey = Leveling;
       Draw_Leveling_Highlight(true); // Default select box to edit
       // Refresh_Leveling_Value(); //Refresh the leveling value and color to the screen
-      z_values[mesh_Count.x][mesh_Count.y] = HMI_ValueStruct.Temp_Leveling_Value / 100;
+      bedlevel.z_values[mesh_Count.x][mesh_Count.y] = HMI_ValueStruct.Temp_Leveling_Value / 100;
       // refresh_bed_level();
       // xy_int8_t mesh_Count=Converted_Grid_Point(select_level.now); //Convert grid points
-      // SERIAL_ECHOLNPAIR("temp_zoffset_single:", temp_zoffset_single, );
+      // SERIAL_ECHOLNPGM("temp_zoffset_single:", temp_zoffset_single, );
       //  babystep.add_mm(Z_AXIS, -temp_zoffset_single); //Withdraw the moved baby_steper
       // DO_BLOCKING_MOVE_TO_Z(3-temp_zoffset_single, 5);//Rise to a height of 5mm each time before moving
       // HMI_ValueStruct.Temp_Leveling_Value=(HMI_ValueStruct.Temp_Leveling_Value/100-temp_zoffset_single)*100;
       // Draw_Dots_On_Screen(&mesh_Count,1,Select_Block_Color);
-      HMI_ValueStruct.Temp_Leveling_Value = z_values[mesh_Count.x][mesh_Count.y] * 100;
-      // SERIAL_ECHOLNPAIR("HMI_ValueStruct.Temp_Leveling_Value22:", z_values[mesh_Count.x][mesh_Count.y]);
+      HMI_ValueStruct.Temp_Leveling_Value = bedlevel.z_values[mesh_Count.x][mesh_Count.y] * 100;
+      // SERIAL_ECHOLNPGM("HMI_ValueStruct.Temp_Leveling_Value22:", bedlevel.z_values[mesh_Count.x][mesh_Count.y]);
       DWIN_Draw_Z_Offset_Float(font6x12, Color_White, Select_Color, 1, 2, value_LU_x, value_LU_y, HMI_ValueStruct.Temp_Leveling_Value); // Upper left corner coordinates
       Draw_Dots_On_Screen(&mesh_Count, 0, 0);                                                                                           // Set the currently selected block to unselected
       DO_BLOCKING_MOVE_TO_Z(5, 5);                                                                                                      // Raise to a height of 5mm each time before moving
@@ -7078,13 +7073,13 @@ void HMI_Leveling_Edit()
     Draw_Dots_On_Screen(&mesh_Count, 2, Select_Color); // Set the font background color without changing the selected block color
     checkkey = Change_Level_Value;
     temp_zoffset_single = 0; // Leveling value before adjustment of current point
-    dwin_zoffset_edit = z_values[mesh_Count.x][mesh_Count.y];
-    HMI_ValueStruct.Temp_Leveling_Value = z_values[mesh_Count.x][mesh_Count.y] * 100;
-    // SERIAL_ECHOLNPAIR("HMI_ValueStruct.Temp_Leveling_Value11:", z_values[mesh_Count.x][mesh_Count.y]);
+    dwin_zoffset_edit = bedlevel.z_values[mesh_Count.x][mesh_Count.y];
+    HMI_ValueStruct.Temp_Leveling_Value = bedlevel.z_values[mesh_Count.x][mesh_Count.y] * 100;
+    // SERIAL_ECHOLNPGM("HMI_ValueStruct.Temp_Leveling_Value11:", bedlevel.z_values[mesh_Count.x][mesh_Count.y]);
     DWIN_Draw_Z_Offset_Float(font6x12, Color_White, Select_Color, 1, 2, value_LU_x, value_LU_y, HMI_ValueStruct.Temp_Leveling_Value); // Upper left corner coordinates
     // Draw_Dots_On_Screen(&mesh_Count,1,Select_Block_Color);
     DO_BLOCKING_MOVE_TO_XY(mesh_Count.x * G29_X_INTERVAL + G29_X_MIN, mesh_Count.y * G29_Y_INTERVAL + G29_Y_MIN, 100);
-    DO_BLOCKING_MOVE_TO_Z(z_values[mesh_Count.x][mesh_Count.y], 5);
+    DO_BLOCKING_MOVE_TO_Z(bedlevel.z_values[mesh_Count.x][mesh_Count.y], 5);
   }
 }
 
@@ -7125,7 +7120,7 @@ void HMI_Leveling()
     {
       gcode.process_subcommands_now(PSTR("M420 S1"));
       LevelingBilinear bd;
-      bd.refresh_bed_level();
+      bedlevel.refresh_bed_level();
       settings.save(); // Save the edited leveling data to eeprom
       delay(100);
       HMI_flag.G29_finish_flag = false; // Even after exiting the editing page and entering the leveling page, turning the knob is not allowed.
@@ -9011,7 +9006,7 @@ void HMI_InputShaping()
   //     break;
   //   case LINEAR_ADV_KFACTOR:
   //     checkkey = LinAdv_KFactor;
-  //     // SERIAL_ECHOLNPAIR("showMenu Val: ", planner.extruder_advance_K[0]);
+  //     // SERIAL_ECHOLNPGM("showMenu Val: ", planner.extruder_advance_K[0]);
   //     DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Select_Color, 2, 3, (VALUERANGE_X - 10), MBASE(1) + 3, (planner.extruder_advance_K[0] * 1000));
   //     EncoderRate.enabled = true;
   //     break;
@@ -9110,8 +9105,9 @@ void HMI_Step()
 
 void HMI_Boot_Set() // Boot settings
 {
-  SERIAL_ECHOLNPGM("HMI_Boot_Set");
-  SERIAL_ECHOLNPGM("HMI_flag.boot_step:", HMI_flag.boot_step);
+  SERIAL_ECHOLNPGM(" ====> HMI_Boot_Set");
+  SERIAL_ECHOLNPGM(" ----> HMI_flag.boot_step: ", HMI_flag.boot_step);
+  SERIAL_ECHOLNPGM(" ----> language: ", Set_language);
   switch (HMI_flag.boot_step)
   {
   case Set_language:
@@ -9139,6 +9135,10 @@ void HMI_Boot_Set() // Boot settings
 
 void HMI_Init()
 {
+  SERIAL_ECHOLNPGM(">>>> HMI_Init");
+  SERIAL_ECHOLNPGM(" ----HMI_flag.boot_step: ", HMI_flag.boot_step);
+  SERIAL_ECHOLNPGM(" ----HMI_flag.language: ", HMI_flag.language);
+  SERIAL_ECHOLNPGM(" ----HMI_flag.Need_boot_flag: ", HMI_flag.Need_boot_flag);
   HMI_SDCardInit();
   if ((HMI_flag.language < Chinese) || (HMI_flag.language >= Language_Max)) // The language is confusing when you power on, so set it to English first.
   {
@@ -9153,8 +9153,13 @@ void HMI_Init()
   }
   Read_Boot_Step_Value(); // Read the value of the boot step
   Read_Auto_PID_Value();
+
+
   if (HMI_flag.Need_boot_flag)
+  {
+    SERIAL_ECHOLNPGM(">>>> HMI_Boot_Set");
     HMI_Boot_Set(); // Boot settings
+  }
   // PRINT_LOG("HMI_flag.boot_step:", HMI_flag.boot_step, "HMI_flag.language:", HMI_flag.language);
   // PRINT_LOG("HMI_ValueStruct.Auto_PID_Value[1]:", HMI_ValueStruct.Auto_PID_Value[1], "HMI_ValueStruct.Auto_PID_Value[2]:", HMI_ValueStruct.Auto_PID_Value[2]);
 }
@@ -9555,7 +9560,7 @@ void EachMomentUpdate()
     // Update printing time
     if (last_Printtime != min)
     { // 1 minute update
-      // SERIAL_ECHOLNPAIR(" elapsed.value=: ", elapsed.value);
+      // SERIAL_ECHOLNPGM(" elapsed.value=: ", elapsed.value);
       last_Printtime = min;
       Draw_Print_ProgressElapsed();
     }
@@ -9686,6 +9691,7 @@ void EachMomentUpdate()
 #endif
   if (HMI_flag.Pressure_Height_end) // Complete high level with one click
   {
+    SERIAL_ECHOLNPGM("### Seems we come from M8015 to BedLevel ###");
     HMI_flag.Pressure_Height_end = false;
     HMI_flag.local_leveling_flag = true;
     checkkey = Leveling;
@@ -9965,6 +9971,7 @@ void HMI_Poweron_Select_language()
     break;
     }
 #if ENABLED(EEPROM_SETTINGS) && ENABLED(IIC_BL24CXX_EEPROM)
+    SERIAL_ECHOLNPGM("EEPROM set language id:", HMI_flag.language);
     BL24CXX::write(DWIN_LANGUAGE_EEPROM_ADDRESS, (uint8_t *)&HMI_flag.language, sizeof(HMI_flag.language));
 #endif
     // Serial echolnpair("set language id:",set language id);
@@ -9981,12 +9988,12 @@ void DWIN_HandleScreen()
   // if(ELAPSED(ms, timeout_ms))
   // {
   //   timeout_ms = ms + 1000;
-  //   SERIAL_ECHOLNPAIR("checkkey:", checkkey);
+  //   SERIAL_ECHOLNPGM("checkkey:", checkkey);
   // }
   // static uint8_t prev_checkkey = 0;
   // if(prev_checkkey != checkkey)
   // {
-  //   SERIAL_ECHOLNPAIR("prev_checkkey:", prev_checkkey, ", checkkey:", checkkey);
+  //   SERIAL_ECHOLNPGM("prev_checkkey:", prev_checkkey, ", checkkey:", checkkey);
   //   prev_checkkey = checkkey;
   // }
   switch (checkkey)
@@ -10240,7 +10247,7 @@ void DWIN_HandleScreen()
   //   static uint8_t prev_checkkey = 0;
   //   if (prev_checkkey != checkkey)
   //   {
-  //     SERIAL_ECHOLNPAIR("DWIN_HandleScreen-prev_checkkey:", prev_checkkey, ", checkkey:", checkkey);
+  //     SERIAL_ECHOLNPGM("DWIN_HandleScreen-prev_checkkey:", prev_checkkey, ", checkkey:", checkkey);
   //     prev_checkkey = checkkey;
   //   }
   // }
@@ -10360,7 +10367,7 @@ void HMI_Auto_set_PID(void)
   // if(ELAPSED(ms, timeout_ms))
   // {
   //   timeout_ms = ms + 1000;
-  //   SERIAL_ECHOLNPAIR("HMI_Auto_set_PID");
+  //   SERIAL_ECHOLNPGM("HMI_Auto_set_PID");
   // }
   ENCODER_DiffState encoder_diffState = get_encoder_state();
   if (encoder_diffState == ENCODER_DIFF_NO)
@@ -10395,7 +10402,7 @@ void HMI_Auto_set_PID(void)
         return;
       }
 #endif
-      // SERIAL_ECHOLNPAIR("HMI_Auto_set_PID:encoder_diffState:", encoder_diffState);
+      // SERIAL_ECHOLNPGM("HMI_Auto_set_PID:encoder_diffState:", encoder_diffState);
       checkkey = AUTO_PID_Value;
       if (select_set_pid.now == 2)
         thermalManager.set_fan_speed(0, 255); // Turn on the model fan at full speed
@@ -10495,7 +10502,7 @@ void HMI_Auto_Bed_PID(void)
   // if(ELAPSED(ms, timeout_ms))
   // {
   //   timeout_ms = ms + 1000;
-  //   SERIAL_ECHOLNPAIR("HMI_Auto_Bed_PID");
+  //   SERIAL_ECHOLNPGM("HMI_Auto_Bed_PID");
   // }
   static char cmd[30] = {0}, str_1[7] = {0}, str_2[7] = {0}, str_3[7] = {0}, sP[16], sI[16], sD[16];
   if ((checkkey == AUTO_SET_BED_PID) || (checkkey == AUTO_SET_NOZZLE_PID))
@@ -10542,15 +10549,15 @@ void HMI_Auto_Bed_PID(void)
         Save_Auto_PID_Value();
         // save PID
         checkkey = AUTO_SET_PID;
-        // SERIAL_ECHOLNPAIR("HMI_Auto_Bed_PID");
-        // SERIAL_ECHOLNPAIR("11checkkey:", checkkey);
+        // SERIAL_ECHOLNPGM("HMI_Auto_Bed_PID");
+        // SERIAL_ECHOLNPGM("11checkkey:", checkkey);
         select_set_pid.set(1);
         select_set_pid.now = 1;
         Draw_Auto_PID_Set();
         HMI_flag.PID_autotune_end = false;
         // Remember to save and exit when you're done debugging
         // settings.save();
-        // SERIAL_ECHOLNPAIR("22checkkey:", checkkey);
+        // SERIAL_ECHOLNPGM("22checkkey:", checkkey);
       }
     }
   }

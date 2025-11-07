@@ -114,23 +114,23 @@ void Filters::hFilter(double *vals, int count, double cutFrqHz, double acqFrqHz)
 /**Bubble sort
  *Ascending order
  */
-static void BubbleSort(double arr[], int len)
-{
-  int i, j;
-  double tem;
-  for (i = len - 1; i > 0; i--)
-  {
-    for (j = 0; j < i; j++)
-    {
-      if (arr[j] > arr[j + 1])
-      {
-        tem = arr[j];
-        arr[j] = arr[j + 1];
-        arr[j + 1] = tem;
-      }
-    }
-  }
-}
+// static void BubbleSort(double arr[], int len)
+// {
+//   int i, j;
+//   double tem;
+//   for (i = len - 1; i > 0; i--)
+//   {
+//     for (j = 0; j < i; j++)
+//     {
+//       if (arr[j] > arr[j + 1])
+//       {
+//         tem = arr[j];
+//         arr[j] = arr[j + 1];
+//         arr[j + 1] = tem;
+//       }
+//     }
+//   }
+// }
 
 /*
  *Function Name: tFilter(double *vals, int count)
@@ -461,7 +461,7 @@ bool clearByBed(xyz_float_t startPos, xyz_float_t endPos, float minTemp, float m
   WAIT_HOTEND_TEMP(60 * 5 * 1000, 5); // Wait for the temperature to reach the set value
   WAIT_BED_TEMP(60 * 5 * 1000, 2);
   Popup_Window_Height(Nozz_Clear); // Refresh the high page display_wipe the nozzle
-  // >>> In_out_feedtock_level(LEVEL_DISTANCE,FEEDING_DEF_SPEED,false); //Withdraw 50mm
+  In_out_feedtock_level(LEVEL_DISTANCE,FEEDING_DEF_SPEED,false); //Withdraw 50mm
   SERIAL_ECHOLNPGM_P("Starting nozzle wipe...");
   DO_BLOCKING_MOVE_TO_XY(startPos.x, startPos.y, 50);
   float start_mm = ProbeAcq::probeTimes(3, startPos, 0.03, -10, 0.2, MIN_HOLD, MAX_HOLD / 2);
@@ -610,7 +610,7 @@ float Multiple_Hight(bool isRunProByPress, bool isRunProByTouch)
   {
     ARY_AVG(zoffset_avg, zoffset_value, 2);
     SET_BED_LEVE_ENABLE(true); // Turn on automatic leveling
-    //  >>> In_out_feedtock_level(LEVEL_DISTANCE,FEEDING_DEF_SPEED,true); //feed 50mm
+    In_out_feedtock_level(LEVEL_DISTANCE,FEEDING_DEF_SPEED,true); //feed 50mm
     SET_HOTEND_TEMP(140, 0);
     SET_FAN_SPD(255);                   // Turn on the model cooling fan to ensure faster cooling
     WAIT_HOTEND_TEMP(60 * 5 * 1000, 5); // Wait for the temperature to reach the set value
@@ -641,7 +641,7 @@ float Multiple_Hight(bool isRunProByPress, bool isRunProByTouch)
         }
         ARY_AVG(zoffset_avg, zoffset_value, 2);
         SET_BED_LEVE_ENABLE(true); // Turn on automatic leveling
-        // >>> In_out_feedtock_level(LEVEL_DISTANCE,FEEDING_DEF_SPEED,true); //feed 50mm
+        In_out_feedtock_level(LEVEL_DISTANCE,FEEDING_DEF_SPEED,true); //feed 50mm
         SET_HOTEND_TEMP(140, 0);
         SET_FAN_SPD(255);                   // Turn on the model cooling fan to ensure faster cooling
         WAIT_HOTEND_TEMP(60 * 5 * 1000, 5); // Wait for the temperature to reach the set value
@@ -693,7 +693,7 @@ bool getZOffset(bool isNozzleClr, bool isRunProByPress, bool isRunProByTouch, fl
 
   SET_Z_OFFSET(0, false);                  // Clear the z offset to 0 first to prevent the z offset from affecting the measurement results.
   RUN_AND_WAIT_GCODE_CMD("G28", true);     // Get the home point first before measuring
-  RUN_AND_WAIT_GCODE_CMD("M211 S0", true); // Enable negative values
+  // RUN_AND_WAIT_GCODE_CMD("M211 S0", true); // Enable negative values
 
   // 1. Nozzle wiping for PLA consumables
   srand(millis());
@@ -706,14 +706,15 @@ bool getZOffset(bool isNozzleClr, bool isRunProByPress, bool isRunProByTouch, fl
   startPos.z = 0;
   endPos.z = 0;
   CHECK_AND_RUN(isNozzleClr, clearByBed(startPos, endPos, 140, 175));
+  Popup_Window_Height(Nozz_Hight); // Refresh the height page display_nozzle height measurement
 
   *outOffset = Multiple_Hight(isRunProByPress, isRunProByTouch); // Get the data after measuring twice
   SERIAL_ECHOLNPGM_P("=== Z Offset Measurement Completed ===");
 
-  PRINTF("\n***OUTPUT_ZOFFSET: zOffset=%s***\n", getStr(*outOffset));
+  // PRINTF("\n***OUTPUT_ZOFFSET: zOffset=%s***\n", getStr(*outOffset));
 
   soft_endstop._enabled = SoftEndstopEnable;
-  RUN_AND_WAIT_GCODE_CMD("M211 S1", true); // Disable negative values
+  // RUN_AND_WAIT_GCODE_CMD("M211 S1", true); // Disable negative values
 
   planner.leveling_active = reenable;
   if ((*outOffset > ZOFFSET_VALUE_MAX) || (*outOffset < ZOFFSET_VALUE_MIN))
