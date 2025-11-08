@@ -2,7 +2,7 @@
  * Config.h - Marlin Firmware distilled configuration
  * Usage: Place this file in the 'Marlin' folder with the name 'Config.h'.
  *
- * Exported by Marlin build on 2025-11-08 at 00:03:11.
+ * Exported by Marlin build on 2025-11-08 at 19:09:06.
  */
 
 //
@@ -313,8 +313,8 @@
 #define LEVELING_BED_TEMP                        60
 #define MESH_TEST_NOZZLE_SIZE                    0.4
 #define MESH_TEST_BED_TEMP                       60
-#define XY_DIAG_AC                               282.8427124746
-#define XY_DIAG_BD                               270
+#define XY_DIAG_AC                               282.84
+#define XY_DIAG_BD                               270.45
 #define G26_RETRACT_MULTIPLIER                   1.0
 #define MESH_TEST_HOTEND_TEMP                    205
 #define GRID_MAX_POINTS_X                        6
@@ -325,7 +325,7 @@
 #define SKEW_CORRECTION
 #define ABL_BILINEAR_SUBDIVISION
 #define SKEW_CORRECTION_GCODE
-#define XY_SIDE_AD                               200
+#define XY_SIDE_AD                               200.69
 #define ENABLE_LEVELING_AFTER_G28
 #define MESH_TEST_LAYER_HEIGHT                   0.2
 #define PREHEAT_BEFORE_LEVELING

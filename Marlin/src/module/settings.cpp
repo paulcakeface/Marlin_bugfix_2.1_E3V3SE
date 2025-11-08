@@ -36,7 +36,7 @@
  */
 
 // Change EEPROM version if the structure changes
-#define EEPROM_VERSION "V91"
+#define EEPROM_VERSION "V92"
 #define EEPROM_OFFSET 100
 
 // Check the integrity of data offsets.
@@ -720,6 +720,11 @@ typedef struct SettingsDataStruct {
    int16_t lcddimm;             
    int16_t lcdbright;       
    uint8_t czheight;       
+  #endif
+  #if ENABLED(SKEW_CORRECTION)
+   float skew_dac;
+   float skew_dbd;
+   float skew_sad;
   #endif
   #if ENABLED(ADVANCED_HELP_MESSAGES)
     bool advanced_help_messages_enabled;
@@ -1867,7 +1872,16 @@ void MarlinSettings::postprocess() {
        EEPROM_WRITE(zheight); 
      }             
      #endif
-
+     #if ENABLED(SKEW_CORRECTION)
+     {
+        float sk_dac = xyskew_d_ac;
+        float sk_dbd = xyskew_d_bd;
+        float sk_sad = xyskew_s_ad;
+        EEPROM_WRITE(sk_dac);
+        EEPROM_WRITE(sk_dbd);
+        EEPROM_WRITE(sk_sad);
+     }
+    #endif
     #if ENABLED(ADVANCED_HELP_MESSAGES)
     {
       bool advanced_help_messages_enabled = true;
@@ -3067,6 +3081,24 @@ void MarlinSettings::postprocess() {
     }
     #endif
 
+    #if ENABLED(SKEW_CORRECTION)
+    {
+      float sk_dac, sk_dbd, sk_sad;
+      EEPROM_READ(sk_dac);
+      // if sk_dac is zero or above 500 then use default else use the stored value
+      xyskew_d_ac = (sk_dac == 0.0f || sk_dac > 500.0f) ? XY_DIAG_AC : sk_dac;
+
+      EEPROM_READ(sk_dbd);
+      // if sk_dbd is zero or above 500 then use default else use the stored value
+      xyskew_d_bd = (sk_dbd == 0.0f || sk_dbd > 500.0f) ? XY_DIAG_BD : sk_dbd;
+
+      EEPROM_READ(sk_sad);
+      // if sk_sad is zero or above 500 then use default else use the stored value
+      xyskew_s_ad = (sk_sad == 0.0f || sk_sad > 500.0f) ? XY_SIDE_AD : sk_sad;
+
+    }
+    #endif
+
     #if ENABLED(ADVANCED_HELP_MESSAGES)
     {
       bool advanced_help_messages_enabled;
@@ -4248,6 +4280,12 @@ void MarlinSettings::reset() {
       SERIAL_ECHOLNPGM("   DIMM BRIGHTNESS: ", ((DIMM_SCREEN_BRIGHTNESS-164)*100)/66);
       SERIAL_ECHOLNPGM("   AUTO OFF TIME: ", TURN_OFF_TIME);
       SERIAL_ECHOLNPGM("CUSTOM Z Height After Homing: ", CZ_AFTER_HOMING);
+      SERIAL_ECHOLNPGM("SKEW Correction");
+      SERIAL_ECHOLNPGM("   XY DIAG AC: ", xyskew_d_ac);
+      SERIAL_ECHOLNPGM("   XY DIAG BD: ", xyskew_d_bd);
+      SERIAL_ECHOLNPGM("   SIDE AD: ", xyskew_s_ad);
+      SERIAL_ECHOLNPGM("   SKEW FACTOR: ", p_float_t(planner.skew_factor.xy, 6));
+
     #endif
   }
 

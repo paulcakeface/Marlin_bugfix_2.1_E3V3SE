@@ -61,7 +61,7 @@
 // @section info
 
 // Author info of this build printed to the host during boot and M115
-#define STRING_CONFIG_H_AUTHOR "Creality" // Original author or contributor.
+#define STRING_CONFIG_H_AUTHOR "MarlinFirmware, Creality, Kraplax & Navaismo" // Original author or contributor.
 //#define CUSTOM_VERSION_FILE Version.h // Path from the root directory (no quotes)
 
 // @section machine
@@ -2480,9 +2480,9 @@ extern uint8_t CZ_AFTER_HOMING;
 
 #if ENABLED(SKEW_CORRECTION)
   // Input all length measurements here:
-  #define XY_DIAG_AC 282.8427124746
-  #define XY_DIAG_BD 270
-  #define XY_SIDE_AD 200
+  #define XY_DIAG_AC 282.84
+  #define XY_DIAG_BD 270.45
+  #define XY_SIDE_AD 200.69
 
   extern float xyskew_d_ac;
   extern float xyskew_d_bd;
