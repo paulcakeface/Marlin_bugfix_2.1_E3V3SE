@@ -8249,14 +8249,25 @@ void HMI_SkewItems_Menu()
         if(xyskew_d_ac != 0.0 && xyskew_d_bd != 0.0 && xyskew_s_ad != 0.0)
         {
           skew_factor = _SKEW_FACTOR(xyskew_d_ac, xyskew_d_bd, xyskew_s_ad);
-          planner.skew_factor.xy = skew_factor;
-          settings.save();
-
-          DWIN_Draw_Rectangle(1, All_Black, 0, 200, 240, 237);
-          const char *str = "Set Skew Factor Of:";
-          DWIN_Draw_String(true, true, font8x16, Color_Blue, Color_Bg_Black, (DWIN_WIDTH - strlen(str) * MENU_CHR_W) / 2, 210, F(str));   // Centered Received String
-          DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_Blue, Color_Bg_Black, 2, 4, (DWIN_WIDTH - 10 * MENU_CHR_W) / 2, 230, planner.skew_factor.xy * 1000);
           
+          //skew factor must be between SKEW_FACTOR_MIN & SKEW_FACTOR_MAX to be valid
+          if(skew_factor < SKEW_FACTOR_MIN || skew_factor > SKEW_FACTOR_MAX){
+            skew_factor = 0.0;
+            DWIN_Draw_Rectangle(1, All_Black, 0, 200, 240, 237);
+            const char *str = "Invalid Skew Factor:";
+            DWIN_Draw_String(true, true, font8x16, Color_Yellow, Color_Bg_Black, (DWIN_WIDTH - strlen(str) * MENU_CHR_W) / 2, 210, F(str));   // Centered Received String
+            DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_Yellow, Color_Bg_Black, 2, 4, (DWIN_WIDTH - 10 * MENU_CHR_W) / 2, 230, planner.skew_factor.xy * 1000);
+
+          }else{
+
+            planner.skew_factor.xy = skew_factor;
+            settings.save();
+
+            DWIN_Draw_Rectangle(1, All_Black, 0, 200, 240, 237);
+            const char *str = "Set Skew Factor Of:";
+            DWIN_Draw_String(true, true, font8x16, Color_Blue, Color_Bg_Black, (DWIN_WIDTH - strlen(str) * MENU_CHR_W) / 2, 210, F(str));   // Centered Received String
+            DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_Blue, Color_Bg_Black, 2, 4, (DWIN_WIDTH - 10 * MENU_CHR_W) / 2, 230, planner.skew_factor.xy * 1000);
+          }
 
         }
         else
@@ -9191,6 +9202,74 @@ void HMI_InputShaping()
   }
   DWIN_UpdateLCD();
 }
+
+
+void HMI_SkewXY_DAC()
+{
+  ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+  if (encoder_diffState == ENCODER_DIFF_NO)
+    return;
+  
+  if (Apply_Encoder(encoder_diffState, xyskew_d_ac)) {
+    checkkey = SkewCorrection;
+    EncoderRate.enabled = false;   
+    LIMIT(xyskew_d_ac, 0.000f, 500.0000f); 
+    //SERIAL_ECHOLNPAIR("Saved Value: ", xyskew_d_ac);
+    // Display the saved value (multiplied by 100 for correct rendering)
+    DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, 4, (VALUERANGE_X - 10), MBASE(1) + 3, xyskew_d_ac * 10000);
+    return;
+  }
+  
+  LIMIT(xyskew_d_ac, 0.000f, 500.0000f);  // Assuming the real range
+
+  // Scale for display (float to int conversion)
+   DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Blue, 3, 4, (VALUERANGE_X - 10), MBASE(1) + 3, xyskew_d_ac * 10000);
+     
+  
+}
+
+HMI_SkewXY_DBD(){
+  ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+  if (encoder_diffState == ENCODER_DIFF_NO)
+    return;
+  
+  if (Apply_Encoder(encoder_diffState, xyskew_d_bd)) {
+    checkkey = SkewCorrection;
+    EncoderRate.enabled = false;   
+    LIMIT(xyskew_d_bd, 0.000f, 500.0000f); 
+    //SERIAL_ECHOLNPAIR("Saved Value: ", xyskew_d_bd);
+    // Display the saved value (multiplied by 100 for correct rendering)
+    DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, 4, (VALUERANGE_X - 10), MBASE(2) + 3, xyskew_d_bd * 10000);
+    return;
+  }
+  
+  LIMIT(xyskew_d_bd, 0.000f, 500.0000f);  // Assuming the real range
+
+  // Scale for display (float to int conversion)
+   DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Blue, 3, 4, (VALUERANGE_X - 10), MBASE(2) + 3, xyskew_d_bd * 10000);
+}
+
+HMI_SkewXY_SAD(){
+  Encoder_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+  if (encoder_diffState == ENCODER_DIFF_NO)
+    return;
+  if (Apply_Encoder(encoder_diffState, xyskew_s_ad)) {
+    checkkey = SkewCorrection;
+    EncoderRate.enabled = false;   
+    LIMIT(xyskew_s_ad, 0.000f, 500.0000f); 
+    //SERIAL_ECHOLNPAIR("Saved Value: ", xyskew_s_ad);
+    // Display the saved value (multiplied by 100 for correct rendering)
+    DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, 4, (VALUERANGE - 10), MBASE(3) + 3, xyskew_s_ad * 10000);
+    return;
+  }
+
+  LIMIT(xyskew_s_ad, 0.000f, 500.0000f);  // Assuming the real range
+
+  // Scale for display (float to int conversion)
+  DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Blue, 3, 4, (VALUERANGE - 10), MBASE(3) + 3, xyskew_s_ad * 10000);
+}
+////
+
 
 ////
 /* Linear Advance */
@@ -10326,6 +10405,15 @@ void DWIN_HandleScreen()
   case SkewCorrection:
     HMI_SkewItems_Menu();
     break;  
+  case skewxy_dac:
+    HMI_SkewXY_DAC();
+    break;
+  case skewxy_dbd:
+    HMI_SkewXY_DBD();
+    break;
+  case skewxy_sad:
+    HMI_SkewXY_SAD();
+    break;    
   case Step:
     HMI_Step();
     break;
