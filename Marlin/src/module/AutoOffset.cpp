@@ -501,7 +501,7 @@ bool probeByPress(xyz_float_t basePos_mm, float *outZ)
 {
 
   // In order to save time, it was changed from 5 times to 3 times.
-  float outZ_mm[3] = {0};
+  float outZ_mm[2] = {0};
   // CHECK_AND_RETURN((!(pa.checHx711() || pa.checHx711())), false); //Check whether the module is working normally
   FOR_LOOP_TIMES(i, 0, 3, outZ_mm[i] = ProbeAcq::probeTimes(0, basePos_mm, 0.02, -10, 0, MIN_HOLD, MAX_HOLD));
   ARY_SORT(outZ_mm, 3);

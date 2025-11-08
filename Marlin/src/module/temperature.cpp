@@ -2941,8 +2941,8 @@ void Temperature::updateTemperaturesFromRawValues() {
       const raw_adc_t r = temp_hotend[e].getraw();
       const bool neg = temp_dir[e] < 0, pos = temp_dir[e] > 0;
       if ((neg && r < temp_range[e].raw_max) || (pos && r > temp_range[e].raw_max))
-        MAXTEMP_ERROR(e, temp_hotend[e].celsius);
-
+        // MAXTEMP_ERROR(e, temp_hotend[e].celsius);
+        maxtemp_error(e);
       /**
       // DEBUG PREHEATING TIME
       SERIAL_ECHOLNPGM("\nExtruder = ", e, " Preheat On/Off = ", is_preheating(e));
@@ -2953,7 +2953,8 @@ void Temperature::updateTemperaturesFromRawValues() {
       const bool heater_on = temp_hotend[e].target > 0;
       if (heater_on && !is_hotend_preheating(e) && ((neg && r > temp_range[e].raw_min) || (pos && r < temp_range[e].raw_min))) {
         if (TERN1(MULTI_MAX_CONSECUTIVE_LOW_TEMP_ERR, ++consecutive_low_temperature_error[e] >= MAX_CONSECUTIVE_LOW_TEMPERATURE_ERROR_ALLOWED))
-          MINTEMP_ERROR(e, temp_hotend[e].celsius);
+          // MINTEMP_ERROR(e, temp_hotend[e].celsius);
+          mintemp_error(e);
       }
       else {
         TERN_(MULTI_MAX_CONSECUTIVE_LOW_TEMP_ERR, consecutive_low_temperature_error[e] = 0);
@@ -2964,9 +2965,19 @@ void Temperature::updateTemperaturesFromRawValues() {
 
   #if ENABLED(THERMAL_PROTECTION_BED)
     if (TP_CMP(BED, temp_bed.getraw(), temp_sensor_range_bed.raw_max))
-      MAXTEMP_ERROR(H_BED, temp_bed.celsius);
-    if (temp_bed.target > 0 && !is_bed_preheating() && TP_CMP(BED, temp_sensor_range_bed.raw_min, temp_bed.getraw()))
-      MINTEMP_ERROR(H_BED, temp_bed.celsius);
+      // MAXTEMP_ERROR(H_BED, temp_bed.celsius);
+      maxtemp_error(H_BED);
+
+    uint8_t threshold_error = 10; // 10 raw units threshold for bed mintemp error
+    uint8_t error_counter = 0;
+
+    if (temp_bed.target > 0 && !is_bed_preheating() && TP_CMP(BED, temp_sensor_range_bed.raw_min, temp_bed.getraw())){
+      if(++error_counter >= threshold_error)
+        // MINTEMP_ERROR(H_BED, temp_bed.celsius);
+        mintemp_error(H_BED);
+    }else{
+      error_counter = 0;
+    }
   #endif
 
   #if ALL(HAS_HEATED_CHAMBER, THERMAL_PROTECTION_CHAMBER)

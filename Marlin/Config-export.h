@@ -2,13 +2,13 @@
  * Config.h - Marlin Firmware distilled configuration
  * Usage: Place this file in the 'Marlin' folder with the name 'Config.h'.
  *
- * Exported by Marlin build on 2025-11-08 at 19:09:06.
+ * Exported by Marlin build on 2025-11-08 at 20:25:15.
  */
 
 //
 // Info
 //
-#define STRING_CONFIG_H_AUTHOR                   "Creality"
+#define STRING_CONFIG_H_AUTHOR                   "MarlinFirmware, Creality, Kraplax & Navaismo"
 
 //
 // Machine

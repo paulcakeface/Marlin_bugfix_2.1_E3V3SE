@@ -447,15 +447,15 @@ static void HMI_ResetDevice()
 }
 static void Read_Boot_Step_Value()
 {
-  SERIAL_ECHOLNPGM(" >>> Read_Boot_Step_Value");
+  // SERIAL_ECHOLNPGM(" >>> Read_Boot_Step_Value");
 #if ENABLED(EEPROM_SETTINGS) && ENABLED(IIC_BL24CXX_EEPROM)
   // First read the value of hmi flag.boot step to determine whether booting is required.
   BL24CXX::read(DWIN_BOOT_STEP_EEPROM_ADDRESS, (uint8_t *)&HMI_flag.boot_step, sizeof(HMI_flag.boot_step));
   // Read language configuration items
   BL24CXX::read(DWIN_LANGUAGE_EEPROM_ADDRESS, (uint8_t *)&HMI_flag.language, sizeof(HMI_flag.language));
 #endif
-  SERIAL_ECHOLNPGM(" HMI_flag.boot_step: ", HMI_flag.boot_step);
-  SERIAL_ECHOLNPGM(" HMI_flag.language: ", HMI_flag.language);
+  // SERIAL_ECHOLNPGM(" HMI_flag.boot_step: ", HMI_flag.boot_step);
+  // SERIAL_ECHOLNPGM(" HMI_flag.language: ", HMI_flag.language);
   if (HMI_flag.boot_step != Boot_Step_Max)
   {
     HMI_flag.Need_boot_flag = true; // Requires booting
@@ -471,12 +471,12 @@ static void Read_Boot_Step_Value()
 
 void Save_Boot_Step_Value()
 {
-  SERIAL_ECHOLNPGM(" >>> Save_Boot_Step_Value");
-  SERIAL_ECHOLNPGM(" HMI_flag.boot_step: ", HMI_flag.boot_step);
+  // SERIAL_ECHOLNPGM(" >>> Save_Boot_Step_Value");
+  // SERIAL_ECHOLNPGM(" HMI_flag.boot_step: ", HMI_flag.boot_step);
 #if ENABLED(EEPROM_SETTINGS) && ENABLED(IIC_BL24CXX_EEPROM)
 
   BL24CXX::write(DWIN_BOOT_STEP_EEPROM_ADDRESS, (uint8_t *)&HMI_flag.boot_step, sizeof(HMI_flag.boot_step));
-  SERIAL_ECHOLNPGM(" Saved HMI_flag.boot_step to EEPROM ", HMI_flag.boot_step);
+  // SERIAL_ECHOLNPGM(" Saved HMI_flag.boot_step to EEPROM ", HMI_flag.boot_step);
 #endif
 }
 static void Read_Auto_PID_Value()
