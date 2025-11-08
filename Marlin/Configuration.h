@@ -2481,8 +2481,13 @@ extern uint8_t CZ_AFTER_HOMING;
 #if ENABLED(SKEW_CORRECTION)
   // Input all length measurements here:
   #define XY_DIAG_AC 282.8427124746
-  #define XY_DIAG_BD 282.8427124746
+  #define XY_DIAG_BD 270
   #define XY_SIDE_AD 200
+
+  extern float xyskew_d_ac;
+  extern float xyskew_d_bd;
+  extern float xyskew_s_ad;
+  extern float skew_factor;
 
   // Or, set the XY skew factor directly:
   //#define XY_SKEW_FACTOR 0.0
@@ -2501,7 +2506,7 @@ extern uint8_t CZ_AFTER_HOMING;
   #endif
 
   // Enable this option for M852 to set skew at runtime
-  //#define SKEW_CORRECTION_GCODE
+  #define SKEW_CORRECTION_GCODE
 #endif
 
 //=============================================================================

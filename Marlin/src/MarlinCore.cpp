@@ -1735,6 +1735,11 @@ extern bool SD_Card_status;
 extern bool sd_printing_autopause;
 uint8_t CZ_AFTER_HOMING = 10; 
 
+float xyskew_d_ac = XY_DIAG_AC;
+float xyskew_d_bd = XY_DIAG_BD;
+float xyskew_s_ad = XY_SIDE_AD;
+float skew_factor = _SKEW_FACTOR(XY_DIAG_AC, XY_DIAG_BD, XY_SIDE_AD);
+
 #if ENABLED(ENABLE_AUTO_OFF_DISPLAY)
 int16_t DIMM_SCREEN_BRIGHTNESS = 175;
 int16_t MAX_SCREEN_BRIGHTNESS = 230;

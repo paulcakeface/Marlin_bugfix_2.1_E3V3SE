@@ -108,6 +108,10 @@ enum processID : uint8_t {
   InputShaping_XZeta,
   InputShaping_YFreq,
   InputShaping_YZeta,
+  SkewCorrection,
+  skewxy_dac,
+  skewxy_dbd,
+  skewxy_sad,
   CExtrude_Menu,
   custom_extrude_temp,
   custom_extrude_length,
@@ -648,6 +652,7 @@ extern bool G29_flag;
 extern millis_t dwin_heat_time;
 extern float dwin_zoffset;
 extern float last_zoffset;
+
 
 typedef struct 
 {

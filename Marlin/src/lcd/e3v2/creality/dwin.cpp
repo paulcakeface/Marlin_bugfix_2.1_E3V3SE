@@ -196,7 +196,7 @@ typedef struct
   char longfilename[LONG_FILENAME_LENGTH];
 } PrintFile_InfoTypeDef;
 
-select_t select_page{0}, select_file{0}, select_print{0}, select_prepare{0}, select_control{0}, select_axis{0}, select_temp{0}, select_motion{0}, select_tune{0}, select_advset{0}, select_PLA{0}, select_ABS{0}, select_TPU{0}, select_PETG{0}, select_speed{0}, select_acc{0}, select_jerk{0}, select_step{0}, select_input_shaping{0}, select_cextr{0}, select_display{0}, select_item{0}, select_language{0}, select_hm_set_pid{0}, select_set_pid{0}, select_level{0}, select_show_pic{0};
+select_t select_page{0}, select_file{0}, select_print{0}, select_prepare{0}, select_control{0}, select_axis{0}, select_temp{0}, select_motion{0}, select_tune{0}, select_advset{0}, select_PLA{0}, select_ABS{0}, select_TPU{0}, select_PETG{0}, select_speed{0}, select_acc{0}, select_jerk{0}, select_step{0}, select_input_shaping{0}, select_skew{0}, select_cextr{0}, select_display{0}, select_item{0}, select_language{0}, select_hm_set_pid{0}, select_set_pid{0}, select_level{0}, select_show_pic{0};
 
 uint8_t index_file = MROWS,
         index_prepare = MROWS,
@@ -1310,7 +1310,8 @@ inline bool Apply_Encoder(const ENCODER_DiffState &encoder_diffState, auto &valr
 #define MOTION_CASE_STEPS (MOTION_CASE_JERK + 1)
 #define MOTION_CASE_INPUT_SHAPING (MOTION_CASE_STEPS + 1)
 // #define MOTION_CASE_LINADV (MOTION_CASE_INPUT_SHAPING + 1)
-#define MOTION_CASE_TOTAL MOTION_CASE_INPUT_SHAPING
+#define MOTION_CASE_SKEW (MOTION_CASE_INPUT_SHAPING + 1)
+#define MOTION_CASE_TOTAL MOTION_CASE_SKEW
 
 #define INPUT_SHAPING_CASE_XFREQ 1
 #define INPUT_SHAPING_CASE_YFREQ (INPUT_SHAPING_CASE_XFREQ + 1)
@@ -2190,6 +2191,13 @@ void draw_input_shaping(const uint16_t line)
 //   Draw_Menu_Line(line - 2, ICON_Motion);
 // }
 
+void Draw_Skew_Menu(const uint16_t line)
+{
+  // There's no graphical asset for this label, so we just write it as string
+  DWIN_Draw_Label(line, F("Skew Correction"));
+  Draw_Menu_Line(line - 2, ICON_Motion);
+}
+
 void say_x(const uint16_t inset, const uint16_t line)
 {
   DWIN_Frame_AreaCopy(1, 95, 104, 102, 114, LBLX + inset, line); // "x"
@@ -2230,6 +2238,7 @@ void Draw_Motion_Menu()
     // DWIN_Frame_AreaCopy(1, 153, 148, 194, 161, LBLX, MBASE(MOTION_CASE_STEPS));         //Flow ratio
     DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Step, 42, MBASE(MOTION_CASE_STEPS) + JPN_OFFSET);
     draw_input_shaping(MBASE(MOTION_CASE_INPUT_SHAPING) + 2); // "Input shaping"
+    Draw_Skew_Menu(MBASE(MOTION_CASE_SKEW) + 2);              // "Skew Correction"
     // draw_lin_adv(MBASE(MOTION_CASE_LINADV) + 2); // "Linear Advance"
   }
   else
@@ -2257,7 +2266,8 @@ void Draw_Motion_Menu()
 #endif // HAS_CLASSIC_JERK
     draw_steps_per_mm(MBASE(MOTION_CASE_STEPS));              // "steps per mm"
     draw_input_shaping(MBASE(MOTION_CASE_INPUT_SHAPING) + 2); // "Input shaping"
-                                                              // draw_lin_adv(MBASE(MOTION_CASE_LINADV) + 2); // "Linear Advance"
+    // draw_lin_adv(MBASE(MOTION_CASE_LINADV) + 2); // "Linear Advance"
+    Draw_Skew_Menu(MBASE(MOTION_CASE_SKEW) + 2);    // "Skew Correction"
 #endif // USE_STRING_TITLES
   }
 
@@ -2267,22 +2277,27 @@ void Draw_Motion_Menu()
 
   uint8_t i = 0;
 #define _MOTION_ICON(N) Draw_Menu_Line(++i, ICON_MaxSpeed + (N) - 1)
-  _MOTION_ICON(MOTION_CASE_RATE);
-  Draw_More_Icon(i);
-  _MOTION_ICON(MOTION_CASE_ACCEL);
-  Draw_More_Icon(i);
+  _MOTION_ICON(MOTION_CASE_RATE); // max speed line
+  Draw_More_Icon(i); //  max speed more icon
+
+  _MOTION_ICON(MOTION_CASE_ACCEL); // max acceleration line
+  Draw_More_Icon(i); // max acceleration more icon
+
 #if HAS_CLASSIC_JERK
   _MOTION_ICON(MOTION_CASE_JERK);
   Draw_More_Icon(i);
   Draw_Menu_Icon(MOTION_CASE_JERK, ICON_MaxJerk);
 #endif
-  _MOTION_ICON(MOTION_CASE_STEPS);
-  Draw_More_Icon(i);
-  Draw_Menu_Line(++i, ICON_Setspeed);
-  Draw_More_Icon(i);
-  // Draw_Menu_Line(++i, ICON_Motion);
-  // Draw_More_Icon(i);
-  // Draw_Menu_Icon(MOTION_CASE_STEPS, ICON_Step);
+
+  _MOTION_ICON(MOTION_CASE_STEPS); // steps per mm line
+  Draw_More_Icon(i); // steps per mm more icon
+
+  Draw_Menu_Line(++i, ICON_Setspeed); // input shaping line
+  Draw_More_Icon(i); // input shaping more icon
+
+  Draw_Menu_Line(++i, ICON_PrintSize); // skew correction line
+  Draw_More_Icon(i); // skew correction more icon
+  
 }
 
 //
@@ -5162,7 +5177,7 @@ void HMI_MainMenu()
     case 3: // Leveling or Info
 #if HAS_ONESTEP_LEVELING
       // Just Leveling
-      Clear_Main_Window();
+      Popup_Window_Home();
       RUN_AND_WAIT_GCODE_CMD("G28", true); // Home all axes
       HMI_flag.leveling_offset_flag = false; //Disable Offset Flag
       HMI_flag.Pressure_Height_end = true; // Enable Leveling Flag
@@ -8159,6 +8174,113 @@ void Draw_InputShaping_Menu()
 //   DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 2, 3, (VALUERANGE_X - 10), MBASE(1) + 3, planner.extruder_advance_K[0] * 1000);
 // }
 
+
+// Skew Correction Items
+void Draw_SkewItems_Menu()
+{
+  Clear_Main_Window();
+  Draw_Mid_Status_Area(true);
+  HMI_flag.Refresh_bottom_flag = true; // Flag refresh bottom parameter
+
+  Draw_Back_First();
+  Draw_Title(F("Skew Correction"));
+
+  DWIN_Draw_Label(MBASE(1), F("XY DIAGONAL AC"));
+  Draw_Menu_Line(1, ICON_PrintSize);
+  DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 2, 3, (VALUERANGE_X - 10), MBASE(1) + 3, xyskew_d_ac * 1000);
+
+  DWIN_Draw_Label(MBASE(2), F("XY DIAGONAL BD"));
+  Draw_Menu_Line(2, ICON_PrintSize);
+  DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 2, 3, (VALUERANGE_X - 10), MBASE(2) + 3, xyskew_d_bd * 1000);
+
+  DWIN_Draw_Label(MBASE(3), F("XY SIDE AD"));
+  Draw_Menu_Line(3, ICON_PrintSize);
+  DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 2, 3, (VALUERANGE_X - 10), MBASE(3) + 3, xyskew_s_ad * 1000);
+
+  DWIN_Draw_Label(MBASE(4), F("Calculate & Set"));
+  Draw_Menu_Line(4, ICON_Homing);
+}
+
+
+void HMI_SkewItems_Menu()
+{
+  ENCODER_DiffState encoder_diffState = get_encoder_state();
+  if (encoder_diffState == ENCODER_DIFF_NO)
+    return;
+
+  // Avoid flicker by updating only the previous menu
+  if (encoder_diffState == ENCODER_DIFF_CW)
+  {
+    if (select_skew.inc(1 + 4))
+      Move_Highlight(1, select_skew.now);
+  }
+  else if (encoder_diffState == ENCODER_DIFF_CCW)
+  {
+    if (select_skew.dec())
+      Move_Highlight(-1, select_skew.now);
+  }
+  else if (encoder_diffState == ENCODER_DIFF_ENTER)
+  {
+    switch (select_skew.now)
+    {
+      case 0: // Back
+        checkkey = Motion;
+        select_motion.now = MOTION_CASE_SKEW;
+        Draw_Motion_Menu();
+        break;
+      case 1: // XY_DIAG_AC
+        checkkey = skewxy_dac;
+        DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, 4, (VALUERANGE_X - 10), MBASE(1) + 3, xyskew_d_ac * 10000);
+        EncoderRate.enabled = true;
+        break;
+      case 2: // XY_DIAG_BD
+        checkkey = skewxy_dbd;
+        DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, 4, (VALUERANGE_X - 10), MBASE(2) + 3, xyskew_d_bd * 10000);
+        EncoderRate.enabled = true;
+        break;
+      case 3: // XY_SIDE_AD
+        checkkey = skewxy_sad;
+        DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, 4, (VALUERANGE_X - 10), MBASE(3) + 3, xyskew_s_ad * 10000);
+        EncoderRate.enabled = true;
+        break;
+
+      case 4: // Calculate & Set
+        // Perform skew correction calculation
+        if(xyskew_d_ac != 0.0 && xyskew_d_bd != 0.0 && xyskew_s_ad != 0.0)
+        {
+          skew_factor = _SKEW_FACTOR(xyskew_d_ac, xyskew_d_bd, xyskew_s_ad);
+          planner.skew_factor.xy = skew_factor;
+          settings.save();
+
+          DWIN_Draw_Rectangle(1, All_Black, 0, 200, 240, 237);
+          const char *str = "Set Skew Factor Of:";
+          DWIN_Draw_String(true, true, font8x16, Color_Blue, Color_Bg_Black, (DWIN_WIDTH - strlen(str) * MENU_CHR_W) / 2, 210, F(str));   // Centered Received String
+          DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_Blue, Color_Bg_Black, 2, 4, (DWIN_WIDTH - 10 * MENU_CHR_W) / 2, 230, planner.skew_factor.xy * 1000);
+          
+
+        }
+        else
+        {
+        DWIN_Draw_Rectangle(1, All_Black, 0, 174, 240, 237);
+          // Help Info
+          // Info Icon
+          DWIN_ICON_Show(ICON, 56, 115, 175);
+          const char *str = "Warning!";
+          const char *str2 = "XY Values";
+          const char *str3 = "Cannot be Zero or Invalid!";
+          // Draw Help Strings
+          DWIN_Draw_String(true, true, font8x16, Color_Yellow, Color_Bg_Black, (DWIN_WIDTH - strlen(str) * MENU_CHR_W) / 2, 195, F(str));   // Centered Received String
+          DWIN_Draw_String(true, true, font8x16, Color_Yellow, Color_Bg_Black, (DWIN_WIDTH - strlen(str2) * MENU_CHR_W) / 2, 215, F(str2)); // Centered Received String
+          DWIN_Draw_String(true, true, font8x16, Color_Yellow, Color_Bg_Black, (DWIN_WIDTH - strlen(str3) * MENU_CHR_W) / 2, 235, F(str3)); // Centered Received String
+
+        }
+      break;  
+    }
+  }
+  DWIN_UpdateLCD();
+}
+
+
 /* Motion */
 void HMI_Motion()
 {
@@ -8220,6 +8342,13 @@ void HMI_Motion()
     //   select_linear_adv.reset();
     //   Draw_LinearAdv_Menu();
     //   break;
+
+    case MOTION_CASE_SKEW: // Skew Correction
+      checkkey = SkewCorrection;
+      select_skew.reset();
+      Draw_SkewItems_Menu();
+      break;  
+
     default:
       break;
     }
@@ -10193,7 +10322,10 @@ void DWIN_HandleScreen()
     break;
     // case LinearAdv:
     //   HMI_LinearAdv();
-    break;
+    // break;
+  case SkewCorrection:
+    HMI_SkewItems_Menu();
+    break;  
   case Step:
     HMI_Step();
     break;
