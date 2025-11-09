@@ -98,7 +98,7 @@
  *
  * :[2400, 9600, 19200, 38400, 57600, 115200, 250000, 500000, 1000000]
  */
-#define BAUDRATE 115200
+#define BAUDRATE 128000
 
 //#define BAUD_RATE_GCODE     // Enable G-code M575 to set the baud rate
 
@@ -2481,7 +2481,7 @@ extern uint8_t CZ_AFTER_HOMING;
 #if ENABLED(SKEW_CORRECTION)
   // Input all length measurements here:
   #define XY_DIAG_AC 282.84
-  #define XY_DIAG_BD 270.45
+  #define XY_DIAG_BD 282.84
   #define XY_SIDE_AD 200.69
 
   extern float xyskew_d_ac;

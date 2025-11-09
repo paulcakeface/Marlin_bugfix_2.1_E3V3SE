@@ -82,6 +82,7 @@ enum processID : uint8_t {
   Prepare,
   Control,
   Leveling,
+  Level,
   PrintProcess,
   AxisMove,
   TemperatureID,

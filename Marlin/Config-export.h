@@ -2,7 +2,7 @@
  * Config.h - Marlin Firmware distilled configuration
  * Usage: Place this file in the 'Marlin' folder with the name 'Config.h'.
  *
- * Exported by Marlin build on 2025-11-08 at 22:10:09.
+ * Exported by Marlin build on 2025-11-09 at 22:58:26.
  */
 
 //
@@ -314,7 +314,7 @@
 #define MESH_TEST_NOZZLE_SIZE                    0.4
 #define MESH_TEST_BED_TEMP                       60
 #define XY_DIAG_AC                               282.84
-#define XY_DIAG_BD                               270.45
+#define XY_DIAG_BD                               282.84
 #define G26_RETRACT_MULTIPLIER                   1.0
 #define MESH_TEST_HOTEND_TEMP                    205
 #define GRID_MAX_POINTS_X                        6
@@ -427,7 +427,7 @@
 // Serial
 //
 #define SERIAL_PORT                              1
-#define BAUDRATE                                 115200
+#define BAUDRATE                                 128000
 #define BUFSIZE                                  8
 #define MAX_CMD_SIZE                             96
 #define PROPORTIONAL_FONT_RATIO                  1.0

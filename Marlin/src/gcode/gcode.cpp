@@ -466,7 +466,7 @@ void GcodeSuite::process_parsed_command(bool no_ok/*=false*/) {
 
       case 92: G92(); break;                                      // G92: Set current axis position(s)
 
-      case 212: G212(); break;                                  // G212: Test Probe Mesurements
+      // case 212: G212(); break;                                  // G212: Test Probe Mesurements
 
       #if ENABLED(CALIBRATION_GCODE)
         case 425: G425(); break;                                  // G425: Perform calibration with calibration cube

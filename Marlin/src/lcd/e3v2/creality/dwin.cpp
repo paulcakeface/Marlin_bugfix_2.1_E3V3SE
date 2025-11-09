@@ -5097,6 +5097,75 @@ void HMI_Select_language()
   DWIN_UpdateLCD();
 }
 
+
+
+
+void Draw_Level_Menu(){
+  Clear_Main_Window();
+  Draw_Mid_Status_Area(true);
+  HMI_flag.Refresh_bottom_flag = false; // Flag refresh bottom parameter
+
+  // Back option
+  Draw_Back_First();
+  // Title
+  Draw_Title(F("Leveling Menu"));
+  
+  // There's no graphical asset for this label, so we just write it as string
+  DWIN_Draw_Label(MBASE(1), F("Start Auto Z-Offset"));
+  // Menu Line with Extrusion Icon
+  Draw_Menu_Line(1, ICON_SetHome);
+  
+
+  // There's no graphical asset for this label, so we just write it as string
+  DWIN_Draw_Label(MBASE(2), F("Start Bed Leveling"));
+  // Menu Line with Extrusion Icon
+  Draw_Menu_Line(2, ICON_Edit_Level_Data); 
+}
+
+void HMI_Level_Menu(){
+  ENCODER_DiffState encoder_diffState = get_encoder_state();
+  if (encoder_diffState == ENCODER_DIFF_NO)
+    return;
+
+  // Avoid flicker by updating only the previous menu
+  if (encoder_diffState == ENCODER_DIFF_CW)
+  {
+    if (select_cextr.inc(1  + 2))
+      Move_Highlight(1, select_cextr.now);
+  }
+  else if (encoder_diffState == ENCODER_DIFF_CCW)
+  {
+    if (select_cextr.dec())
+      Move_Highlight(-1, select_cextr.now);
+  }
+  else if (encoder_diffState == ENCODER_DIFF_ENTER)
+  {
+    switch (select_cextr.now)
+    {
+      case 0: // Back
+        select_page.set(3);
+        select_cextr.reset();
+        Goto_MainMenu();
+        break;
+      case 1: // Start Auto Z-Offset
+        Popup_Window_Home();
+        gcode.process_subcommands_now(PSTR("M8015 S0"));
+        break;
+      case 2: // Start Bed Leveling
+        Popup_Window_Home();
+        RUN_AND_WAIT_GCODE_CMD("G28", true); // Home all axes
+        HMI_flag.leveling_offset_flag = false; //Disable Offset Flag
+        HMI_flag.Pressure_Height_end = true; // Enable Leveling Flag
+      
+        break;
+    }
+  }
+  DWIN_UpdateLCD();
+}
+
+
+
+
 /* Main Process */
 void HMI_MainMenu()
 {
@@ -5176,12 +5245,9 @@ void HMI_MainMenu()
 
     case 3: // Leveling or Info
 #if HAS_ONESTEP_LEVELING
-      // Just Leveling
-      Popup_Window_Home();
-      RUN_AND_WAIT_GCODE_CMD("G28", true); // Home all axes
-      HMI_flag.leveling_offset_flag = false; //Disable Offset Flag
-      HMI_flag.Pressure_Height_end = true; // Enable Leveling Flag
-      
+      checkkey = Level;
+      select_cextr.reset();
+      Draw_Level_Menu();
    
 
 #else
@@ -5905,7 +5971,7 @@ void HMI_Confirm()
       Popup_Window_Height(Nozz_Start); // Jump to height page
       checkkey = ONE_HIGH;             // Enter the high logic
 #if ANY(USE_AUTOZ_TOOL, USE_AUTOZ_TOOL_2)
-      queue.inject_P(PSTR("M8015"));
+      queue.inject_P(PSTR("M8015 S1"));
 #endif
       // Checkkey=max gui;
     }
@@ -5917,7 +5983,7 @@ void HMI_Confirm()
       Popup_Window_Height(Nozz_Start); // Jump to height page
       checkkey = ONE_HIGH;             // Enter the high logic
 #if ANY(USE_AUTOZ_TOOL, USE_AUTOZ_TOOL_2)
-      queue.inject_P(PSTR("M8015"));
+      queue.inject_P(PSTR("M8015 S1"));
 #endif
     }
     else if (Set_levelling == HMI_flag.boot_step) // Boot boot leveling successful
@@ -5937,7 +6003,7 @@ void HMI_Confirm()
       Popup_Window_Height(Nozz_Start); // Jump to height page
       checkkey = ONE_HIGH;             // Enter the high logic
 #if ANY(USE_AUTOZ_TOOL, USE_AUTOZ_TOOL_2)
-      queue.inject_P(PSTR("M8015"));
+      queue.inject_P(PSTR("M8015 S1"));
 #endif
       // HMI_flag.Need_boot_flag=false; //No need to boot in the future
       // select_page.set(0);//The action of jumping to the main interface
@@ -8187,16 +8253,16 @@ void Draw_SkewItems_Menu()
 
   DWIN_Draw_Label(MBASE(1), F("XY DIAGONAL AC"));
   Draw_Menu_Line(1, ICON_PrintSize);
-  DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, 2, (VALUERANGE_X - 10), MBASE(1) + 3, xyskew_d_ac * 100);
+  // DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, 2, (VALUERANGE_X - 10), MBASE(1) + 3, xyskew_d_ac * 100);
+  DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, 2, (VALUERANGE_X - 10), MBASE(1) + 3, lroundf(xyskew_d_ac * 100.0f));
 
   DWIN_Draw_Label(MBASE(2), F("XY DIAGONAL BD"));
   Draw_Menu_Line(2, ICON_PrintSize);
-  DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, 2, (VALUERANGE_X - 10), MBASE(2) + 3, xyskew_d_bd * 100);
+  DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, 2, (VALUERANGE_X - 10), MBASE(2) + 3, lroundf(xyskew_d_bd * 100.0f));
 
   DWIN_Draw_Label(MBASE(3), F("XY SIDE AD"));
   Draw_Menu_Line(3, ICON_PrintSize);
-  DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, 2, (VALUERANGE_X - 10), MBASE(3) + 3, xyskew_s_ad * 100);
-
+  DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, 2, (VALUERANGE_X - 10), MBASE(3) + 3, lroundf(xyskew_s_ad * 100.0f));
   DWIN_Draw_Label(MBASE(4), F("Calculate & Set"));
   Draw_Menu_Line(4, ICON_Homing);
 }
@@ -9226,7 +9292,7 @@ void HMI_SkewXY_DAC()
   xyskew_d_ac /= 100.0f;
   LIMIT(xyskew_d_ac, 0.00f, 500.00f);
 
-  DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Blue, 3, 2, (VALUERANGE_X - 10), MBASE(1) + 3, lroundf(xyskew_d_ac * 100.0f));
+  DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Select_Color, 3, 2, (VALUERANGE_X - 10), MBASE(1) + 3, lroundf(xyskew_d_ac * 100.0f));
 }
 
 
@@ -9253,7 +9319,7 @@ void HMI_SkewXY_DBD()
   xyskew_d_bd /= 100.0f;
   LIMIT(xyskew_d_bd, 0.00f, 500.00f);
 
-  DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Blue, 3, 2, (VALUERANGE_X - 10), MBASE(2) + 3, lroundf(xyskew_d_bd * 100.0f));
+  DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Select_Color, 3, 2, (VALUERANGE_X - 10), MBASE(2) + 3, lroundf(xyskew_d_bd * 100.0f));
 }
 
 
@@ -9280,7 +9346,7 @@ void HMI_SkewXY_SAD()
   xyskew_s_ad /= 100.0f;
   LIMIT(xyskew_s_ad, 0.00f, 500.00f);
 
-  DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Blue, 3, 2, (VALUERANGE_X - 10), MBASE(3) + 3, lroundf(xyskew_s_ad * 100.0f));
+  DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Select_Color, 3, 2, (VALUERANGE_X - 10), MBASE(3) + 3, lroundf(xyskew_s_ad * 100.0f));
 }
 
 ////
@@ -10310,6 +10376,9 @@ void DWIN_HandleScreen()
   case Control:
     HMI_Control();
     break;
+  case Level:
+    HMI_Level_Menu();
+    break;  
   case Leveling:
 #if ENABLED(SHOW_GRID_VALUES) // If you need to display the leveling grid value display
     HMI_Leveling();

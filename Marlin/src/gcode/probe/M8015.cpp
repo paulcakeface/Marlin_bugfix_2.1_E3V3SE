@@ -24,6 +24,7 @@
  */
 void GcodeSuite::M8015()
 {
+  const bool wLevel = parser.seen('S') ? parser.value_bool() : true; // S0: Get Z offset without leveling; S1: Get Z offset with leveling
   // SERIAL_ECHOLNPGM("M8015: Trying to get Z offset value...");
   float zOffset = 0;
   for (int x = 0; x < GRID_MAX_POINTS_X; x++)
@@ -58,11 +59,16 @@ void GcodeSuite::M8015()
     // TERN_(EEPROM_SETTINGS, settings.save());
     // TERN_(USE_AUTOZ_TOOL_2, DWIN_CompletedHeight());
     RUN_AND_WAIT_GCODE_CMD("G28", true); // Get the home point first before measuring
-    HMI_flag.leveling_offset_flag = false;
-    HMI_flag.Pressure_Height_end = true;
-    // }
     SERIAL_ECHOLNPGM("M8015 succeeded in getting Z offset.");
     SERIAL_ECHOLN("Z Offset: ", probe.offset.z);
+    if (wLevel){
+
+      HMI_flag.leveling_offset_flag = false;
+      HMI_flag.Pressure_Height_end = true;
+
+    }
+    // }
+    
     // Goto_MainMenu();
   }
   else // Failed against high
