@@ -66,10 +66,10 @@ void GcodeSuite::M8015()
       HMI_flag.leveling_offset_flag = false;
       HMI_flag.Pressure_Height_end = true;
 
+    }else{
+    settings.save(); // Save Z offset to EEPROM
+    Goto_MainMenu();
     }
-    // }
-    
-    // Goto_MainMenu();
   }
   else // Failed against high
   {

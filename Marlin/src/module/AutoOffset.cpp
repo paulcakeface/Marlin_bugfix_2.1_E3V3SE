@@ -529,10 +529,10 @@ static float Multiple_Hight_At(xyz_float_t basePos, bool isRunProByPress, bool i
 
   // Acquire NIN readings
   for (uint8_t k = 0; k < NIN; k++) {
-    pressPos.y = basePos.y - (k * 5);     // same pattern
+    pressPos.y = basePos.y - (k * 5);     
     zoffset_value[k] = Hight_One(pressPos);
     PRINTF("\n***OUTPUT_ZOFFSET(@[%s,%s]): zOffset=%s***\n",getStr(pressPos.x), getStr(pressPos.y), getStr(zoffset_value[k]));
-    RUN_AND_WAIT_GCODE_CMD("G28", true);
+    // RUN_AND_WAIT_GCODE_CMD("G28", true);
   }
 
   // Simple case: NIN == 1 → return that reading as is
@@ -553,7 +553,7 @@ static float Multiple_Hight_At(xyz_float_t basePos, bool isRunProByPress, bool i
   // If the first two differ more than the threshold and there is permission for a third, take a third
   if (NAX >= 3) {
     // third “additional” reading
-    pressPos.y = basePos.y - ((2 - 2) * 5); // same as your original loop when loop_max=2
+    pressPos.y = basePos.y - ((2 - 2) * 5); 
     zoffset_value[2] = Hight_One(pressPos);
     PRINTF("\n***OUTPUT_ZOFFSET(@[%s,%s] 3rd): zOffset=%s***\n",getStr(pressPos.x), getStr(pressPos.y), getStr(zoffset_value[2]));
 
@@ -691,7 +691,7 @@ bool getZOffset(bool isNozzleClr, bool isRunProByPress, bool isRunProByTouch, fl
     } else {
       PRINTF("***POINT[%d @ %s,%s] => zOffset=%s (discarded)\n", i, getStr(Probes[i].x), getStr(Probes[i].y), getStr(zoff));
     }
-    // RUN_AND_WAIT_GCODE_CMD("G28", true);  // homing between points like your routine does between reps
+    // RUN_AND_WAIT_GCODE_CMD("G28", true);  // not needed between points
   }
 
   if (vcount == 0) {
