@@ -196,7 +196,7 @@ typedef struct
   char longfilename[LONG_FILENAME_LENGTH];
 } PrintFile_InfoTypeDef;
 
-select_t select_page{0}, select_file{0}, select_print{0}, select_prepare{0}, select_control{0}, select_axis{0}, select_temp{0}, select_motion{0}, select_tune{0}, select_advset{0}, select_PLA{0}, select_ABS{0}, select_TPU{0}, select_PETG{0}, select_speed{0}, select_acc{0}, select_jerk{0}, select_step{0}, select_input_shaping{0}, select_skew{0}, select_cextr{0}, select_display{0}, select_item{0}, select_language{0}, select_hm_set_pid{0}, select_set_pid{0}, select_level{0}, select_show_pic{0};
+select_t select_page{0}, select_file{0}, select_print{0}, select_prepare{0}, select_control{0}, select_axis{0}, select_temp{0}, select_motion{0}, select_tune{0}, select_advset{0}, select_PLA{0}, select_ABS{0}, select_TPU{0},  select_PETG{0},  select_speed{0}, select_acc{0}, select_jerk{0}, select_step{0}, select_input_shaping{0}, select_skew{0}, select_cextr{0}, select_display{0}, select_item{0}, select_language{0}, select_hm_set_pid{0}, select_set_pid{0}, select_level{0}, select_show_pic{0};
 
 uint8_t index_file = MROWS,
         index_prepare = MROWS,
@@ -3509,7 +3509,7 @@ void HMI_ETemp()
       }
       else if (HMI_ValueStruct.show_mode == -3)
       {
-        checkkey = ABSPreheat;
+        checkkey = TPUPreheat;
         ui.material_preset[1].hotend_temp = HMI_ValueStruct.E_Temp;
         DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(temp_line) + TEMP_SET_OFFSET, ui.material_preset[1].hotend_temp);
         return;
@@ -3603,7 +3603,7 @@ void HMI_BedTemp()
       }
       else if (HMI_ValueStruct.show_mode == -3)
       {
-        checkkey = ABSPreheat;
+        checkkey = TPUPreheat;
         ui.material_preset[1].bed_temp = HMI_ValueStruct.Bed_Temp;
         DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(bed_line) + TEMP_SET_OFFSET, ui.material_preset[1].bed_temp);
         return;
@@ -3693,7 +3693,7 @@ void HMI_FanSpeed()
       }
       else if (HMI_ValueStruct.show_mode == -3)
       {
-        checkkey = ABSPreheat;
+        checkkey = TPUPreheat;
         ui.material_preset[1].fan_speed = HMI_ValueStruct.Fan_speed;
         DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(fan_line) + TEMP_SET_OFFSET, ui.material_preset[1].fan_speed);
         return;

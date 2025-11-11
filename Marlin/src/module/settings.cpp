@@ -3071,11 +3071,12 @@ void MarlinSettings::postprocess() {
       int16_t bright;
       uint8_t zheight;
       EEPROM_READ(sleep);
-      TURN_OFF_TIME = (sleep > 60) ? 5 : sleep;              
+      TURN_OFF_TIME = (sleep > 60 || sleep < 2) ? 5 : sleep;              
       EEPROM_READ(dimmBright);
-      DIMM_SCREEN_BRIGHTNESS = (dimmBright > 175) ? 175  : dimmBright;         
+      DIMM_SCREEN_BRIGHTNESS = (dimmBright > 175 || dimmBright < 5) ? 175  : dimmBright;         
       EEPROM_READ(bright);             
-      MAX_SCREEN_BRIGHTNESS = ( bright > 230) ? 230 : bright;
+      MAX_SCREEN_BRIGHTNESS = ( bright > 230 || bright < 20) ? 230 : bright;
+
       EEPROM_READ(zheight);
       CZ_AFTER_HOMING = (zheight >= 10) ? zheight : 10; //Set default value
     }
