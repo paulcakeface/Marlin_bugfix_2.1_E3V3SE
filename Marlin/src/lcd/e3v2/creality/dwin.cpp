@@ -7391,13 +7391,15 @@ void HMI_AxisMove()
       gcode.process_subcommands_now(PSTR("G4 P1000"));
       bool r = probe.deploy();
       if (!r)
-      {
-        gcode.process_subcommands_now(PSTR("M117 Probe Deployed"));
-      }
-      else
-      {
-        gcode.process_subcommands_now(PSTR("M117 Probe Deploy Failed"));
-      }
+        {
+          Clear_Title_Bar();
+          Draw_Title(F("Probe Deployed"));
+        }
+        else
+        {
+          Clear_Title_Bar();
+          Draw_Title(F("Probe Deploy Failed"));
+        }
       break;
     }
 
@@ -7407,13 +7409,15 @@ void HMI_AxisMove()
       gcode.process_subcommands_now(PSTR("G4 P1000"));
       bool r2 = probe.stow();
       if (!r2)
-      {
-        gcode.process_subcommands_now(PSTR("M117 Probe Stowed"));
-      }
-      else
-      {
-        gcode.process_subcommands_now(PSTR("M117 Probe Stow Failed"));
-      }
+        {
+          Clear_Title_Bar();
+          Draw_Title(F("Probe Stowed"));
+        }
+        else
+        {
+          Clear_Title_Bar();
+          Draw_Title(F("Probe Stow Failed"));
+        }
       break;
     }
     }
