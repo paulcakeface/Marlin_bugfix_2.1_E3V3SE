@@ -214,7 +214,7 @@ public:
 
   FORCE_INLINE static void set_total_time(const uint32_t t) { model_total_time_s = t; }
   FORCE_INLINE static uint32_t get_total_time() { return model_total_time_s; }
-  FORCE_INLINE static void total_time_reset() { model_total_time_s = 0; }
+  FORCE_INLINE static void total_time_reset() { set_total_time(0); }
 
 
   static void init();

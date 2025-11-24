@@ -32,7 +32,8 @@
  */
 void GcodeSuite::M117()
 {
-  if ENABLED (HOST_ACTION_COMMANDS)
+  #if ENABLED(HOST_ACTION_COMMANDS)
+  
 
     if (parser.string_arg && parser.string_arg[0] != '\0')
     {
@@ -47,22 +48,21 @@ void GcodeSuite::M117()
       {
         TERN_(DWIN_CREALITY_LCD, DWIN_Show_M117(my_string));
       }
-
     }
     else
     {
       SERIAL_ECHOLN("Warning: No string provided with M117");
     }
 
-
-  if (parser.string_arg && parser.string_arg[0])
-  {
-    ui.set_status(parser.string_arg);
-  }
-  else
-  {
-    ui.reset_status();
-  }
+    if (parser.string_arg && parser.string_arg[0])
+    {
+      ui.set_status(parser.string_arg);
+    }
+    else
+    {
+      ui.reset_status();
+    }
+  #endif
 }
 
 #endif // HAS_STATUS_MESSAGE

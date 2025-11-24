@@ -652,145 +652,339 @@ void DWIN_ICON_SHOW_SRAM(uint16_t x,uint16_t y,uint16_t addr)
 }
 
 
-model_information_t model_information;
-static const char * gcode_information_name[] =
-{
-  "TIME","Filament used","Layer height"
-};
-uint8_t read_gcode_model_information(const char* fileName)
-{
-  char string_buf[_GCODE_METADATA_STRING_LENGTH_MAX + 1];
-  // char *char_pos;
-  char byte;
-  unsigned char buf_state = 0;
-  uint8_t line_idx=0;
-  
-  ui.reset_remaining_time();
-  // ui.total_time_reset();
-  memset(model_information.filament, 0, sizeof(model_information.filament));
-  memset(model_information.height, 0, sizeof(model_information.height));
-  
-  card.openFileRead(fileName);
+#define ORCA_FOOTER_WINDOW    32768UL     //Bytes from the end that we are going to scan
 
-  while((line_idx++) < _MAX_LINES_TO_PARSE)
-  {
-    for (int i = 0; i < _GCODE_METADATA_STRING_LENGTH_MAX; i++)
-    {
-      byte = card.get();
+// Remove trailing spaces/newlines
+static void trim_trailing_ws(char *s) {
+  int len = strlen(s);
+  while (len > 0 && (s[len - 1] == ' ' || s[len - 1] == '\t' || s[len - 1] == '\r' || s[len - 1] == '\n')) {
+    s[--len] = '\0';
+  }
+}
 
-      if (i == 0 && byte != ';') break; // skip non-comment strings
+// Convert strings like "13m 18s", "1h 2m 3s", "45s" to seconds
+static uint32_t parse_orca_time_to_seconds(const char *time_str) {
+  uint32_t seconds = 0;
+  uint32_t value   = 0;
 
-      if (byte == '\r' || byte == '\n')
-      {
-        string_buf[i] = '\0';
-        break;
-      }
-
-      // If you can't find ';' beyond max line length, it means the file is wrong.
-      if (i + 1 == _GCODE_METADATA_STRING_LENGTH_MAX)
-      {        
-        return METADATA_PARSE_ERROR;
-      }
-
-      string_buf[i] = byte;
+  for (const char *p = time_str; *p; ++p) {
+    if (*p >= '0' && *p <= '9') {
+      value = value * 10UL + (*p - '0');
+      continue;
     }
-    byte = 0;
+
+    if (*p == 'h' || *p == 'H') {
+      seconds += value * 3600UL;
+      value = 0;
+    }
+    else if (*p == 'm' || *p == 'M') {
+      seconds += value * 60UL;
+      value = 0;
+    }
+    else if (*p == 's' || *p == 'S') {
+      seconds += value;
+      value = 0;
+    }
+  }
+
+  seconds += value; // In case it ends without a suffix
+  return seconds;
+}
+
+
+model_information_t model_information;
+
+// static const char * gcode_information_name[] = {
+//   "TIME",
+//   "Filament used",
+//   "Layer height"
+// };
+
+uint8_t read_gcode_model_information(const char* fileName) {
+  char string_buf[_GCODE_METADATA_STRING_LENGTH_MAX + 1];
+  char byte;
+  uint16_t line_idx = 0;
+
+  // SERIAL_ECHOLNPAIR("Reading model information from G-code file: ", fileName);
+  // SERIAL_ECHOLN("Resetting model information variables.");
+  ui.reset_remaining_time();
+  ui.total_time_reset();
+  
+  // memset(&model_information, 0, sizeof(model_information)); 
+  memset(model_information.filament, 0, sizeof(model_information.filament));
+  memset(model_information.height,   0, sizeof(model_information.height));
+  
+  // SERIAL_ECHOLNPAIR("Remaining time reset to: ", ui.get_remaining_time());
+  // SERIAL_ECHOLNPAIR("Total time reset to: ", ui.get_total_time());
+  // SERIAL_ECHOLNPAIR("Model filament info: ", model_information.filament);
+  // SERIAL_ECHOLNPAIR("Model height info: ", model_information.height);
+
+
+  card.openFileRead(fileName);
+  if (!card.isFileOpen())
+    return METADATA_PARSE_ERROR;
+
+  bool is_orca            = false;
+  bool have_cura_time     = false;
+  bool have_cura_filament = false;
+  bool have_cura_height   = false;
+
+  // ---------------------------------------------------------------------------
+  // PASS 1: first MAX_HEADER_LINES
+  //   - Search for Cura-type header (TIME, Filament used, Layer height)
+  //   - Detect if it is OrcaSlicer
+  // ---------------------------------------------------------------------------
+  while (!card.eof() && line_idx++ < _GCODE_METADATA_STRING_LENGTH_MAX) {
+
+    // Read a full line
+    uint16_t i = 0;
+    while (!card.eof() && i < _GCODE_METADATA_STRING_LENGTH_MAX) {
+      int16_t c = card.get();
+      if (c < 0) break;
+      byte = (char)c;
+      if (byte == '\r' || byte == '\n') break;
+      string_buf[i++] = byte;
+    }
+    string_buf[i] = '\0';
+
+    if (i == 0)
+      continue;
 
     #if ENABLED(USER_LOGIC_DEUBG)
-      SERIAL_ECHOLNPAIR("Input string: ", string_buf);
+      SERIAL_ECHOLNPAIR("Header line: ", string_buf);
     #endif
 
-    char* char_pos = string_buf;
-    // Skip leading semicolons and spaces
-    while (*char_pos == ';' || *char_pos == ' ') {
-        char_pos++;
+    // Detect Orca in the header
+    if (strstr(string_buf, "OrcaSlicer") || strstr(string_buf, "Orca Slicer"))
+      is_orca = true;
+
+    // We are only interested in comments
+    if (string_buf[0] != ';')
+      continue;
+
+    // Skip ';' and spaces
+    char *char_pos = string_buf + 1;
+    while (*char_pos == ' ')
+      char_pos++;
+
+    if (!*char_pos)
+      continue;
+
+    // --- Cura style ---
+    // ;TIME:441
+    if (!have_cura_time && strncmp(char_pos, "TIME", 4) == 0) {
+      const char *value_buf = char_pos + 4;
+      while (*value_buf == ':' || *value_buf == ' ' || *value_buf == '=') value_buf++;
+      ui.set_total_time(atoi(value_buf));    // Cura gives TIME in seconds
+      have_cura_time = true;
+    }
+    // ;Filament used: 0.187823m
+    else if (!have_cura_filament && strncmp(char_pos, "Filament used", 13) == 0) {
+      const char *value_buf = char_pos + 13;
+      while (*value_buf == ':' || *value_buf == ' ' || *value_buf == '=') value_buf++;
+
+      memset(model_information.filament, 0, sizeof(model_information.filament));
+      if (strlen(value_buf) > 6) {
+        strncpy(model_information.filament, value_buf, 5);
+        model_information.filament[5] = '\0';
+        if ('m' == value_buf[strlen(value_buf) - 1])
+          strncat(model_information.filament, &value_buf[strlen(value_buf) - 1], 1);
+        else if ('m' == value_buf[strlen(value_buf) - 2])
+          strncat(model_information.filament, &value_buf[strlen(value_buf) - 2], 1);
+      }
+      else {
+        strcpy(model_information.filament, value_buf);
+      }
+      have_cura_filament = true;
+    }
+    // ;Layer height: 0.2
+    else if (!have_cura_height && strncmp(char_pos, "Layer height", 12) == 0) {
+      const char *value_buf = char_pos + 12;
+      while (*value_buf == ':' || *value_buf == ' ' || *value_buf == '=') value_buf++;
+      memset(model_information.height, 0, sizeof(model_information.height));
+      strncpy(model_information.height, value_buf, sizeof(model_information.height) - 3);
+      model_information.height[sizeof(model_information.height) - 3] = '\0';
+      trim_trailing_ws(model_information.height);
+      strcat(model_information.height, "mm");
+      have_cura_height = true;
     }
 
-    // Check for each keyword
-    for(int k = 0; k < (signed)(sizeof(gcode_information_name) / sizeof(gcode_information_name[0])); k++)
-    {
-      // Check if the string starts with the keyword
-      // Corresponding data has been found
-      if (strncmp(char_pos, gcode_information_name[k], strlen(gcode_information_name[k])) == 0) {
-        // Move the pointer after the keyword
-        const char* value_buf = string_buf + strlen(gcode_information_name[k]) + 1;
-        
-        // Skip optional symbols
-        while (*value_buf == ':' || *value_buf == ' ' || *value_buf == '=') {
-            value_buf++;
-        }
-        #if ENABLED(USER_LOGIC_DEUBG)
-          SERIAL_ECHOLNPAIR("Parsed value_buf: ", value_buf);
-        #endif
-        
-        buf_state++;
-        switch(k)
-        {
-          case 0: // "TIME"
-            // ui.set_total_time(atoi(value_buf));
-            break;
-          case 1: // "Filament used"
-            memset(model_information.filament, 0, sizeof(model_information.filament));           
-            if(strlen(value_buf)>6)
-            {
-              strncpy(model_information.filament, value_buf,5);
-              if('m'==value_buf[strlen(value_buf)-1])
-              strncat(model_information.filament, &value_buf[strlen(value_buf)-1],1);
-              else if('m'==value_buf[strlen(value_buf)-2])strncat(model_information.filament, &value_buf[strlen(value_buf)-2],1);
-            }
-            else {
-              strcpy(model_information.filament, value_buf);
-            }
-            break;
-          case 2: // "Layer height"
-            memset(model_information.height, 0, sizeof(model_information.height));
-            strcpy(model_information.height, value_buf);
-            strcat(model_information.height, "mm");
-            break;
-        }
-        memset(string_buf, 0, sizeof(string_buf));
-      }
-    }
-    if(buf_state == (sizeof(gcode_information_name) / sizeof(char*)))
-    {
-      // Exit the loop
+    if (have_cura_time && have_cura_filament && have_cura_height) {
+      // card.closefile();
+      ui.set_remaining_time(ui.get_total_time());
+      // SERIAL_ECHOLN("Cura-type header detected and parsed successfully.");
+      // SERIAL_ECHOLNPAIR("Total time: ", ui.get_total_time());
+      // SERIAL_ECHOLNPAIR("Remaining time: ", ui.get_remaining_time());
+      // SERIAL_ECHOLNPAIR("Filament used: ", model_information.filament);
+      // SERIAL_ECHOLNPAIR("Layer height: ", model_information.height);
       return METADATA_PARSE_OK;
     }
   }
-  
+
+  // If it is not Orca and we did not find a Cura-type header, exit
+  if (!is_orca) {
+    // card.closefile();
+    return METADATA_PARSE_ERROR;
+  }
+
+  // ---------------------------------------------------------------------------
+  // PASS 2: Orca footer (from the end of the file)
+  //   We look for:
+  //     ; filament used [mm] = 433.62
+  //     ; total layers count = 82
+  //     ; estimated printing time (normal mode) = 13m 18s
+  //     ; layer_height = 0.16
+  // ---------------------------------------------------------------------------
+  const uint32_t filesize = card.getFileSize();
+  const uint32_t window   = (filesize > ORCA_FOOTER_WINDOW) ? ORCA_FOOTER_WINDOW : filesize;
+
+  // Position near the end
+  card.setIndex(filesize - window);
+
+  // Consume first partial line (we are in the middle of a line)
+  while (!card.eof()) {
+    int16_t c = card.get();
+    if (c < 0) break;
+    if (c == '\n' || c == '\r') break;
+  }
+
+  bool have_filament_mm   = false;
+  bool have_layers        = false;
+  bool have_time          = false;
+  bool have_layer_height  = false;
+
+  char     filament_mm_str[16]  = { 0 };  // "433.62"
+  char     layer_height_str[16] = { 0 };  // "0.16"
+  uint32_t orca_time_sec        = 0;
+  uint16_t orca_layers          = 0;
+
+  while (!card.eof()) {
+    uint16_t i = 0;
+    while (!card.eof() && i < _GCODE_METADATA_STRING_LENGTH_MAX) {
+      int16_t c = card.get();
+      if (c < 0) break;
+      byte = (char)c;
+      if (byte == '\r' || byte == '\n') break;
+      string_buf[i++] = byte;
+    }
+    string_buf[i] = '\0';
+
+    if (i == 0)
+      continue;
+
+    if (string_buf[0] != ';')
+      continue;
+
+    char *char_pos = string_buf + 1;
+    while (*char_pos == ' ')
+      char_pos++;
+
+    if (!*char_pos)
+      continue;
+
+    // ; filament used [mm] = 433.62
+    if (!have_filament_mm && strncmp(char_pos, "filament used [mm]", 18) == 0) {
+      const char *p = strchr(char_pos, '=');
+      if (p) {
+        p++;
+        while (*p == ' ' || *p == '\t') p++;
+        strncpy(filament_mm_str, p, sizeof(filament_mm_str) - 1);
+        filament_mm_str[sizeof(filament_mm_str) - 1] = '\0';
+        trim_trailing_ws(filament_mm_str);
+        have_filament_mm = true;
+      }
+    }
+
+    // ; total layers count = 82
+    else if (!have_layers && strncmp(char_pos, "total layers count", 18) == 0) {
+      const char *p = strchr(char_pos, '=');
+      if (p) {
+        p++;
+        while (*p == ' ' || *p == '\t') p++;
+        orca_layers = (uint16_t)atoi(p);
+        have_layers = (orca_layers > 0);
+      }
+    }
+
+    // ; estimated printing time (normal mode) = 13m 18s
+    else if (!have_time && strncmp(char_pos, "estimated printing time", 23) == 0) {
+      const char *p = strchr(char_pos, '=');
+      if (p) {
+        p++;
+        while (*p == ' ' || *p == '\t') p++;
+        orca_time_sec = parse_orca_time_to_seconds(p);
+        have_time     = (orca_time_sec > 0);
+      }
+    }
+
+    // ; layer_height = 0.16   (en CONFIG_BLOCK)
+    else if (!have_layer_height && strncmp(char_pos, "layer_height", 12) == 0) {
+      const char *p = strchr(char_pos, '=');
+      if (!p) p = strchr(char_pos, ':');
+      if (p) {
+        p++;
+        while (*p == ' ' || *p == '\t') p++;
+        strncpy(layer_height_str, p, sizeof(layer_height_str) - 1);
+        layer_height_str[sizeof(layer_height_str) - 1] = '\0';
+        trim_trailing_ws(layer_height_str);
+        have_layer_height = (layer_height_str[0] != '\0');
+      }
+    }
+
+    // If we already have everything we want, we can exit early
+    if (have_filament_mm && have_layers && have_time && have_layer_height)
+      break;
+  }
+
+  //card.closefile();
+  // ---- Apply data obtained from Orca ----
+
+  // Total time (seconds)
+  if (have_time)
+    ui.set_total_time(orca_time_sec);
+
+  // Filament: mm -> m (2 decimals, "Xm")
+  if (have_filament_mm) {
+    const float mm     = atof(filament_mm_str);
+    const float meters = mm * 0.001f;
+    char tmp[16];
+    dtostrf(meters, 0, 2, tmp);       // e.g.: "0.43"
+    char *p = tmp;
+    while (*p == ' ') p++;            // remove leading spaces
+
+    memset(model_information.filament, 0, sizeof(model_information.filament));
+    strncpy(model_information.filament, p, sizeof(model_information.filament) - 2);
+    model_information.filament[sizeof(model_information.filament) - 2] = '\0';
+    strcat(model_information.filament, "m");
+  }
+
+  // Layer height: "0.16mm"
+  if (have_layer_height) {
+    memset(model_information.height, 0, sizeof(model_information.height));
+    strncpy(model_information.height, layer_height_str, sizeof(model_information.height) - 3);
+    model_information.height[sizeof(model_information.height) - 3] = '\0';
+    trim_trailing_ws(model_information.height);
+    strcat(model_information.height, "mm");
+  }
+
+  // If your struct has a field for total layers:
+  // if (have_layers)
+  //   model_information.total_layers = orca_layers;
+
+  // Consider it OK if we get at least some useful info
+  if (have_time && have_filament_mm && have_layer_height){
+      ui.set_remaining_time(ui.get_total_time());
+      // SERIAL_ECHOLN("Orca-type header detected and parsed successfully.");
+      // SERIAL_ECHOLNPAIR("Total time: ", ui.get_total_time());
+      // SERIAL_ECHOLNPAIR("Remaining time: ", ui.get_remaining_time());
+      // SERIAL_ECHOLNPAIR("Filament used: ", model_information.filament);
+      // SERIAL_ECHOLNPAIR("Layer height: ", model_information.height);
+      return METADATA_PARSE_OK;
+    }
+    
+
   return METADATA_PARSE_ERROR;
 }
-/*---------------------------------------- Memory functions ----------------------------------------*/
-// The LCD has an additional 32KB SRAM and 16KB Flash
 
-// Data can be written to the sram and save to one of the jpeg page files
-
-// Write Data Memory
-//  command 0x31
-//  Type: Write memory selection; 0x5A=SRAM; 0xA5=Flash
-//  Address: Write data memory address; 0x000-0x7FFF for SRAM; 0x000-0x3FFF for Flash
-//  Data: data
-//
-//  Flash writing returns 0xA5 0x4F 0x4B
-
-// Read Data Memory
-//  command 0x32
-//  Type: Read memory selection; 0x5A=SRAM; 0xA5=Flash
-//  Address: Read data memory address; 0x000-0x7FFF for SRAM; 0x000-0x3FFF for Flash
-//  Length: leangth of data to read; 0x01-0xF0
-//
-//  Response:
-//    Type, Address, Length, Data
-
-// Write Picture Memory
-//  Write the contents of the 32KB SRAM data memory into the designated image memory space
-//  Issued: 0x5A, 0xA5, PIC_ID
-//  Response: 0xA5 0x4F 0x4B
-//
-//  command 0x33
-//  0x5A, 0xA5
-//  PicId: Picture Memory location, 0x00-0x0F
-//
-//  Flash writing returns 0xA5 0x4F 0x4B
 
 #endif // DWIN_CREALITY_LCD

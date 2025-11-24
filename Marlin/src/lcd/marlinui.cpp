@@ -118,7 +118,7 @@ constexpr uint8_t epps = ENCODER_PULSES_PER_STEP;
 
 #if HAS_LCD_BRIGHTNESS
   #if ENABLED(DWIN_CREALITY_LCD)
-    
+      uint32_t MarlinUI::model_total_time_s = 0;
   #else
     uint8_t MarlinUI::brightness = LCD_BRIGHTNESS_DEFAULT;
     bool MarlinUI::backlight = true;
