@@ -9796,7 +9796,7 @@ void EachMomentUpdate()
       // rock_20211122
       ui.set_progress_done();
       ui.reset_remaining_time();
-      // ui.total_time_reset();
+      ui.total_time_reset();
       // Show remaining time
       Draw_Print_ProgressRemain();
       Draw_Print_ProgressBar();

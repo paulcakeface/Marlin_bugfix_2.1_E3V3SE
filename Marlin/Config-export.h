@@ -2,7 +2,7 @@
  * Config.h - Marlin Firmware distilled configuration
  * Usage: Place this file in the 'Marlin' folder with the name 'Config.h'.
  *
- * Exported by Marlin build on 2025-11-24 at 22:53:36.
+ * Exported by Marlin build on 2025-11-25 at 00:37:34.
  */
 
 //
@@ -113,6 +113,7 @@
 #define DEFAULT_MINTRAVELFEEDRATE                0.0
 #define MIN_STEPS_PER_SEGMENT                    4
 #define DEFAULT_MINSEGMENTTIME                   20000
+#define DEFAULT_EJERK                            10.0
 #define JD_HANDLE_SMALL_SEGMENTS
 #define DEFAULT_STEPPER_TIMEOUT_SEC              120
 #define DISABLE_IDLE_X

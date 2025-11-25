@@ -1413,6 +1413,13 @@
  *   https://reprap.org/forum/read.php?1,739819
  *   https://blog.kyneticcnc.com/2018/10/computing-junction-deviation-for-marlin.html
  */
+
+#if ENABLED(HIGH_SPEED_1)
+#define DEFAULT_EJERK 10.0  // May be used by Linear Advance
+#else
+#define DEFAULT_EJERK 5.0  // May be used by Linear Advance
+#endif
+
 #if DISABLED(CLASSIC_JERK)
   #define JUNCTION_DEVIATION_MM 0.1 // (mm) Distance from real junction edge
   #define JD_HANDLE_SMALL_SEGMENTS    // Use curvature estimation instead of just the junction angle
