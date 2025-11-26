@@ -347,6 +347,7 @@
 //
 // STM32 ARM Cortex-M3
 //
+#define BOARD_CREALITY_V3_GD303       4050  // Creality GD303 (STM32F103RE)
 
 #define BOARD_STM32F103RE             5000  // STM32F103RE Libmaple-based STM32F1 controller
 #define BOARD_MALYAN_M200             5001  // STM32C8 Libmaple-based STM32F1 controller
