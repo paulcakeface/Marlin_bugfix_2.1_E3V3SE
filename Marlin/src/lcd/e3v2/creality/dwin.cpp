@@ -7270,8 +7270,9 @@ void HMI_Leveling()
       {
         gcode.process_subcommands_now(PSTR("M420 S0"));
         checkkey = Level_Value_Edit;
-        select_level.reset();
-        xy_int8_t mesh_Count = {0, 0};
+        // select_level.reset();
+        // xy_int8_t mesh_Count = {0, 0};
+        xy_int8_t mesh_Count = Converted_Grid_Point(select_level.now);
         Draw_Dots_On_Screen(&mesh_Count, 1, Select_Block_Color);
         EncoderRate.enabled = true;
         DO_BLOCKING_MOVE_TO_Z(5, 5); // Raise to a height of 5mm each time before moving
@@ -7288,14 +7289,16 @@ void HMI_Leveling()
       if (HMI_flag.Edit_Only_flag)
       {
         HMI_flag.Edit_Only_flag = false;
-        checkkey = Control;
-        select_control.set(CONTROL_CASE_SHOW_DATA);
-        Draw_Control_Menu();
+        checkkey = Level;
+        select_cextr.reset();
+        select_cextr.set(0);
+        Draw_Level_Menu();
       }
       else
       {
         Goto_MainMenu(); // Return to the main interface
       }
+      select_level.reset();
       // HMI_flag.Refresh_bottom_flag=false;//The flag does not refresh the bottom parameters
       // Draw_Mid_Status_Area(true); //rock_20230529 //Update all parameters once
     }

@@ -2,7 +2,7 @@
  * Config.h - Marlin Firmware distilled configuration
  * Usage: Place this file in the 'Marlin' folder with the name 'Config.h'.
  *
- * Exported by Marlin build on 2025-11-26 at 16:27:13.
+ * Exported by Marlin build on 2025-11-26 at 18:13:21.
  */
 
 //
@@ -42,6 +42,8 @@
 #define INVERT_E0_DIR                            false
 #define DEFAULT_NOMINAL_FILAMENT_DIA             1.75
 #define ENABLE_AUTO_OFF_DISPLAY
+#define LIN_ADVANCE
+#define ADVANCE_K                                0.0
 
 //
 // Geometry
@@ -125,6 +127,16 @@
 #define LIMITED_MAX_FR_EDITING
 #define LIMITED_MAX_ACCEL_EDITING
 #define MULTISTEPPING_LIMIT                      16
+
+//
+// Motion Control
+//
+#define SHAPING_ZETA_X                           0.15
+#define SHAPING_ZETA_Y                           0.15
+#define INPUT_SHAPING_X
+#define INPUT_SHAPING_Y
+#define SHAPING_FREQ_X                           42.0
+#define SHAPING_FREQ_Y                           40.0
 
 //
 // Endstops
@@ -234,9 +246,9 @@
 #define PIDTEMP
 #define PID_K1                                   0.95
 #define PID_MAX                                  255
-#define DEFAULT_Kd                               52.79
-#define DEFAULT_Ki                               1.39
-#define DEFAULT_Kp                               17.10
+#define DEFAULT_Kd                               26.68
+#define DEFAULT_Ki                               3.93
+#define DEFAULT_Kp                               20.49
 
 //
 // PID Temp
@@ -247,10 +259,10 @@
 // Bed Temp
 //
 #define MAX_BED_POWER                            255
-#define DEFAULT_bedKi                            10.06
+#define DEFAULT_bedKi                            14.29
 #define PIDTEMPBED
-#define DEFAULT_bedKp                            54.86
-#define DEFAULT_bedKd                            199.38
+#define DEFAULT_bedKp                            123.71
+#define DEFAULT_bedKd                            713.77
 
 //
 // Fans
