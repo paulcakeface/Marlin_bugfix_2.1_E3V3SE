@@ -1417,7 +1417,7 @@
 #if ENABLED(HIGH_SPEED_1)
 #define DEFAULT_EJERK 10.0  // May be used by Linear Advance
 #else
-#define DEFAULT_EJERK 5.0  // May be used by Linear Advance
+#define DEFAULT_EJERK 12  // May be used by Linear Advance
 #endif
 
 #if DISABLED(CLASSIC_JERK)
@@ -1434,7 +1434,7 @@
  *
  * See https://github.com/synthetos/TinyG/wiki/Jerk-Controlled-Motion-Explained
  */
-#define S_CURVE_ACCELERATION
+//#define S_CURVE_ACCELERATION
 
 //===========================================================================
 //============================= Z Probe Options =============================
@@ -2533,7 +2533,7 @@ extern uint8_t CZ_AFTER_HOMING;
  */
 #define EEPROM_SETTINGS     // Persistent storage with M500 and M501
 //#define DISABLE_M503        // Saves ~2700 bytes of flash. Disable for release!
-#define EEPROM_CHITCHAT       // Give feedback on EEPROM commands. Disable to save flash.
+//#define EEPROM_CHITCHAT       // Give feedback on EEPROM commands. Disable to save flash.
 #define EEPROM_BOOT_SILENT    // Keep M503 quiet and only give errors during first load
 #if ENABLED(EEPROM_SETTINGS)
   #define EEPROM_AUTO_INIT  // Init EEPROM automatically on any errors.

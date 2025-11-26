@@ -1343,8 +1343,8 @@ inline bool Apply_Encoder(const ENCODER_DiffState &encoder_diffState, auto &valr
 #define CONTROL_CASE_MOVE (CONTROL_CASE_TEMP + 1)
 #define CONTROL_CASE_SAVE (CONTROL_CASE_MOVE + ENABLED(EEPROM_SETTINGS))
 #define CONTROL_CASE_LOAD (CONTROL_CASE_SAVE + ENABLED(EEPROM_SETTINGS))
-#define CONTROL_CASE_SHOW_DATA (CONTROL_CASE_LOAD + 1) // Leveling data display
-#define CONTROL_CASE_RESET (CONTROL_CASE_SHOW_DATA + ENABLED(EEPROM_SETTINGS))
+// #define CONTROL_CASE_SHOW_DATA (CONTROL_CASE_LOAD + 1) // Leveling data display
+#define CONTROL_CASE_RESET (CONTROL_CASE_LOAD + ENABLED(EEPROM_SETTINGS))
 
 // #define CONTROL_CASE_ADVSET (CONTROL_CASE_RESET + 1)  //rock_20210726
 // #define CONTROL_CASE_INFO  (CONTROL_CASE_ADVSET + 1)
@@ -1904,7 +1904,7 @@ void Draw_Control_Menu()
 #if ENABLED(EEPROM_SETTINGS)
     DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Store, 42, CLINE(CONTROL_CASE_SAVE) + JPN_OFFSET);
     DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Read, 42, CLINE(CONTROL_CASE_LOAD) + JPN_OFFSET);
-    DWIN_ICON_Show(HMI_flag.language, LANGUAGE_EDIT_LEVEL_DATA, 42, CLINE(CONTROL_CASE_SHOW_DATA) + JPN_OFFSET);
+    // DWIN_ICON_Show(HMI_flag.language, LANGUAGE_EDIT_LEVEL_DATA, 42, CLINE(CONTROL_CASE_SHOW_DATA) + JPN_OFFSET);
     // DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Reset, 42, CLINE(CONTROL_CASE_RESET) + JPN_OFFSET);
 #endif
 #endif
@@ -1938,7 +1938,7 @@ void Draw_Control_Menu()
 #if ENABLED(EEPROM_SETTINGS)
   _TEMP_ICON(CONTROL_CASE_SAVE, ICON_WriteEEPROM, false);
   _TEMP_ICON(CONTROL_CASE_LOAD, ICON_ReadEEPROM, false);
-  _TEMP_ICON(CONTROL_CASE_SHOW_DATA, ICON_Edit_Level_Data, false);
+  // _TEMP_ICON(CONTROL_CASE_SHOW_DATA, ICON_Edit_Level_Data, false);
   _TEMP_ICON(CONTROL_CASE_RESET, ICON_ResumeEEPROM, false);
 #endif
   _TEMP_ICON(CONTROL_CASE_INFO, ICON_Info, true);
@@ -3828,6 +3828,7 @@ void HMI_MaxJerkXYZE()
 
 #endif // Has classic jerk
 
+#if ENABLED(INPUT_SHAPING_X) && ENABLED(INPUT_SHAPING_Y)
 void HMI_InputShaping_Values()
 {
   ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
@@ -3900,6 +3901,7 @@ void HMI_InputShaping_Values()
 
   DWIN_UpdateLCD();
 }
+#endif // ENABLED(INPUT_SHAPING_X) && ENABLED(INPUT_SHAPING_Y)
 
 ////
 // void HMI_LinearAdv_KFactor()
@@ -5120,6 +5122,11 @@ void Draw_Level_Menu(){
   DWIN_Draw_Label(MBASE(2), F("Start Bed Leveling"));
   // Menu Line with Extrusion Icon
   Draw_Menu_Line(2, ICON_Edit_Level_Data); 
+
+  // Show Edit Level Data Icon
+  DWIN_ICON_Show(HMI_flag.language, LANGUAGE_EDIT_LEVEL_DATA, 42, MBASE(3) + JPN_OFFSET);
+  // Draw Menu Line for Edit Level Data Icon
+  Draw_Menu_Line(3, ICON_Edit_Level_Data);
 }
 
 void HMI_Level_Menu(){
@@ -5130,7 +5137,7 @@ void HMI_Level_Menu(){
   // Avoid flicker by updating only the previous menu
   if (encoder_diffState == ENCODER_DIFF_CW)
   {
-    if (select_cextr.inc(1  + 2))
+    if (select_cextr.inc(1  + 3))
       Move_Highlight(1, select_cextr.now);
   }
   else if (encoder_diffState == ENCODER_DIFF_CCW)
@@ -5156,8 +5163,14 @@ void HMI_Level_Menu(){
         RUN_AND_WAIT_GCODE_CMD("G28", true); // Home all axes
         HMI_flag.leveling_offset_flag = false; //Disable Offset Flag
         HMI_flag.Pressure_Height_end = true; // Enable Leveling Flag
-      
         break;
+      case 3: // Edit Level Data
+        HMI_flag.G29_finish_flag = true;
+        HMI_flag.Edit_Only_flag = true;
+        Popup_Window_Leveling();
+        checkkey = Leveling;
+        Refresh_Leveling_Value(); // Flush leveling values ​​and colors to the screen
+        break;    
     }
   }
   DWIN_UpdateLCD();
@@ -7081,16 +7094,16 @@ void HMI_Control()
       HMI_AudioFeedback(success);
     }
     break;
-#if HAS_LEVELING
-    case CONTROL_CASE_SHOW_DATA:
-      HMI_flag.G29_finish_flag = true;
-      HMI_flag.Edit_Only_flag = true;
-      Popup_Window_Leveling();
-      checkkey = Leveling;
-      Refresh_Leveling_Value(); // Flush leveling values ​​and colors to the screen
+// #if HAS_LEVELING
+//     case CONTROL_CASE_SHOW_DATA:
+//       HMI_flag.G29_finish_flag = true;
+//       HMI_flag.Edit_Only_flag = true;
+//       Popup_Window_Leveling();
+//       checkkey = Leveling;
+//       Refresh_Leveling_Value(); // Flush leveling values ​​and colors to the screen
 
-      break;
-#endif
+//       break;
+// #endif
     case CONTROL_CASE_RESET:
       // Reset EEPROM
       checkkey = Print_window;
@@ -8201,6 +8214,7 @@ void Draw_Steps_Menu()
 #endif
 }
 
+#if ENABLED(INPUT_SHAPING_X) && ENABLED(INPUT_SHAPING_Y)
 void Draw_InputShaping_Menu()
 {
   Clear_Main_Window();
@@ -8230,6 +8244,8 @@ void Draw_InputShaping_Menu()
   DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 2, 2, VALUERANGE_X, MBASE(INPUT_SHAPING_CASE_YZETA) + 3, stepper.get_shaping_damping_ratio(Y_AXIS) * 100);
 #endif
 }
+#endif
+
 
 // void Draw_LinearAdv_Menu()
 // {
@@ -8412,12 +8428,13 @@ void HMI_Motion()
       select_step.reset();
       Draw_Steps_Menu();
       break;
+  #if ENABLED(INPUT_SHAPING_X) && ENABLED(INPUT_SHAPING_Y)    
     case MOTION_CASE_INPUT_SHAPING: // Input Shaping
       checkkey = InputShaping;
       select_input_shaping.reset();
       Draw_InputShaping_Menu();
       break;
-
+  #endif    
     // case MOTION_CASE_LINADV: // Linear Advance
     //   checkkey = LinearAdv;
     //   select_linear_adv.reset();
@@ -9217,6 +9234,8 @@ void HMI_MaxAcceleration()
   DWIN_UpdateLCD();
 }
 
+
+#if ENABLED(INPUT_SHAPING_X) && ENABLED(INPUT_SHAPING_Y)
 /* Input Shaping */
 void HMI_InputShaping()
 {
@@ -9272,7 +9291,7 @@ void HMI_InputShaping()
   }
   DWIN_UpdateLCD();
 }
-
+#endif
 
 void HMI_SkewXY_DAC()
 {
@@ -10481,9 +10500,12 @@ void DWIN_HandleScreen()
     HMI_MaxJerk();
     break;
 #endif
+
+#if ENABLED(INPUT_SHAPING_X) && ENABLED(INPUT_SHAPING_Y)
   case InputShaping:
     HMI_InputShaping();
     break;
+#endif    
     // case LinearAdv:
     //   HMI_LinearAdv();
     // break;
@@ -10548,12 +10570,15 @@ void DWIN_HandleScreen()
     HMI_MaxJerkXYZE();
     break;
 #endif
+
+#if ENABLED(INPUT_SHAPING_X) && ENABLED(INPUT_SHAPING_Y)
   case InputShaping_XFreq:
   case InputShaping_YFreq:
   case InputShaping_XZeta:
   case InputShaping_YZeta:
     HMI_InputShaping_Values();
     break;
+#endif    
     // case LinAdv_KFactor:
     //   HMI_LinearAdv_KFactor();
     break;

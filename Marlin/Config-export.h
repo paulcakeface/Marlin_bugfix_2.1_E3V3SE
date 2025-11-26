@@ -2,7 +2,7 @@
  * Config.h - Marlin Firmware distilled configuration
  * Usage: Place this file in the 'Marlin' folder with the name 'Config.h'.
  *
- * Exported by Marlin build on 2025-11-25 at 00:37:34.
+ * Exported by Marlin build on 2025-11-26 at 16:27:13.
  */
 
 //
@@ -20,7 +20,6 @@
 // EEPROM
 //
 #define EEPROM_BOOT_SILENT
-#define EEPROM_CHITCHAT
 #define EEPROM_SETTINGS
 #define EEPROM_AUTO_INIT
 
@@ -43,8 +42,6 @@
 #define INVERT_E0_DIR                            false
 #define DEFAULT_NOMINAL_FILAMENT_DIA             1.75
 #define ENABLE_AUTO_OFF_DISPLAY
-#define LIN_ADVANCE
-#define ADVANCE_K                                0.0
 
 //
 // Geometry
@@ -124,22 +121,10 @@
 #define SLOWDOWN_DIVISOR                         2
 #define MAX_FEEDRATE_EDIT_VALUES                 { 1000, 1000, 40, 60 }
 #define MAX_ACCEL_EDIT_VALUES                    { 8000, 8000, 8000, 8000 }
-#define S_CURVE_ACCELERATION
 #define EDITABLE_STEPS_PER_UNIT
 #define LIMITED_MAX_FR_EDITING
 #define LIMITED_MAX_ACCEL_EDITING
 #define MULTISTEPPING_LIMIT                      16
-#define MINIMUM_STEPPER_POST_DIR_DELAY           50000
-
-//
-// Motion Control
-//
-#define SHAPING_ZETA_X                           0.15
-#define SHAPING_ZETA_Y                           0.15
-#define INPUT_SHAPING_X
-#define INPUT_SHAPING_Y
-#define SHAPING_FREQ_X                           40.0
-#define SHAPING_FREQ_Y                           40.0
 
 //
 // Endstops
@@ -286,14 +271,14 @@
 #define FILAMENT_CHANGE_UNLOAD_FEEDRATE          10
 #define ADVANCED_PAUSE_FEATURE
 #define ADVANCED_PAUSE_PURGE_LENGTH              50
-#define PAUSE_PARK_NOZZLE_TIMEOUT                45
+#define PAUSE_PARK_NOZZLE_TIMEOUT                60
 #define ADVANCED_PAUSE_PURGE_FEEDRATE            3
 #define FILAMENT_CHANGE_UNLOAD_LENGTH            100
 #define PAUSE_PARK_RETRACT_FEEDRATE              60
 #define FILAMENT_CHANGE_FAST_LOAD_ACCEL          25
 #define PAUSE_PARK_NO_STEPPER_TIMEOUT
 #define PARK_HEAD_ON_PAUSE
-#define FILAMENT_CHANGE_ALERT_BEEPS              10
+#define FILAMENT_CHANGE_ALERT_BEEPS              15
 #define FILAMENT_LOAD_UNLOAD_GCODES
 #define FILAMENT_CHANGE_SLOW_LOAD_LENGTH         0
 #define FILAMENT_UNLOAD_PURGE_LENGTH             8
@@ -419,7 +404,7 @@
 //
 // G-code
 //
-#define BLOCK_BUFFER_SIZE                        8
+#define BLOCK_BUFFER_SIZE                        16
 #define FASTER_GCODE_PARSER
 #define DEBUG_FLAGS_GCODE
 
@@ -428,7 +413,7 @@
 //
 #define SERIAL_PORT                              1
 #define BAUDRATE                                 115200
-#define BUFSIZE                                  8
+#define BUFSIZE                                  16
 #define MAX_CMD_SIZE                             96
 #define PROPORTIONAL_FONT_RATIO                  1.0
 #define SERIAL_OVERRUN_PROTECTION
