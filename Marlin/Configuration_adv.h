@@ -3081,7 +3081,7 @@
    * Interpolate microsteps to 256
    * Override for each driver with <driver>_INTERPOLATE settings below
    */
-  #define INTERPOLATE      false
+  #define INTERPOLATE      true
 
   #if HAS_DRIVER(TMC2240)
     #define TMC2240_RREF        12000   // (Ω) 12000 .. 60000. (FLY TMC2240 = 12300)
@@ -3097,7 +3097,7 @@
     #define X_MICROSTEPS     16        // 0..256
     #define X_RSENSE          0.15
     #define X_CHAIN_POS      -1        // -1..0: Not chained. 1: MCU MOSI connected. 2: Next in chain, ...
-    #define X_INTERPOLATE  false      // Enable to override 'INTERPOLATE' for the X axis
+    // #define X_INTERPOLATE  false      // Enable to override 'INTERPOLATE' for the X axis
     #define X_HOLD_MULTIPLIER 0.5    // Enable to override 'HOLD_MULTIPLIER' for the X axis
   #endif
 
@@ -3117,7 +3117,7 @@
     #define Y_MICROSTEPS     16
     #define Y_RSENSE          0.15
     #define Y_CHAIN_POS      -1
-    #define Y_INTERPOLATE  false
+    // #define Y_INTERPOLATE  false
     #define Y_HOLD_MULTIPLIER 0.5
   #endif
 
