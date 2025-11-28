@@ -62,7 +62,7 @@ typedef struct _model_information_t
 }model_information_t;
 
 extern model_information_t model_information;
-
+extern char my_short_fn[13];
 
 
 #define PRIWIEW_PIC_FORMAT_NEED         PIC_FORMAT_JPG
@@ -91,6 +91,8 @@ extern model_information_t model_information;
 
 /*-------------------------------------- System variable function --------------------------------------*/
 extern uint8_t read_gcode_model_information(const char* fileName);
+extern bool DWIN_RenderThumb(const char *filename);
+
 
 void Draw_Curve_Set(uint8_t line_wide,uint8_t step_x,uint16_t step_y,uint32_t colour);
 void Draw_Curve_Data(uint8_t index,int16_t* temp_data);

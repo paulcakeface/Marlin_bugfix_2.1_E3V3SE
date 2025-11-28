@@ -162,6 +162,10 @@ enum DC_language current_language;
 volatile uint8_t checkkey = 0;
 // 0 Without interruption, 1 runout filament paused 2 remove card pause
 static bool temp_remove_card_flag = false, temp_cutting_line_flag = false /*,temp wifi print flag=false*/;
+
+bool hasThumbnail = false;
+int clear_UpperArea = 0;
+
 typedef struct
 {
   uint8_t now, last;
@@ -2845,6 +2849,16 @@ void Draw_Select_Highlight(const bool sel)
 #endif
 }
 
+
+void Clear_Thumb_UpperArea(){
+  DWIN_Draw_Rectangle(1, Color_Bg_Black, 0, 25, 240, 124);
+
+}
+void Clear_Thumb_Area()
+{
+  DWIN_Draw_Rectangle(1, Color_Bg_Black, 0, 123, 240, 319);
+}
+
 void Popup_window_PauseOrStop()
 {
   Clear_Main_Window();
@@ -3257,6 +3271,56 @@ void Goto_PrintProcess()
   Draw_Print_ProgressElapsed(); // Show current time
   Draw_Print_ProgressRemain();  // Show remaining time
 }
+
+
+// custom print process
+// Function to render the print job details from Octoprint in the LCD.
+void Goto_ThumbPrintProcess(){
+
+  checkkey = PrintProcess;
+  Clear_Title_Bar();
+  // Clear the upper area just once, when loading first time
+  if(clear_UpperArea == 0){
+    Clear_Thumb_UpperArea();
+  }
+  
+  Clear_Thumb_Area();
+  Draw_Mid_Status_Area(true);
+  clear_UpperArea++;
+  HMI_flag.Refresh_bottom_flag = false;
+
+  // Draw_OctoTitle(vfilename); // FileName as Title
+  //  if (vthumb == NULL || vthumb[0] == '\0')
+  //   DC_"Show_defaut_imageOcto(); // For the moment show default preview
+
+  Draw_Print_ProgressBar(); 
+  DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 123, F("Print Time:")); // Label Print Time
+  // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 123, F());   // value Print Time
+  DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 144, F("Time Left:"));  // Label Time Left
+  // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 144, F());   // value Time Left
+  DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 165, F("Layer:"));      // Label Print Time
+  // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 80, 165, F());    // Label Print Time
+
+  ICON_Tune();
+  // Pause --Pause
+  if (HMI_flag.pause_flag)
+  {
+    // Show_JPN_pause_title(); //Show title -Show Title
+    ICON_Continue();
+  }
+  else
+  {
+    // Printing --Printing
+    // Show_JPN_print_title();
+    ICON_Pause();
+  }
+  // Stop button --Stop
+  ICON_Stop();
+}
+
+
+
+
 
 void Goto_MainMenu()
 {
@@ -5315,6 +5379,18 @@ static void Display_Estimated_Time(int time) // Display remaining time.
 // Picture preview details display
 static void Image_Preview_Information_Show(uint8_t ret)
 {
+
+
+  if (!hasThumbnail){
+    SERIAL_ECHOLNPGM("No Image Preview Data");
+    hasThumbnail = false;
+    DC_Show_defaut_image(); // Show default image 
+  }else{
+    // Image preview successful
+    SERIAL_ECHOLNPGM("Image Preview Data Found");
+    hasThumbnail = true;
+  }
+
 #if ENABLED(DWIN_CREALITY_480_LCD)
 #elif ENABLED(DWIN_CREALITY_320_LCD)
   // show title
@@ -5507,11 +5583,21 @@ void HMI_SelectFile()
       make_name_without_ext(str, name);
       Draw_Title(str);
       uint8_t ret = METADATA_PARSE_ERROR;
+     
       // Ender-3v3 SE temporarily does not support the image preview function to prevent freezing and displays the default preview image.
+    
+      strncpy(my_short_fn, card.filename, sizeof(my_short_fn) - 1);
+      my_short_fn[sizeof(my_short_fn) - 1] = '\0';
+
+      SERIAL_ECHOLNPGM("Image Preview Info");
+      SERIAL_ECHOLNPGM("File Name: ", my_short_fn);
+      
+      hasThumbnail = DWIN_RenderThumb(my_short_fn);
+     
       // ret = gcodePicDataSendToDwin(card.filename, VP_OVERLAY_PIC_PREVIEW_1, PRIWIEW_PIC_FORMAT_NEED, PRIWIEW_PIC_RESOLITION_NEED);
-      ret = read_gcode_model_information(card.filename);
+      ret = read_gcode_model_information(my_short_fn);
       // if(ret == PIC_MISS_ERR)
-      DC_Show_defaut_image();              // Since this project does not have image preview data, the default small robot image is displayed.
+      // DC_Show_defaut_image();              // Since this project does not have image preview data, the default small robot image is displayed.
       Image_Preview_Information_Show(ret); // Picture preview details display
     }
   }
@@ -10167,7 +10253,13 @@ void Show_G_Pic(void)
         recovery.info.sd_printing_flag = true;
 
         card.openAndPrintFile(card.filename);
-        Goto_PrintProcess();
+
+        if(hasThumbnail){
+          Goto_ThumbPrintProcess();
+          
+        } else {
+         Goto_PrintProcess();
+        }  
 #if ENABLED(USER_LEVEL_CHECK) // Using the leveling calibration function
         if (HMI_flag.Level_check_flag && (!card.isPrinting()))
         {

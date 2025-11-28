@@ -49,6 +49,7 @@ uint8_t DWIN_SendBuf[11 + DWIN_WIDTH / 6 * 2] = { 0xAA };
 uint8_t DWIN_BufTail[4] = { 0xCC, 0x33, 0xC3, 0x3C };
 uint8_t databuf[26] = { 0 };
 uint8_t receivedType;
+char my_short_fn[13] = { 0 };
 
 int recnum = 0;
 
@@ -652,6 +653,158 @@ void DWIN_ICON_SHOW_SRAM(uint16_t x,uint16_t y,uint16_t addr)
 }
 
 
+// Thumbnail read/write routines
+bool gcode_readline(char *buffer, const size_t bufsize) {
+  size_t i = 0;
+  while (!card.eof()) {
+    int16_t c = card.get();
+    if (c < 0) break;
+    if (c == '\n' || c == '\r') {
+      if (i == 0) continue;       // saltar líneas vacías consecutivas
+      break;
+    }
+    if (i + 1 < bufsize)         // dejar espacio para '\0'
+      buffer[i++] = char(c);
+  }
+  buffer[i] = '\0';
+  return i > 0;
+}
+
+
+
+
+static uint16_t parse_hex4(const char *p) {
+  uint16_t v = 0;
+  for (uint8_t i = 0; i < 4; i++) {
+    const char c = p[i];
+    uint8_t n;
+    if      (c >= '0' && c <= '9') n = c - '0';
+    else if (c >= 'A' && c <= 'F') n = c - 'A' + 10;
+    else if (c >= 'a' && c <= 'f') n = c - 'a' + 10;
+    else return 0;  // unexpected character -> black color
+    v = (v << 4) | n;
+  }
+  return v;
+}
+
+
+bool find_thumb_raw16_header(uint16_t &w, uint16_t &h) {
+  char line[96];
+
+  // Asegurarnos de empezar al principio del archivo
+  card.setIndex(0);
+
+  while (gcode_readline(line, sizeof(line))) {
+    if (line[0] != ';') continue;
+
+    char *p = line + 1;
+    while (*p == ' ') p++;
+
+    // Buscamos exactamente: "; E3V3SE_THUMB_RAW16_BEGIN 96x96"
+    if (strncmp(p, "E3V3SE_THUMB_RAW16_BEGIN", 24) == 0) {
+      uint16_t tw = 0, th = 0;
+
+      // Intentar parsear el " 96x96" que viene justo después
+      if (sscanf(p + 24, "%hu%*c%hu", &tw, &th) == 2) {
+        w = tw;
+        h = th;
+      }
+      else {
+        w = 96;
+        h = 96;
+      }
+
+      SERIAL_ECHOLNPGM("RAW16 header found. w=", w);
+      SERIAL_ECHOLNPGM(" h=", h);
+      return true;
+    }
+  }
+
+  SERIAL_ECHOLNPGM("RAW16 header NOT found.");
+  return false;
+}
+
+
+static constexpr uint16_t THUMB_X_START = 12;
+static constexpr uint16_t THUMB_Y_START = 25;
+
+ bool DWIN_RenderThumb(const char *filename) {
+  SERIAL_ECHOLNPGM("DWIN_RenderThumb using: ", filename);
+  SERIAL_ECHOLNPGM("Card current filename (before open): ", card.filename);
+
+  card.openFileRead(filename);
+  if (!card.isFileOpen()) {
+    SERIAL_ECHOLNPGM("No file open.");
+    return false;
+  }
+
+  uint16_t w = 0, h = 0;
+  if (!find_thumb_raw16_header(w, h)) {
+    card.closefile();
+    return false;
+  }
+
+  if (w > 96) w = 96;
+  if (h > 96) h = 96;
+
+  char line[4 * 96 + 8]; // 384 hex + '; ' + '\0'
+
+  uint16_t y = 0;
+  while (y < h && gcode_readline(line, sizeof(line))) {
+
+    // Saltar líneas que no sean de datos de imagen
+    if (line[0] != ';') continue;
+
+    const char *p = line + 1;
+    while (*p == ' ') p++;
+
+    // ¿Llegamos al END?
+    if (strncmp(p, "E3V3SE_THUMB_RAW16_END", 23) == 0) {
+      SERIAL_ECHOLNPGM("RAW16 end reached.");
+      break;
+    }
+
+    const size_t len = strlen(p);
+    if (len < w * 4) {
+      SERIAL_ECHOLNPGM("Line too short for RAW16: len=", len);
+      break;
+    }
+
+    // Debug rápido de la primera fila
+    if (y == 0) {
+      SERIAL_ECHOLNPGM("First RAW16 data row: ");
+      SERIAL_ECHO(p);
+      SERIAL_ECHOLNPGM("");
+    }
+
+    for (uint16_t x = 0; x < w; x++) {
+      const char *px = p + x * 4;
+      const uint16_t color = parse_hex4(px);
+
+      // Debug de algunos puntos para ver si salen distintos de 0
+      if ((y == 0 && (x == 0 || x == w/2 || x == w-1))) {
+        SERIAL_ECHOPGM("px(", x);
+        SERIAL_ECHOPGM(",", y);
+        SERIAL_ECHOLNPGM(") color=", color);
+      }
+
+      DWIN_Draw_Rectangle(
+        1, color,
+        THUMB_X_START + x, THUMB_Y_START + y,
+        THUMB_X_START + x, THUMB_Y_START + y
+      );
+      delayMicroseconds(70); // give some time to DWIN to process the data
+    }
+
+    y++;
+  }
+
+  card.closefile();
+  SERIAL_ECHOLNPGM("RAW16 drawn rows: ", y);
+  return y > 0;
+}
+
+// ----
 #define ORCA_FOOTER_WINDOW    32768UL     //Bytes from the end that we are going to scan
 
 // Remove trailing spaces/newlines
@@ -704,6 +857,8 @@ uint8_t read_gcode_model_information(const char* fileName) {
   char string_buf[_GCODE_METADATA_STRING_LENGTH_MAX + 1];
   char byte;
   uint16_t line_idx = 0;
+  SERIAL_ECHOLNPGM("read_gcode_model using: ", fileName);
+  SERIAL_ECHOLNPGM("Card current filename: ", card.filename);
 
   // SERIAL_ECHOLNPAIR("Reading model information from G-code file: ", fileName);
   // SERIAL_ECHOLN("Resetting model information variables.");
