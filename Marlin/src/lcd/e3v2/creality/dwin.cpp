@@ -3273,64 +3273,6 @@ void Goto_PrintProcess()
 }
 
 
-// custom print process
-// Function to render the print job details from Octoprint in the LCD.
-void Goto_ThumbPrintProcess(){
-
-      
-      SERIAL_ECHOLNPGM("Image Preview Info");
-      SERIAL_ECHOLNPGM("File Name: ", my_short_fn);
-      
-      Clear_Thumb_Area();
-      hasThumbnail = DWIN_RenderThumb(my_short_fn);
-     
-      // ret = gcodePicDataSendToDwin(card.filename, VP_OVERLAY_PIC_PREVIEW_1, PRIWIEW_PIC_FORMAT_NEED, PRIWIEW_PIC_RESOLITION_NEED);
-      // ret = read_gcode_model_information(my_short_fn);
-      // if(ret == PIC_MISS_ERR)
-      // DC_Show_defaut_image();              // Since this project does not have image preview data, the default small robot image is displayed.
-      // Image_Preview_Information_Show(ret); 
-
-  // checkkey = PrintProcess;
-  // Clear_Title_Bar();
-  // // Clear the upper area just once, when loading first time
-  // if(clear_UpperArea == 0){
-  //   Clear_Thumb_UpperArea();
-  // }
-  
-  // Clear_Thumb_Area();
-  // Draw_Mid_Status_Area(true);
-  // clear_UpperArea++;
-  // HMI_flag.Refresh_bottom_flag = false;
-
-  // // Draw_OctoTitle(vfilename); // FileName as Title
-  // //  if (vthumb == NULL || vthumb[0] == '\0')
-  // //   DC_"Show_defaut_imageOcto(); // For the moment show default preview
-
-  // Draw_Print_ProgressBar(); 
-  // DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 123, F("Print Time:")); // Label Print Time
-  // // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 123, F());   // value Print Time
-  // DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 144, F("Time Left:"));  // Label Time Left
-  // // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 144, F());   // value Time Left
-  // DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 165, F("Layer:"));      // Label Print Time
-  // // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 80, 165, F());    // Label Print Time
-
-  // ICON_Tune();
-  // // Pause --Pause
-  // if (HMI_flag.pause_flag)
-  // {
-  //   // Show_JPN_pause_title(); //Show title -Show Title
-  //   ICON_Continue();
-  // }
-  // else
-  // {
-  //   // Printing --Printing
-  //   // Show_JPN_print_title();
-  //   ICON_Pause();
-  // }
-  // // Stop button --Stop
-  ICON_Stop();
-}
-
 
 
 
@@ -5360,14 +5302,8 @@ void DC_Show_defaut_image()
 #endif
 }
 
-void DC_Show_defaut_imageOcto()
-{
-#if ENABLED(DWIN_CREALITY_480_LCD)
-  DWIN_ICON_Show(ICON, ICON_Defaut_Image, 36, 35);
-#elif ENABLED(DWIN_CREALITY_320_LCD)
-  DWIN_ICON_Show(ICON, ICON_Defaut_Image, 2, ICON_Defaut_Image_Y);
-#endif
-}
+
+
 
 static void Display_Estimated_Time(int time) // Display remaining time.
 {
@@ -5392,17 +5328,15 @@ static void Display_Estimated_Time(int time) // Display remaining time.
 // Picture preview details display
 static void Image_Preview_Information_Show(uint8_t ret)
 {
-
-
-  if (!hasThumbnail){
-    SERIAL_ECHOLNPGM("No Image Preview Data");
-    hasThumbnail = false;
-    DC_Show_defaut_image(); // Show default image 
-  }else{
-    // Image preview successful
-    SERIAL_ECHOLNPGM("Image Preview Data Found");
-    hasThumbnail = true;
-  }
+  // if (!hasThumbnail){
+  //   SERIAL_ECHOLNPGM("No Image Preview Data");
+  //   hasThumbnail = false;
+  //   DC_Show_defaut_image(); // Show default image 
+  // }else{
+  //   // Image preview successful
+  //   SERIAL_ECHOLNPGM("Image Preview Data Found");
+  //   hasThumbnail = true;
+  // }
 
 #if ENABLED(DWIN_CREALITY_480_LCD)
 #elif ENABLED(DWIN_CREALITY_320_LCD)
@@ -5437,6 +5371,54 @@ static void Image_Preview_Information_Show(uint8_t ret)
   }
 
 #endif
+}
+
+
+// Image preview interface
+void Goto_ThumbPreview(){
+
+      SERIAL_ECHOLNPGM("Image Preview Info");
+      SERIAL_ECHOLNPGM("File Name: ", my_short_fn);
+      checkkey = Show_gcode_pic;
+      select_show_pic.reset();
+      HMI_flag.select_flag = true;
+      Clear_Main_Window();
+      Draw_Mid_Status_Area(true);
+
+      if (HMI_flag.language < Language_Max)
+        {
+          DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Confirm, BUTTON_X, BUTTON_Y);
+          DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Cancel, BUTTON_X + BUTTON_OFFSET_X, BUTTON_Y);
+        }
+
+#if ENABLED(USER_LEVEL_CHECK)
+        select_show_pic.now = 0; // Default selection
+#else
+        select_show_pic.now = 1; // Default selection
+#endif
+
+      Draw_Show_G_Select_Highlight(true);
+      
+      char *const name = card.longest_filename();
+      char str[strlen(name) + 1];
+      // Cancel the suffix. For example: filename.gcode and remove .gocde.
+      make_name_without_ext(str, name);
+      
+
+      Draw_Title("Finding thumbnail, wait...");
+      hasThumbnail = DWIN_RenderThumb(my_short_fn);
+
+      if (!hasThumbnail) {
+        SERIAL_ECHOLNPGM("No thumbnail found, displaying default image.");
+        DC_Show_defaut_image(); // Show default image if no thumbnail is found
+      } else {
+        SERIAL_ECHOLNPGM("Thumbnail displayed successfully.");
+      }
+     
+      Draw_Title(str);
+      uint8_t ret = METADATA_PARSE_ERROR;
+      ret = read_gcode_model_information(my_short_fn);
+      Image_Preview_Information_Show(ret); 
 }
 
 // Select (and Print) File
@@ -5568,48 +5550,39 @@ void HMI_SelectFile()
       }
       else
       {
-        checkkey = Show_gcode_pic;
-        select_show_pic.reset();
-        HMI_flag.select_flag = true;
-        Clear_Main_Window();
-        Draw_Mid_Status_Area(true); // Rock 20230529
-        if (HMI_flag.language < Language_Max)
-        {
-#if ENABLED(DWIN_CREALITY_480_LCD)
-          DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Confirm, 26, 315);
-          DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Cancel, 146, 315);
-#elif ENABLED(DWIN_CREALITY_320_LCD)
-          DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Confirm, BUTTON_X, BUTTON_Y);
-          DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Cancel, BUTTON_X + BUTTON_OFFSET_X, BUTTON_Y);
-#endif
-        }
-#if ENABLED(USER_LEVEL_CHECK)
-        select_show_pic.now = 0; // Default selection
-#else
-        select_show_pic.now = 1; // Default selection
-#endif
-        Draw_Show_G_Select_Highlight(true);
-      }
-      char *const name = card.longest_filename();
-      char str[strlen(name) + 1];
-      // Cancel the suffix. For example: filename.gcode and remove .gocde.
-      make_name_without_ext(str, name);
-      Draw_Title(str);
-      uint8_t ret = METADATA_PARSE_ERROR;
-     
-      // Ender-3v3 SE temporarily does not support the image preview function to prevent freezing and displays the default preview image.
-    
+        // checkkey = Show_gcode_pic;
+        // select_show_pic.reset();
+        // HMI_flag.select_flag = true;
+        // Clear_Main_Window();
+        // Draw_Mid_Status_Area(true); // Rock 20230529
+//         if (HMI_flag.language < Language_Max)
+//         {
+// #if ENABLED(DWIN_CREALITY_480_LCD)
+//           DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Confirm, 26, 315);
+//           DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Cancel, 146, 315);
+// #elif ENABLED(DWIN_CREALITY_320_LCD)
+//           DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Confirm, BUTTON_X, BUTTON_Y);
+//           DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Cancel, BUTTON_X + BUTTON_OFFSET_X, BUTTON_Y);
+// #endif
+//         }
+// #if ENABLED(USER_LEVEL_CHECK)
+//         select_show_pic.now = 0; // Default selection
+// #else
+//         select_show_pic.now = 1; // Default selection
+// #endif
+//         Draw_Show_G_Select_Highlight(true);
+     }
+      // char *const name = card.longest_filename();
+      // char str[strlen(name) + 1];
+      // // Cancel the suffix. For example: filename.gcode and remove .gocde.
+      // make_name_without_ext(str, name);
+      // Draw_Title(str);
+      
       strncpy(my_short_fn, card.filename, sizeof(my_short_fn) - 1);
       my_short_fn[sizeof(my_short_fn) - 1] = '\0';
 
-      Goto_ThumbPrintProcess();
+      Goto_ThumbPreview();
 
-      // SERIAL_ECHOLNPGM("Image Preview Info");
-      // SERIAL_ECHOLNPGM("File Name: ", my_short_fn);
-      
-      // Clear_Thumb_Area();
-      // hasThumbnail = DWIN_RenderThumb(my_short_fn);
-     
       // // ret = gcodePicDataSendToDwin(card.filename, VP_OVERLAY_PIC_PREVIEW_1, PRIWIEW_PIC_FORMAT_NEED, PRIWIEW_PIC_RESOLITION_NEED);
       // ret = read_gcode_model_information(my_short_fn);
       // // if(ret == PIC_MISS_ERR)
@@ -10270,12 +10243,9 @@ void Show_G_Pic(void)
 
         card.openAndPrintFile(card.filename);
 
-        if(hasThumbnail){
-          Goto_ThumbPrintProcess();
-          
-        } else {
+          //! todo go to rendering process
          Goto_PrintProcess();
-        }  
+          
 #if ENABLED(USER_LEVEL_CHECK) // Using the leveling calibration function
         if (HMI_flag.Level_check_flag && (!card.isPrinting()))
         {

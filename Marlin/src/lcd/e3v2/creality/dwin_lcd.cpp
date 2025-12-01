@@ -1,28 +1,28 @@
 /**
- * Marlin 3D Printer Firmware
- * Copyright (c) 2020 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ *Marlin 3D Printer Firmware
+ *Copyright (c) 2020 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
- * Based on Sprinter and grbl.
- * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
+ *Based on Sprinter and grbl.
+ *Copyright (c) 2011 Camiel Gubbels /Erik van der Zalm
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *This program is free software: you can redistribute it and/or modify
+ *it under the terms of the GNU General Public License as published by
+ *the Free Software Foundation, either version 3 of the License, or
+ *(at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *This program is distributed in the hope that it will be useful,
+ *but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *You should have received a copy of the GNU General Public License
+ *along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 /********************************************************************************
  * @file     dwin_lcd.cpp
- * @author   LEO / Creality3D
+ * @author   LEO /Creality3D
  * @date     2019/07/18
  * @version  2.0.1
  * @brief    DWIN screen control functions
@@ -90,7 +90,7 @@ inline void DWIN_Send(size_t &i) {
   LOOP_L_N(n, 4) { LCD_SERIAL.write(DWIN_BufTail[n]); delayMicroseconds(1); }
 }
 
-/*-------------------------------------- System variable function --------------------------------------*/
+/*--------------------------------------System variable function --------------------------------------*/
 
 // Handshake (1: Success, 0: Fail)
 bool DWIN_Handshake(void)
@@ -100,7 +100,7 @@ bool DWIN_Handshake(void)
   #endif
   LCD_SERIAL.begin(LCD_BAUDRATE);
   const millis_t serial_connect_timeout = millis() + 1000UL;
-  while (!LCD_SERIAL.connected() && PENDING(millis(), serial_connect_timeout)) { /*nada*/ }
+  while (!LCD_SERIAL.connected() && PENDING(millis(), serial_connect_timeout)) { /*Nothing*/ }
 
   size_t i = 0;
   DWIN_Byte(i, 0x00);
@@ -163,7 +163,7 @@ void DWIN_UpdateLCD(void)
   DWIN_Send(i);
 }
 
-/*---------------------------------------- Drawing functions ----------------------------------------*/
+/*----------------------------------------Drawing functions ----------------------------------------*/
 
 // Clear screen
 //  color: Clear screen color
@@ -191,8 +191,8 @@ void DWIN_Set_Color(uint16_t FC,uint16_t BC)
 {
   size_t i = 0;
   DWIN_Byte(i, 0x40);
-  DWIN_Word(i, FC);  //前景色
-  DWIN_Word(i, BC);  //背景色
+  DWIN_Word(i, FC);  //foreground color
+  DWIN_Word(i, BC);  //background color
   DWIN_Send(i);
 }
 
@@ -200,10 +200,10 @@ void DWIN_Set_24_Color(uint32_t BC)
 {
   size_t i = 0;
   DWIN_Byte(i, 0x40); 
-  DWIN_Byte(i, BC>>16); //背景色
+  DWIN_Byte(i, BC>>16); //background color
   DWIN_Byte(i, BC>>8);
   DWIN_Byte(i, BC);
-  DWIN_Byte(i, 255);  //前景色
+  DWIN_Byte(i, 255);  //foreground color
   DWIN_Byte(i, 255);
   DWIN_Byte(i, 255);
   DWIN_Send(i);
@@ -244,10 +244,10 @@ void DWIN_Draw_Rectangle(uint8_t mode, uint16_t color,
       temp_mode = 0x5B;
       break;
      case 2:
-      temp_mode = 0x69; //背景色显示矩形区域
+      temp_mode = 0x69; //Background color displays rectangular area
       break;
      case 3:
-      temp_mode = 0x5A; //背景色填充矩形区域
+      temp_mode = 0x5A; //Background color fills rectangular area
       break;
     default:
       break;
@@ -286,24 +286,24 @@ void DWIN_Frame_AreaMove(uint8_t mode, uint8_t dir, uint16_t dis,
   DWIN_Send(i);
 }
 
-// uint16_t color,uint8_t width,uint8_t x_step,uint16_t y_ratio     通道  固定  XsYs      XeYe      颜色    粗细  X步长  Y=0位置 Y数据比例
-// AA 84 00    FF    0010 0020 0074 00C8 00F800  01    05     00C8    0100      CC33C33C 
+// uint16_t color,uint8_t width,uint8_t x_step,uint16_t y_ratio channel fixed XsYs XeYe color thickness X step Y=0 position Y data ratio
+// AA 84 00 FF 0010 0020 0074 00C8 00F800 01 05 00C8 0100 CC33C33C 
 void Draw_Curve_Set(uint8_t line_wide,uint8_t step_x,uint16_t step_y,uint32_t colour)
 {
   size_t i = 0;
   DWIN_Byte(i, 0x84);
   DWIN_Byte(i, 0x00);
   DWIN_Byte(i, 0xFF);
-  DWIN_Word(i, Curve_Psition_Start_X); //left_up_x
-  DWIN_Word(i, Curve_Psition_Start_Y); //left_up_y
-  DWIN_Word(i, Curve_Psition_End_X);  //right_down_x
-  DWIN_Word(i, Curve_Psition_End_Y); //right_down_y
+  DWIN_Word(i, Curve_Psition_Start_X); //Left up x
+  DWIN_Word(i, Curve_Psition_Start_Y); //Left up y
+  DWIN_Word(i, Curve_Psition_End_X);  //Right down x
+  DWIN_Word(i, Curve_Psition_End_Y); //Right down y
 
   DWIN_Byte(i, colour>>16);
-  DWIN_Word(i, colour);    //颜色
+  DWIN_Word(i, colour);    //color
 
-  DWIN_Byte(i,line_wide);  //粗细
-  DWIN_Byte(i, step_x);   //x步长
+  DWIN_Byte(i,line_wide);  //Thickness
+  DWIN_Byte(i, step_x);   //X step length
   DWIN_Word(i, Curve_Zero_Y);
   DWIN_Word(i, step_y);
   DWIN_Send(i);
@@ -313,16 +313,16 @@ void Draw_Curve_Data(uint8_t index,int16_t* temp_data)
 {
   size_t i = 0;
   DWIN_Byte(i, 0x84);
-  DWIN_Byte(i, 0x00);//通道
-  DWIN_Byte(i, 0x00);//固定
-  //数据
+  DWIN_Byte(i, 0x00);//aisle
+  DWIN_Byte(i, 0x00);//Fixed
+  //data
   for(uint8_t num=0;num<index;num++)
   {
     DWIN_Word(i, *(temp_data+num));
   }
   DWIN_Send(i);
 }
-/*---------------------------------------- Text related functions ----------------------------------------*/
+/*----------------------------------------Text related functions ----------------------------------------*/
 
 // Draw a string
 //  widthAdjust: true=self-adjust character width; false=no adjustment
@@ -344,11 +344,11 @@ void DWIN_Draw_String(bool widthAdjust, bool bShow, uint8_t size,
   DWIN_Byte(i, 0x98);
   DWIN_Word(i, x);
   DWIN_Word(i, y);
-  DWIN_Byte(i, 0);  //字库
+  DWIN_Byte(i, 0);  //font
 
   if(bShow)
   {
-    // 显示背景;
+    // show background;
     mode = 0x40;
   }
   else
@@ -356,7 +356,7 @@ void DWIN_Draw_String(bool widthAdjust, bool bShow, uint8_t size,
     mode = 0;
   }
 
-  // GBK编码
+  // Gbk encoding
   mode |= 0x02;
 
   DWIN_Byte(i, mode);
@@ -402,7 +402,7 @@ void DWIN_Draw_IntValue(uint8_t bShow, bool zeroFill, uint8_t zeroMode, uint8_t 
   DWIN_Word(i, color);
   DWIN_Word(i, bColor);
   DWIN_Byte(i, iNum);
-  DWIN_Byte(i, 0); // fNum
+  DWIN_Byte(i, 0); // F num
   DWIN_Word(i, x);
   DWIN_Word(i, y);
   #if 0
@@ -443,7 +443,7 @@ void DWIN_Draw_IntValue_N0SPACE(uint8_t bShow, bool zeroFill, uint8_t zeroMode, 
   DWIN_Word(i, color);
   DWIN_Word(i, bColor);
   DWIN_Byte(i, iNum);
-  DWIN_Byte(i, 0); // fNum
+  DWIN_Byte(i, 0); // F num
   DWIN_Word(i, x);
   DWIN_Word(i, y);
   #if 0
@@ -503,7 +503,7 @@ void DWIN_Draw_FloatValue(uint8_t bShow, bool zeroFill, uint8_t zeroMode, uint8_
   DWIN_Send(i);
 }
 
-/*---------------------------------------- Picture related functions ----------------------------------------*/
+/*----------------------------------------Picture related functions ----------------------------------------*/
 
 // Draw JPG and cached in #0 virtual display area
 // id: Picture ID
@@ -522,7 +522,7 @@ void DWIN_JPG_ShowAndCache(const uint8_t id)
 void DWIN_ICON_Not_Filter_Show(uint8_t libID, uint8_t picID, uint16_t x, uint16_t y) 
 {
   NOMORE(x, DWIN_WIDTH - 1);
-  NOMORE(y, DWIN_HEIGHT - 1); // -- ozy -- srl
+  NOMORE(y, DWIN_HEIGHT - 1); // --ozy --srl
   size_t i = 0;
 
   DWIN_Byte(i, 0x97);
@@ -541,7 +541,7 @@ void DWIN_ICON_Not_Filter_Show(uint8_t libID, uint8_t picID, uint16_t x, uint16_
 void DWIN_ICON_Show(uint8_t libID, uint8_t picID, uint16_t x, uint16_t y)
 {
   NOMORE(x, DWIN_WIDTH - 1);
-  // -- ozy -- srl
+  // --ozy --srl
   NOMORE(y, DWIN_HEIGHT - 1);
   size_t i = 0;
   DWIN_Byte(i, 0x97);
@@ -605,7 +605,7 @@ void DWIN_Frame_AreaCopy(uint8_t cacheID, uint16_t xStart, uint16_t yStart,
 //  interval: Display time interval, unit 10mS
 void DWIN_ICON_Animation(uint8_t animID, bool animate, uint8_t libID, uint8_t picIDs, uint8_t picIDe, uint16_t x, uint16_t y, uint16_t interval) {
   NOMORE(x, DWIN_WIDTH - 1);
-  NOMORE(y, DWIN_HEIGHT - 1); // -- ozy -- srl
+  NOMORE(y, DWIN_HEIGHT - 1); // --ozy --srl
   size_t i = 0;
   DWIN_Byte(i, 0x28);
   DWIN_Word(i, x);
@@ -660,10 +660,10 @@ bool gcode_readline(char *buffer, const size_t bufsize) {
     int16_t c = card.get();
     if (c < 0) break;
     if (c == '\n' || c == '\r') {
-      if (i == 0) continue;       // saltar líneas vacías consecutivas
+      if (i == 0) continue;       // skip consecutive empty lines
       break;
     }
-    if (i + 1 < bufsize)         // dejar espacio para '\0'
+    if (i + 1 < bufsize)         // leave space for '\0'
       buffer[i++] = char(c);
   }
   buffer[i] = '\0';
@@ -691,20 +691,24 @@ static uint16_t parse_hex4(const char *p) {
 bool find_thumb_raw16_header(uint16_t &w, uint16_t &h) {
   char line[96];
 
-  // Asegurarnos de empezar al principio del archivo
+  // Always start from the beginning of the file
   card.setIndex(0);
 
-  while (gcode_readline(line, sizeof(line))) {
+  uint16_t line_count = 0;
+
+  while (line_count < 50 && gcode_readline(line, sizeof(line))) {
+    line_count++;
+
     if (line[0] != ';') continue;
 
     char *p = line + 1;
     while (*p == ' ') p++;
 
-    // Buscamos exactamente: "; E3V3SE_THUMB_RAW16_BEGIN 96x96"
+    // Buscamos: "; E3V3SE_THUMB_RAW16_BEGIN 96x96"
     if (strncmp(p, "E3V3SE_THUMB_RAW16_BEGIN", 24) == 0) {
       uint16_t tw = 0, th = 0;
 
-      // Intentar parsear el " 96x96" que viene justo después
+      // Try to parse the "96x96" that comes right after
       if (sscanf(p + 24, "%hu%*c%hu", &tw, &th) == 2) {
         w = tw;
         h = th;
@@ -714,13 +718,13 @@ bool find_thumb_raw16_header(uint16_t &w, uint16_t &h) {
         h = 96;
       }
 
-      SERIAL_ECHOLNPGM("RAW16 header found. w=", w);
-      SERIAL_ECHOLNPGM(" h=", h);
+      SERIAL_ECHOPGM("RAW16 header found. w=96");
+      SERIAL_ECHOLNPGM(" h=96");
       return true;
     }
   }
 
-  SERIAL_ECHOLNPGM("RAW16 header NOT found.");
+  SERIAL_ECHOLNPGM("RAW16 header NOT found in first 50 lines.");
   return false;
 }
 
@@ -739,26 +743,28 @@ static constexpr uint16_t THUMB_Y_START = 25;
   }
 
   uint16_t w = 0, h = 0;
-  if (!find_thumb_raw16_header(w, h)) {
+  if (!find_thumb_raw16_header(w, h)) { // header not found, bail out
     card.closefile();
     return false;
   }
 
+  // header found, limit to max size
   if (w > 96) w = 96;
   if (h > 96) h = 96;
 
+ 
   char line[4 * 96 + 8]; // 384 hex + '; ' + '\0'
 
   uint16_t y = 0;
   while (y < h && gcode_readline(line, sizeof(line))) {
 
-    // Saltar líneas que no sean de datos de imagen
+    // Skip lines other than image data
     if (line[0] != ';') continue;
 
     const char *p = line + 1;
     while (*p == ' ') p++;
 
-    // ¿Llegamos al END?
+    // Have we reached the END?
     if (strncmp(p, "E3V3SE_THUMB_RAW16_END", 23) == 0) {
       SERIAL_ECHOLNPGM("RAW16 end reached.");
       break;
@@ -770,7 +776,7 @@ static constexpr uint16_t THUMB_Y_START = 25;
       break;
     }
 
-    // Debug rápido de la primera fila
+    // Quick debug of the first row
     if (y == 35) {
       SERIAL_ECHOLNPGM("RAW16 data row: ");
       SERIAL_ECHO(p);
@@ -781,19 +787,16 @@ static constexpr uint16_t THUMB_Y_START = 25;
       const char *px = p + x * 4;
       const uint16_t color = parse_hex4(px);
 
-      // Debug de algunos puntos para ver si salen distintos de 0
+      // Debug some points to see if they come out other than 0
       if ((y == 35 && (x == 0 || x == w/2 || x == w-1))) {
         SERIAL_ECHOPGM("px(", x);
         SERIAL_ECHOPGM(",", y);
         SERIAL_ECHOLNPGM(") color=", color);
       }
 
-      DWIN_Draw_Rectangle(
-        1, color,
-        THUMB_X_START + x, THUMB_Y_START + y,
-        THUMB_X_START + x, THUMB_Y_START + y
-      );
-      delayMicroseconds(1000); // give some time to DWIN to process the data
+      DWIN_Draw_Rectangle(1, color,THUMB_X_START + x, THUMB_Y_START + y, THUMB_X_START + x, THUMB_Y_START + y);
+      delay(4); // give some time to DWIN to process the data
+
     }
 
     y++;
@@ -847,7 +850,7 @@ static uint32_t parse_orca_time_to_seconds(const char *time_str) {
 
 model_information_t model_information;
 
-// static const char * gcode_information_name[] = {
+// static const char *gcode_information_name[] = {
 //   "TIME",
 //   "Filament used",
 //   "Layer height"
@@ -886,8 +889,8 @@ uint8_t read_gcode_model_information(const char* fileName) {
 
   // ---------------------------------------------------------------------------
   // PASS 1: first MAX_HEADER_LINES
-  //   - Search for Cura-type header (TIME, Filament used, Layer height)
-  //   - Detect if it is OrcaSlicer
+  //   -Search for Cura-type header (TIME, Filament used, Layer height)
+  //   -Detect if it is OrcaSlicer
   // ---------------------------------------------------------------------------
   while (!card.eof() && line_idx++ < _GCODE_METADATA_STRING_LENGTH_MAX) {
 
@@ -925,8 +928,8 @@ uint8_t read_gcode_model_information(const char* fileName) {
     if (!*char_pos)
       continue;
 
-    // --- Cura style ---
-    // ;TIME:441
+    // ---Curate style ---
+    // ;TIMES:441
     if (!have_cura_time && strncmp(char_pos, "TIME", 4) == 0) {
       const char *value_buf = char_pos + 4;
       while (*value_buf == ':' || *value_buf == ' ' || *value_buf == '=') value_buf++;
@@ -965,7 +968,7 @@ uint8_t read_gcode_model_information(const char* fileName) {
     }
 
     if (have_cura_time && have_cura_filament && have_cura_height) {
-      // card.closefile();
+      // Card.closefile();
       ui.set_remaining_time(ui.get_total_time());
       // SERIAL_ECHOLN("Cura-type header detected and parsed successfully.");
       // SERIAL_ECHOLNPAIR("Total time: ", ui.get_total_time());
@@ -978,7 +981,7 @@ uint8_t read_gcode_model_information(const char* fileName) {
 
   // If it is not Orca and we did not find a Cura-type header, exit
   if (!is_orca) {
-    // card.closefile();
+    // Card.closefile();
     return METADATA_PARSE_ERROR;
   }
 
@@ -1092,7 +1095,7 @@ uint8_t read_gcode_model_information(const char* fileName) {
   }
 
   //card.closefile();
-  // ---- Apply data obtained from Orca ----
+  // ----Apply data obtained from Orca ----
 
   // Total time (seconds)
   if (have_time)
@@ -1103,7 +1106,7 @@ uint8_t read_gcode_model_information(const char* fileName) {
     const float mm     = atof(filament_mm_str);
     const float meters = mm * 0.001f;
     char tmp[16];
-    dtostrf(meters, 0, 2, tmp);       // e.g.: "0.43"
+    dtostrf(meters, 0, 2, tmp);       // e.g.: "0.cz"
     char *p = tmp;
     while (*p == ' ') p++;            // remove leading spaces
 
@@ -1142,4 +1145,4 @@ uint8_t read_gcode_model_information(const char* fileName) {
 }
 
 
-#endif // DWIN_CREALITY_LCD
+#endif // Dwin creality lcd
