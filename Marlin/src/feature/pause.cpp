@@ -277,39 +277,87 @@ bool load_filament(const float slow_load_length/*=0*/, const float fast_load_len
 
   #else
 
-    do {
-      if (purge_length > 0) {
-        // "Wait for filament purge"
-        if (show_lcd) ui.pause_show_message(PAUSE_MESSAGE_PURGE);
+    // do {
+    //   if (purge_length > 0) {
+    //     // "Wait for filament purge"
+    //     if (show_lcd) ui.pause_show_message(PAUSE_MESSAGE_PURGE);
 
-        #if ENABLED(SOVOL_SV06_RTS)
-          rts.updateTempE0();
-          rts.gotoPage(ID_Purge_L, ID_Purge_D);
+    //     #if ENABLED(SOVOL_SV06_RTS)
+    //       rts.updateTempE0();
+    //       rts.gotoPage(ID_Purge_L, ID_Purge_D);
+    //     #endif
+
+    //     // Extrude filament to get into hotend
+    //     unscaled_e_move(purge_length, ADVANCED_PAUSE_PURGE_FEEDRATE);
+    //   }
+
+    //   TERN_(HOST_PROMPT_SUPPORT, hostui.filament_load_prompt()); // Initiate another host prompt.
+
+    //   #if M600_PURGE_MORE_RESUMABLE
+    //     if (show_lcd) {
+    //       // Show "Purge More" / "Resume" menu and wait for reply
+    //       KEEPALIVE_STATE(PAUSED_FOR_USER);
+    //       wait_for_user = false;
+    //       #if ANY(HAS_MARLINUI_MENU, EXTENSIBLE_UI)
+    //         ui.pause_show_message(PAUSE_MESSAGE_OPTION); // MarlinUI and MKS UI also set PAUSE_RESPONSE_WAIT_FOR
+    //       #else
+    //         pause_menu_response = PAUSE_RESPONSE_WAIT_FOR;
+    //         TERN_(SOVOL_SV06_RTS, rts.gotoPage(ID_PurgeMore_L, ID_PurgeMore_D));
+    //       #endif
+    //       while (pause_menu_response == PAUSE_RESPONSE_WAIT_FOR) idle_no_sleep();
+    //     }
+    //   #endif
+
+    //   // Keep looping if "Purge More" was selected
+    // } while (TERN0(M600_PURGE_MORE_RESUMABLE, pause_menu_response == PAUSE_RESPONSE_EXTRUDE_MORE));
+
+    bool serial_connection_active = false;
+    if(serial_connection_active){
+      do {
+        if (purge_length > 0) {
+          // "Wait for filament purge"
+          if (show_lcd) ui.pause_show_message(PAUSE_MESSAGE_PURGE);
+
+          // Extrude filament to get into hotend
+          unscaled_e_move(40, ADVANCED_PAUSE_PURGE_FEEDRATE);
+          
+        }
+
+        #if ENABLED(HOST_PROMPT_SUPPORT)
+          if (serial_connection_active) {
+          //TERN_(HOST_PROMPT_SUPPORT, filament_load_host_prompt()); // Initiate another host prompt.
+            hostui.filament_load_prompt();
+          }  
         #endif
 
-        // Extrude filament to get into hotend
-        unscaled_e_move(purge_length, ADVANCED_PAUSE_PURGE_FEEDRATE);
-      }
+        #if M600_PURGE_MORE_RESUMABLE
+          if(serial_connection_active){
+            if (show_lcd) {
+              // Show "Purge More" / "Resume" menu and wait for reply
+              KEEPALIVE_STATE(PAUSED_FOR_USER);
+              wait_for_user = false;
+              #if HAS_LCD_MENU
+                ui.pause_show_message(PAUSE_MESSAGE_OPTION); // Also sets PAUSE_RESPONSE_WAIT_FOR
+              #else
+                pause_menu_response = PAUSE_RESPONSE_WAIT_FOR;
+              #endif
+              while (pause_menu_response == PAUSE_RESPONSE_WAIT_FOR) idle_no_sleep();
+            }
+          }
+        #endif
 
-      TERN_(HOST_PROMPT_SUPPORT, hostui.filament_load_prompt()); // Initiate another host prompt.
+        // Keep looping if "Purge More" was selected
+      } while (TERN0(M600_PURGE_MORE_RESUMABLE, show_lcd && pause_menu_response == PAUSE_RESPONSE_EXTRUDE_MORE));
+      //} while (TERN0(serial_connection_active, show_lcd && pause_menu_response == PAUSE_RESPONSE_EXTRUDE_MORE));
+    }else{
+       if (purge_length > 0) {
+          // "Wait for filament purge"
+          if (show_lcd) ui.pause_show_message(PAUSE_MESSAGE_PURGE);
 
-      #if M600_PURGE_MORE_RESUMABLE
-        if (show_lcd) {
-          // Show "Purge More" / "Resume" menu and wait for reply
-          KEEPALIVE_STATE(PAUSED_FOR_USER);
-          wait_for_user = false;
-          #if ANY(HAS_MARLINUI_MENU, EXTENSIBLE_UI)
-            ui.pause_show_message(PAUSE_MESSAGE_OPTION); // MarlinUI and MKS UI also set PAUSE_RESPONSE_WAIT_FOR
-          #else
-            pause_menu_response = PAUSE_RESPONSE_WAIT_FOR;
-            TERN_(SOVOL_SV06_RTS, rts.gotoPage(ID_PurgeMore_L, ID_PurgeMore_D));
-          #endif
-          while (pause_menu_response == PAUSE_RESPONSE_WAIT_FOR) idle_no_sleep();
+          // Extrude filament to get into hotend
+          unscaled_e_move(40, ADVANCED_PAUSE_PURGE_FEEDRATE);
         }
-      #endif
-
-      // Keep looping if "Purge More" was selected
-    } while (TERN0(M600_PURGE_MORE_RESUMABLE, pause_menu_response == PAUSE_RESPONSE_EXTRUDE_MORE));
+    }
 
   #endif
 
