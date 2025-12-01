@@ -483,12 +483,12 @@
  * Enable Autotemp Mode with M104/M109 F<factor> S<mintemp> B<maxtemp>.
  * Disable by sending M104/M109 with no F parameter (or F0 with AUTOTEMP_PROPORTIONAL).
  */
-// #define AUTOTEMP
+#define AUTOTEMP
 #if ENABLED(AUTOTEMP)
   #define AUTOTEMP_OLDWEIGHT    0.98  // Factor used to weight previous readings (0.0 < value < 1.0)
-  // #define AUTOTEMP_MIN          210
-  // #define AUTOTEMP_MAX          250
-  // #define AUTOTEMP_FACTOR       0.1f
+  #define AUTOTEMP_MIN          210
+  #define AUTOTEMP_MAX          250
+  #define AUTOTEMP_FACTOR       0.1f
   // // Turn on AUTOTEMP on M104/M109 by default using proportions set here
   //#define AUTOTEMP_PROPORTIONAL
   #if ENABLED(AUTOTEMP_PROPORTIONAL)
@@ -1269,17 +1269,17 @@
  * Enable DISABLE_IDLE_* to shut down axis steppers after an idle period.
  * The default timeout duration can be overridden with M18 and M84. Set to 0 for No Timeout.
  */
-#define DEFAULT_STEPPER_TIMEOUT_SEC 120
-#define DISABLE_IDLE_X
-#define DISABLE_IDLE_Y
-#define DISABLE_IDLE_Z    // Disable if the nozzle could fall onto your printed part!
+#define DEFAULT_STEPPER_TIMEOUT_SEC 1200
+#define DISABLE_IDLE_X false
+#define DISABLE_IDLE_Y false
+#define DISABLE_IDLE_Z false    // Disable if the nozzle could fall onto your printed part!
 //#define DISABLE_IDLE_I
 //#define DISABLE_IDLE_J
 //#define DISABLE_IDLE_K
 //#define DISABLE_IDLE_U
 //#define DISABLE_IDLE_V
 //#define DISABLE_IDLE_W
-#define DISABLE_IDLE_E    // Shut down all idle extruders
+#define DISABLE_IDLE_E false    // Shut down all idle extruders
 
 // Default Minimum Feedrates for printing and travel moves
 #define DEFAULT_MINIMUMFEEDRATE       0.0     // (mm/s) Minimum feedrate. Set with M205 S.
@@ -1305,6 +1305,9 @@
 #ifdef XY_FREQUENCY_LIMIT
   #define XY_FREQUENCY_MIN_PERCENT 5 // (%) Minimum FR percentage to apply. Set with M201 S<min%>.
 #endif
+
+#define MINIMUM_PLANNER_SPEED 0.05 // (mm/s)
+
 
 //
 // Backlash Compensation
@@ -1421,7 +1424,7 @@
  * vibration and surface artifacts. The algorithm adapts to provide the best possible step smoothing at the
  * lowest stepping frequencies.
  */
-//#define ADAPTIVE_STEP_SMOOTHING
+#define ADAPTIVE_STEP_SMOOTHING
 
 /**
  * Custom Microstepping
@@ -2327,7 +2330,7 @@
   //#define BABYSTEP_WITHOUT_HOMING
   //#define BABYSTEP_ALWAYS_AVAILABLE       // Allow babystepping at all times (not just during movement)
   //#define BABYSTEP_XY                     // Also enable X/Y Babystepping. Not supported on DELTA!
-  // #define BABYSTEP_INVERT_Z               // Enable if Z babysteps should go the other way
+  #define BABYSTEP_INVERT_Z false               // Enable if Z babysteps should go the other way
   #define BABYSTEP_MILLIMETER_UNITS       // Specify BABYSTEP_MULTIPLICATOR_(XY|Z) in mm instead of micro-steps
   #define BABYSTEP_MULTIPLICATOR_Z  0.01       // (steps or mm) Steps or millimeter distance for each Z babystep
   #define BABYSTEP_MULTIPLICATOR_XY 1       // (steps or mm) Steps or millimeter distance for each XY babystep
@@ -2604,7 +2607,7 @@
 //
 #define ARC_SUPPORT                   // Requires ~3226 bytes
 #if ENABLED(ARC_SUPPORT)
-  #define MIN_ARC_SEGMENT_MM      0.1 // (mm) Minimum length of each arc segment
+  #define MIN_ARC_SEGMENT_MM      1 // (mm) Minimum length of each arc segment
   #define MAX_ARC_SEGMENT_MM      1.0 // (mm) Maximum length of each arc segment
   #define MIN_CIRCLE_SEGMENTS    24   // Minimum number of segments in a complete circle
   //#define ARC_SEGMENTS_PER_SEC 50   // Use the feedrate to choose the segment length
@@ -2661,8 +2664,8 @@
  *
  * Override the default value based on the driver type set in Configuration.h.
  */
-//#define MINIMUM_STEPPER_POST_DIR_DELAY 200
-//#define MINIMUM_STEPPER_PRE_DIR_DELAY 200
+#define MINIMUM_STEPPER_POST_DIR_DELAY 50000
+// #define MINIMUM_STEPPER_PRE_DIR_DELAY 650
 
 /**
  * Minimum stepper driver pulse width (in ns)
@@ -2676,7 +2679,7 @@
  *
  * Override the default value based on the driver type set in Configuration.h.
  */
-//#define MINIMUM_STEPPER_PULSE_NS 3000
+// #define MINIMUM_STEPPER_PULSE_NS 2000
 
 /**
  * Maximum stepping rate (in Hz) the stepper driver allows
@@ -2727,7 +2730,7 @@
  *  - Other output doesn't need to be that speedy.
  * :[0, 2, 4, 8, 16, 32, 64, 128, 256]
  */
-#define TX_BUFFER_SIZE 32
+#define TX_BUFFER_SIZE 64
 
 /**
  * Host Receive Buffer Size
@@ -2823,7 +2826,7 @@
  * For clients that use a fixed-width font (like OctoPrint), leave this set to 1.0.
  * Otherwise, adjust according to your client and font.
  */
-#define PROPORTIONAL_FONT_RATIO 1.0
+ #define PROPORTIONAL_FONT_RATIO 1.0
 
 // @section extras
 

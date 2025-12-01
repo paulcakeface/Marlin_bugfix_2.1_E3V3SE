@@ -1335,7 +1335,7 @@
  * Override with M92 (when enabled below)
  *                                      X, Y, Z [, I [, J [, K...]]], E0 [, E1[, E2...]]
  */
-#define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 400, 424.9 }
+#define DEFAULT_AXIS_STEPS_PER_UNIT     { 80, 80, 400, 500 } // { 80, 80, 400, 424.9 }
 
 /**
  * Enable support for M92. Disable to save at least ~530 bytes of flash.
@@ -1436,7 +1436,7 @@
  *
  * See https://github.com/synthetos/TinyG/wiki/Jerk-Controlled-Motion-Explained
  */
-//#define S_CURVE_ACCELERATION
+#define S_CURVE_ACCELERATION
 
 //===========================================================================
 //============================= Z Probe Options =============================
@@ -2231,8 +2231,8 @@ extern uint8_t CZ_AFTER_HOMING;
  */
 #define PREHEAT_BEFORE_LEVELING
 #if ENABLED(PREHEAT_BEFORE_LEVELING)
-  #define LEVELING_NOZZLE_TEMP 170   // (°C) Only applies to E0 at this time
-  #define LEVELING_BED_TEMP     60
+  #define LEVELING_NOZZLE_TEMP 120   // (°C) Only applies to E0 at this time
+  #define LEVELING_BED_TEMP     50
 #endif
 
 /**
@@ -2614,9 +2614,9 @@ extern uint8_t CZ_AFTER_HOMING;
   // Specify a park position as { X, Y, Z_raise }
   #define NOZZLE_PARK_POINT { (0), (0), 0 }
   // #define NOZZLE_PARK_MOVE          0   // Park motion: 0 = XY Move, 1 = X Only, 2 = Y Only, 3 = X before Y, 4 = Y before X
-  #define NOZZLE_PARK_Z_RAISE_MIN   2   // (mm) Always raise Z by at least this distance
+  #define NOZZLE_PARK_Z_RAISE_MIN   5   // (mm) Always raise Z by at least this distance
   #define NOZZLE_PARK_XY_FEEDRATE 100   // (mm/s) X and Y axes feedrate (also used for delta Z axis)
-  #define NOZZLE_PARK_Z_FEEDRATE    5   // (mm/s) Z axis feedrate (not used for delta printers)
+  #define NOZZLE_PARK_Z_FEEDRATE   15   // (mm/s) Z axis feedrate (not used for delta printers)
 #endif
 
 /**

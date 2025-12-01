@@ -2,7 +2,7 @@
  * Config.h - Marlin Firmware distilled configuration
  * Usage: Place this file in the 'Marlin' folder with the name 'Config.h'.
  *
- * Exported by Marlin build on 2025-11-28 at 01:03:07.
+ * Exported by Marlin build on 2025-12-01 at 16:47:00.
  */
 
 //
@@ -93,7 +93,7 @@
 //
 // Motion
 //
-#define DEFAULT_AXIS_STEPS_PER_UNIT              { 80, 80, 400, 424.9 }
+#define DEFAULT_AXIS_STEPS_PER_UNIT              { 80, 80, 400, 500 }
 #define AXIS_RELATIVE_MODES                      { false, false, false, false }
 #define DEFAULT_MAX_FEEDRATE                     { 500, 500, 20, 30 }
 #define DEFAULT_MAX_ACCELERATION                 { 5000, 5000, 5000, 5000 }
@@ -110,23 +110,27 @@
 #define DEFAULT_RETRACT_ACCELERATION             3000
 #define DEFAULT_MINIMUMFEEDRATE                  0.0
 #define DEFAULT_MINTRAVELFEEDRATE                0.0
+#define MINIMUM_PLANNER_SPEED                    0.05
 #define MIN_STEPS_PER_SEGMENT                    4
 #define DEFAULT_MINSEGMENTTIME                   20000
 #define DEFAULT_EJERK                            10.0
 #define JD_HANDLE_SMALL_SEGMENTS
-#define DEFAULT_STEPPER_TIMEOUT_SEC              120
-#define DISABLE_IDLE_X
-#define DISABLE_IDLE_Y
-#define DISABLE_IDLE_Z
-#define DISABLE_IDLE_E
+#define DEFAULT_STEPPER_TIMEOUT_SEC              1200
+#define DISABLE_IDLE_X                           false
+#define DISABLE_IDLE_Y                           false
+#define DISABLE_IDLE_Z                           false
+#define DISABLE_IDLE_E                           false
 #define SLOWDOWN
 #define SLOWDOWN_DIVISOR                         2
 #define MAX_FEEDRATE_EDIT_VALUES                 { 1000, 1000, 40, 60 }
 #define MAX_ACCEL_EDIT_VALUES                    { 8000, 8000, 8000, 8000 }
+#define S_CURVE_ACCELERATION
 #define EDITABLE_STEPS_PER_UNIT
 #define LIMITED_MAX_FR_EDITING
 #define LIMITED_MAX_ACCEL_EDITING
+#define ADAPTIVE_STEP_SMOOTHING
 #define MULTISTEPPING_LIMIT                      16
+#define MINIMUM_STEPPER_POST_DIR_DELAY           50000
 
 //
 // Motion Control
@@ -216,6 +220,8 @@
 #define TEMP_BED_WINDOW                          1
 #define TEMP_RESIDENCY_TIME                      10
 #define TEMP_WINDOW                              1
+#define AUTOTEMP
+#define AUTOTEMP_OLDWEIGHT                       0.98
 #define TEMP_SENSOR_BED                          14
 #define THERMAL_PROTECTION_BED_HYSTERESIS        2
 #define WATCH_BED_TEMP_INCREASE                  2
@@ -238,7 +244,10 @@
 #define BED_MINTEMP                              0
 #define PREHEAT_2_TEMP_HOTEND                    230
 #define BED_MAXTEMP                              120
+#define AUTOTEMP_FACTOR                          0.1f
+#define AUTOTEMP_MIN                             210
 #define THERMAL_PROTECTION_BED_PERIOD            180
+#define AUTOTEMP_MAX                             250
 
 //
 // Hotend Temp
@@ -308,7 +317,7 @@
 #define ENABLE_LEVELING_FADE_HEIGHT
 #define EXTRAPOLATE_BEYOND_GRID
 #define G26_XY_FEEDRATE_TRAVEL                   100
-#define LEVELING_BED_TEMP                        60
+#define LEVELING_BED_TEMP                        50
 #define MESH_TEST_NOZZLE_SIZE                    0.4
 #define MESH_TEST_BED_TEMP                       60
 #define XY_DIAG_AC                               282.84
@@ -327,7 +336,7 @@
 #define ENABLE_LEVELING_AFTER_G28
 #define MESH_TEST_LAYER_HEIGHT                   0.2
 #define PREHEAT_BEFORE_LEVELING
-#define LEVELING_NOZZLE_TEMP                     170
+#define LEVELING_NOZZLE_TEMP                     120
 #define BILINEAR_SUBDIVISIONS                    4
 
 //
@@ -372,6 +381,7 @@
 #define ENCODER_5X_STEPS_PER_SEC                 30
 #define SHOW_ELAPSED_TIME
 #define MANUAL_FEEDRATE                          { 50*60, 50*60, 4*60, 2*60 }
+#define BABYSTEP_INVERT_Z                        false
 #define LONG_FILENAME_WRITE_SUPPORT
 #define AUTOTOOL_PRINT
 #define POWER_LOSS_RECOVERY
@@ -408,10 +418,10 @@
 // Nozzle Park
 //
 #define NOZZLE_PARK_FEATURE
-#define NOZZLE_PARK_Z_RAISE_MIN                  2
+#define NOZZLE_PARK_Z_RAISE_MIN                  5
 #define NOZZLE_PARK_XY_FEEDRATE                  100
 #define NOZZLE_PARK_POINT                        { (0), (0), 0 }
-#define NOZZLE_PARK_Z_FEEDRATE                   5
+#define NOZZLE_PARK_Z_FEEDRATE                   15
 
 //
 // G-code
@@ -429,7 +439,7 @@
 #define MAX_CMD_SIZE                             96
 #define PROPORTIONAL_FONT_RATIO                  1.0
 #define SERIAL_OVERRUN_PROTECTION
-#define TX_BUFFER_SIZE                           32
+#define TX_BUFFER_SIZE                           64
 #define CREALITY_LEVEL_COMPENSATION_ALGORITHM    1
 #define USER_LEVEL_CHECK                         1
 #define WUHAN_CHENGE_PLATFORM                    1
@@ -500,7 +510,7 @@
 //
 #define ARC_SUPPORT
 #define MAX_ARC_SEGMENT_MM                       1.0
-#define MIN_ARC_SEGMENT_MM                       0.1
+#define MIN_ARC_SEGMENT_MM                       1
 #define MIN_CIRCLE_SEGMENTS                      24
 #define N_ARC_CORRECTION                         25
 

@@ -3277,44 +3277,57 @@ void Goto_PrintProcess()
 // Function to render the print job details from Octoprint in the LCD.
 void Goto_ThumbPrintProcess(){
 
-  checkkey = PrintProcess;
-  Clear_Title_Bar();
-  // Clear the upper area just once, when loading first time
-  if(clear_UpperArea == 0){
-    Clear_Thumb_UpperArea();
-  }
+      
+      SERIAL_ECHOLNPGM("Image Preview Info");
+      SERIAL_ECHOLNPGM("File Name: ", my_short_fn);
+      
+      Clear_Thumb_Area();
+      hasThumbnail = DWIN_RenderThumb(my_short_fn);
+     
+      // ret = gcodePicDataSendToDwin(card.filename, VP_OVERLAY_PIC_PREVIEW_1, PRIWIEW_PIC_FORMAT_NEED, PRIWIEW_PIC_RESOLITION_NEED);
+      // ret = read_gcode_model_information(my_short_fn);
+      // if(ret == PIC_MISS_ERR)
+      // DC_Show_defaut_image();              // Since this project does not have image preview data, the default small robot image is displayed.
+      // Image_Preview_Information_Show(ret); 
+
+  // checkkey = PrintProcess;
+  // Clear_Title_Bar();
+  // // Clear the upper area just once, when loading first time
+  // if(clear_UpperArea == 0){
+  //   Clear_Thumb_UpperArea();
+  // }
   
-  Clear_Thumb_Area();
-  Draw_Mid_Status_Area(true);
-  clear_UpperArea++;
-  HMI_flag.Refresh_bottom_flag = false;
+  // Clear_Thumb_Area();
+  // Draw_Mid_Status_Area(true);
+  // clear_UpperArea++;
+  // HMI_flag.Refresh_bottom_flag = false;
 
-  // Draw_OctoTitle(vfilename); // FileName as Title
-  //  if (vthumb == NULL || vthumb[0] == '\0')
-  //   DC_"Show_defaut_imageOcto(); // For the moment show default preview
+  // // Draw_OctoTitle(vfilename); // FileName as Title
+  // //  if (vthumb == NULL || vthumb[0] == '\0')
+  // //   DC_"Show_defaut_imageOcto(); // For the moment show default preview
 
-  Draw_Print_ProgressBar(); 
-  DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 123, F("Print Time:")); // Label Print Time
-  // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 123, F());   // value Print Time
-  DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 144, F("Time Left:"));  // Label Time Left
-  // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 144, F());   // value Time Left
-  DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 165, F("Layer:"));      // Label Print Time
-  // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 80, 165, F());    // Label Print Time
+  // Draw_Print_ProgressBar(); 
+  // DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 123, F("Print Time:")); // Label Print Time
+  // // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 123, F());   // value Print Time
+  // DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 144, F("Time Left:"));  // Label Time Left
+  // // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 144, F());   // value Time Left
+  // DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 165, F("Layer:"));      // Label Print Time
+  // // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 80, 165, F());    // Label Print Time
 
-  ICON_Tune();
-  // Pause --Pause
-  if (HMI_flag.pause_flag)
-  {
-    // Show_JPN_pause_title(); //Show title -Show Title
-    ICON_Continue();
-  }
-  else
-  {
-    // Printing --Printing
-    // Show_JPN_print_title();
-    ICON_Pause();
-  }
-  // Stop button --Stop
+  // ICON_Tune();
+  // // Pause --Pause
+  // if (HMI_flag.pause_flag)
+  // {
+  //   // Show_JPN_pause_title(); //Show title -Show Title
+  //   ICON_Continue();
+  // }
+  // else
+  // {
+  //   // Printing --Printing
+  //   // Show_JPN_print_title();
+  //   ICON_Pause();
+  // }
+  // // Stop button --Stop
   ICON_Stop();
 }
 
@@ -5589,16 +5602,19 @@ void HMI_SelectFile()
       strncpy(my_short_fn, card.filename, sizeof(my_short_fn) - 1);
       my_short_fn[sizeof(my_short_fn) - 1] = '\0';
 
-      SERIAL_ECHOLNPGM("Image Preview Info");
-      SERIAL_ECHOLNPGM("File Name: ", my_short_fn);
+      Goto_ThumbPrintProcess();
+
+      // SERIAL_ECHOLNPGM("Image Preview Info");
+      // SERIAL_ECHOLNPGM("File Name: ", my_short_fn);
       
-      hasThumbnail = DWIN_RenderThumb(my_short_fn);
+      // Clear_Thumb_Area();
+      // hasThumbnail = DWIN_RenderThumb(my_short_fn);
      
-      // ret = gcodePicDataSendToDwin(card.filename, VP_OVERLAY_PIC_PREVIEW_1, PRIWIEW_PIC_FORMAT_NEED, PRIWIEW_PIC_RESOLITION_NEED);
-      ret = read_gcode_model_information(my_short_fn);
-      // if(ret == PIC_MISS_ERR)
-      // DC_Show_defaut_image();              // Since this project does not have image preview data, the default small robot image is displayed.
-      Image_Preview_Information_Show(ret); // Picture preview details display
+      // // ret = gcodePicDataSendToDwin(card.filename, VP_OVERLAY_PIC_PREVIEW_1, PRIWIEW_PIC_FORMAT_NEED, PRIWIEW_PIC_RESOLITION_NEED);
+      // ret = read_gcode_model_information(my_short_fn);
+      // // if(ret == PIC_MISS_ERR)
+      // // DC_Show_defaut_image();              // Since this project does not have image preview data, the default small robot image is displayed.
+      // Image_Preview_Information_Show(ret); // Picture preview details display
     }
   }
   DWIN_UpdateLCD();

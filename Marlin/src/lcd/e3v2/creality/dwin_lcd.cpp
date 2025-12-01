@@ -771,8 +771,8 @@ static constexpr uint16_t THUMB_Y_START = 25;
     }
 
     // Debug rápido de la primera fila
-    if (y == 0) {
-      SERIAL_ECHOLNPGM("First RAW16 data row: ");
+    if (y == 35) {
+      SERIAL_ECHOLNPGM("RAW16 data row: ");
       SERIAL_ECHO(p);
       SERIAL_ECHOLNPGM("");
     }
@@ -782,7 +782,7 @@ static constexpr uint16_t THUMB_Y_START = 25;
       const uint16_t color = parse_hex4(px);
 
       // Debug de algunos puntos para ver si salen distintos de 0
-      if ((y == 0 && (x == 0 || x == w/2 || x == w-1))) {
+      if ((y == 35 && (x == 0 || x == w/2 || x == w-1))) {
         SERIAL_ECHOPGM("px(", x);
         SERIAL_ECHOPGM(",", y);
         SERIAL_ECHOLNPGM(") color=", color);
@@ -793,7 +793,7 @@ static constexpr uint16_t THUMB_Y_START = 25;
         THUMB_X_START + x, THUMB_Y_START + y,
         THUMB_X_START + x, THUMB_Y_START + y
       );
-      delayMicroseconds(70); // give some time to DWIN to process the data
+      delayMicroseconds(1000); // give some time to DWIN to process the data
     }
 
     y++;
