@@ -139,6 +139,9 @@
 // Choose your own or use a service like https://www.uuidgenerator.net/version4
 //#define MACHINE_UUID "00000000-0000-0000-0000-000000000000"
 
+#define DWIN_RENDER_THUMBNAIL  // Enable the Rendering of the Thumbnail Image from Gcode Script for E3V3SE
+
+
 #define USE_SWITCH_POWER_200W  0 //Default 1: Using a 200W power supply, the nozzle and heating bed cannot be heated at the same time. 0: The >200w power supply used has sufficient power and can be heated at the same time.
 #define CREALITY_LEVEL_COMPENSATION_ALGORITHM   1 //1 Use algorithm 0 Algorithm not applicable
 #if ENABLED(CREALITY_LEVEL_COMPENSATION_ALGORITHM)
@@ -149,7 +152,7 @@
   #define COMPEN_FACTOR_3    0.03
   #define COMPEN_FACTOR_2    0.02
   #define COMPEN_FACTOR_1    0.01
-  #define ALGORITHM_INFO_PRINT  0 //Print leveling algorithm information
+  #define ALGORITHM_INFO_PRINT  0   //Print leveling algorithm information
   #define LEVEL_ALGORITHM_MIN  -0.7 //Use auto-leveling algorithm lower bound
   #define LEVEL_ALGORITHM_MAX   0.7 //Use the upper boundary of the automatic leveling algorithm
 #endif
@@ -250,11 +253,14 @@
 #endif
 
 
-#define ENABLE_AUTO_OFF_DISPLAY
-  #if ENABLED(ENABLE_AUTO_OFF_DISPLAY)
-  extern int16_t TURN_OFF_TIME;                // turn-off time: 5min
-  extern int16_t DIMM_SCREEN_BRIGHTNESS;             // brightness 0x00-0xff:0
-  extern int16_t MAX_SCREEN_BRIGHTNESS;              // brightness 0x00-0xff:0
+#define ENABLE_AUTO_OFF_DISPLAY             // Enable automatic turn-off display function & brightness adjustment function
+#if ENABLED(ENABLE_AUTO_OFF_DISPLAY)
+
+  // #define DWIN_DIMM_MENU                    // Enable LCD Menu to Configure Brightness & DIMM parameters
+
+  extern int16_t TURN_OFF_TIME;             // turn-off time: 5min
+  extern int16_t DIMM_SCREEN_BRIGHTNESS;    // brightness 0x00-0xff:0
+  extern int16_t MAX_SCREEN_BRIGHTNESS;     // brightness 0x00-0xff:0
 #endif
 
 
@@ -671,6 +677,10 @@
 #define HEATER_7_MINTEMP   5
 #define BED_MINTEMP        0
 #define CHAMBER_MINTEMP    5
+
+
+#define FLOW_MINVAL 10     // Minimum flow rate for extruder
+#define FLOW_MAXVAL 200   // Maximum flow rate for extruder
 
 // Above this temperature the heater will be switched off.
 // This can protect components from overheating, but NOT from shorts and failures.
@@ -1915,7 +1925,12 @@
                                       // You'll need this much clearance above Z_MAX_POS to avoid grinding.
 
 #define Z_AFTER_HOMING         10   // (mm) Height to move to after homing (if Z was homed)
-extern uint8_t CZ_AFTER_HOMING; 
+
+// #define DWIN_ZHOME_MENU             // Enable LCD Menu to Configure Z Height after Homing 
+#if ENABLED(DWIN_ZHOME_MENU)
+  extern uint8_t CZ_AFTER_HOMING; 
+#endif
+
 //#define XY_AFTER_HOMING { 10, 10 }  // (mm) Move to an XY position after homing (and raising Z)
 
 //#define EVENT_GCODE_AFTER_HOMING "M300 P440 S200"  // Commands to run after G28 (and move to XY_AFTER_HOMING)
@@ -2493,10 +2508,15 @@ extern uint8_t CZ_AFTER_HOMING;
   #define XY_DIAG_BD 282.84
   #define XY_SIDE_AD 200.69
 
-  extern float xyskew_d_ac;
-  extern float xyskew_d_bd;
-  extern float xyskew_s_ad;
-  extern float skew_factor;
+  // #define DWIN_SKEW_MENU     // Enable LCD Menu to Configure Skew Factor Parameters
+  
+  #if ENABLED(DWIN_SKEW_MENU)
+    extern float xyskew_d_ac;
+    extern float xyskew_d_bd;
+    extern float xyskew_s_ad;
+    extern float skew_factor;
+  #endif
+
 
   // Or, set the XY skew factor directly:
   //#define XY_SKEW_FACTOR 0.0
@@ -2583,17 +2603,23 @@ extern uint8_t CZ_AFTER_HOMING;
 #define PREHEAT_2_TEMP_CHAMBER 35
 #define PREHEAT_2_FAN_SPEED    0//255 // Value from 0 to 255
 
-#define PREHEAT_3_LABEL       "PETG"
-#define PREHEAT_3_TEMP_HOTEND 240
-#define PREHEAT_3_TEMP_BED     90
-#define PREHEAT_3_TEMP_CHAMBER 35
-#define PREHEAT_3_FAN_SPEED    0//255 // Value from 0 to 255
+// #define EXTRA_PREHEAT_LABELS   // Enable LCD Menu to Configure 2 Extra Preheat Materials
+#if ENABLED(EXTRA_PREHEAT_LABELS)
+  #define PREHEAT_3_LABEL       "PETG"
+  #define PREHEAT_3_TEMP_HOTEND 240
+  #define PREHEAT_3_TEMP_BED     90
+  #define PREHEAT_3_TEMP_CHAMBER 35
+  #define PREHEAT_3_FAN_SPEED    0//255 // Value from 0 to 255
 
-#define PREHEAT_4_LABEL       "ABS"
-#define PREHEAT_4_TEMP_HOTEND 260
-#define PREHEAT_4_TEMP_BED    110
-#define PREHEAT_4_TEMP_CHAMBER 35
-#define PREHEAT_4_FAN_SPEED    0//255 // Value from 0 to 255
+  #define PREHEAT_4_LABEL       "ABS"
+  #define PREHEAT_4_TEMP_HOTEND 260
+  #define PREHEAT_4_TEMP_BED    110
+  #define PREHEAT_4_TEMP_CHAMBER 35
+  #define PREHEAT_4_FAN_SPEED    0//255 // Value from 0 to 255
+#endif
+
+//  #define PREHEAT_ALERT           // Enable an alert when preheating is complete
+ 
 
 /**
  * @section nozzle park

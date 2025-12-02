@@ -2,7 +2,7 @@
  * Config.h - Marlin Firmware distilled configuration
  * Usage: Place this file in the 'Marlin' folder with the name 'Config.h'.
  *
- * Exported by Marlin build on 2025-12-01 at 23:21:13.
+ * Exported by Marlin build on 2025-12-02 at 23:28:26.
  */
 
 //
@@ -141,6 +141,7 @@
 #define INPUT_SHAPING_Y
 #define SHAPING_FREQ_X                           42.0
 #define SHAPING_FREQ_Y                           40.0
+#define DWIN_INPUT_SHAPING_MENU
 
 //
 // Endstops
@@ -228,17 +229,9 @@
 #define WATCH_BED_TEMP_PERIOD                    180
 #define WATCH_TEMP_INCREASE                      2
 #define WATCH_TEMP_PERIOD                        40
-#define PREHEAT_3_LABEL                          "PETG"
-#define PREHEAT_3_TEMP_CHAMBER                   35
-#define PREHEAT_4_FAN_SPEED                      0
-#define PREHEAT_4_TEMP_CHAMBER                   35
-#define PREHEAT_4_LABEL                          "ABS"
-#define PREHEAT_4_TEMP_BED                       110
-#define PREHEAT_3_FAN_SPEED                      0
-#define PREHEAT_4_TEMP_HOTEND                    260
-#define PREHEAT_3_TEMP_BED                       90
+#define FLOW_MINVAL                              10
+#define FLOW_MAXVAL                              200
 #define PREHEAT_2_LABEL                          "TPU"
-#define PREHEAT_3_TEMP_HOTEND                    240
 #define PREHEAT_2_TEMP_BED                       70
 #define PREHEAT_2_FAN_SPEED                      0
 #define BED_MINTEMP                              0
@@ -456,6 +449,7 @@
 #define COMPACT_GRID_VALUES                      1
 #define LEVEL_ALGORITHM_MIN                      -0.7
 #define HIGH_SPEED_1                             1
+#define DWIN_RENDER_THUMBNAIL
 #define USE_SWITCH_POWER_200W                    0
 #define K8_EXTRUDER                              0
 #define ALGORITHM_INFO_PRINT                     0

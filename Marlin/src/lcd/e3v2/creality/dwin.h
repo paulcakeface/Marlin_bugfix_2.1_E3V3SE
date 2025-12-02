@@ -104,22 +104,28 @@ enum processID : uint8_t {
   MaxJerk_value,
   Step,
   Step_value,
+#if ENABLED(DWIN_INPUT_SHAPING_MENU)  
   InputShaping,
   InputShaping_XFreq,
   InputShaping_XZeta,
   InputShaping_YFreq,
   InputShaping_YZeta,
+#endif  
+#if ENABLED(DWIN_SKEW_MENU)  
   SkewCorrection,
   skewxy_dac,
   skewxy_dbd,
   skewxy_sad,
+#endif
   CExtrude_Menu,
   custom_extrude_temp,
   custom_extrude_length,
   Display_Menu,
+#if ENABLED(DWIN_DIMM_MENU)  
   Max_LCD_Bright,
   Dimm_Bright,
   DimmTime,
+#endif  
   ZHeight,
   HomeOff,
   HomeOffX,
@@ -146,6 +152,7 @@ enum processID : uint8_t {
   #if HAS_HOTEND
     Extruder,
     ETemp,
+    EFlow,
   #endif
   Homeoffset,
   #if HAS_HEATED_BED
@@ -180,6 +187,17 @@ enum processID : uint8_t {
   POPUP_CONFIRM,//Pop-up window confirmation interface
   Max_GUI, 
   M117Info,
+#if ENABLED(DWIN_RENDER_THUMBNAIL)
+  ThumbPrint,
+  ThumbTune,
+  ThumbPrintSpeed,
+  ThumbETemp,
+  ThumbEFlow,
+  ThumbBedTemp,
+  ThumbFanSpeed,
+  ThumbHomeoffset,
+  ThumbPrint_window,
+#endif
 };
 
 enum DC_language{
@@ -659,11 +677,17 @@ typedef struct
 {
   #if ENABLED(HAS_HOTEND)
     celsius_t E_Temp = 0;
+    int16_t E_Flow = 0;
     int16_t Extrusion_Length = 0;
     int16_t LCD_MaxBright  = MAX_SCREEN_BRIGHTNESS;
     int16_t LCD_DimmBright = DIMM_SCREEN_BRIGHTNESS;
     uint8_t Dimm_Time = TURN_OFF_TIME;
-    uint8_t Z_height = CZ_AFTER_HOMING;
+    #if ENABLED(DWIN_ZHOME_MENU)
+      uint8_t Z_height = CZ_AFTER_HOMING;
+    #else
+      uint8_t Z_height = 10;
+    #endif
+
   #endif
   #if ENABLED(HAS_HEATED_BED)
     celsius_t Bed_Temp = 0;

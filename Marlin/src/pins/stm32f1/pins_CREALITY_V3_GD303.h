@@ -187,8 +187,13 @@
 #ifndef FAN0_PIN
   #define FAN0_PIN                           PA0   // FAN
 #endif
-#if PIN_EXISTS(FAN)
-  #define FAN_SOFT_PWM
+
+#ifndef FAN1_PIN
+  #define FAN1_PIN                           PC1   // extruder fan
+#endif
+
+#if PIN_EXISTS(FAN1)
+  #define FAN0_SOFT_PWM
 #endif
 
 //

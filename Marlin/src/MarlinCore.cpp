@@ -1733,7 +1733,10 @@ bool LCD_TURNOFF_FLAG = false;
 uint8_t record_lcd_flag = 0;
 extern bool SD_Card_status;
 extern bool sd_printing_autopause;
-uint8_t CZ_AFTER_HOMING = 10; 
+
+#if ENABLED(DWIN_ZHOME_MENU)
+  uint8_t CZ_AFTER_HOMING = 10; 
+#endif
 
 #if ENABLED(SKEW_CORRECTION)
   float xyskew_d_ac = (xyskew_d_ac == 0.0f || xyskew_d_ac > 500.0f) ? XY_DIAG_AC : xyskew_d_ac;

@@ -721,7 +721,7 @@ typedef struct SettingsDataStruct {
    int16_t lcdbright;       
    uint8_t czheight;       
   #endif
-  #if ENABLED(SKEW_CORRECTION)
+  #if ENABLED(DWIN_SKEW_MENU)
    float skew_dac;
    float skew_dbd;
    float skew_sad;
@@ -1865,14 +1865,19 @@ void MarlinSettings::postprocess() {
        uint8_t sleep = TURN_OFF_TIME;                
        int16_t dimmBright = DIMM_SCREEN_BRIGHTNESS;
        int16_t bright = MAX_SCREEN_BRIGHTNESS;
-       uint8_t zheight = CZ_AFTER_HOMING;
+
+       #if ENABLED(DWIN_ZHOME_MENU)
+         uint8_t zheight = CZ_AFTER_HOMING;
+       #else
+          uint8_t zheight = Z_AFTER_HOMING;
+       #endif     
        EEPROM_WRITE(sleep);              
        EEPROM_WRITE(dimmBright);         
        EEPROM_WRITE(bright);             
        EEPROM_WRITE(zheight); 
      }             
      #endif
-     #if ENABLED(SKEW_CORRECTION)
+     #if ENABLED(DWIN_SKEW_MENU)
      {
         float sk_dac = xyskew_d_ac;
         float sk_dbd = xyskew_d_bd;
@@ -3077,12 +3082,14 @@ void MarlinSettings::postprocess() {
       EEPROM_READ(bright);             
       MAX_SCREEN_BRIGHTNESS = ( bright > 230 || bright < 20) ? 230 : bright;
 
-      EEPROM_READ(zheight);
-      CZ_AFTER_HOMING = (zheight >= 10) ? zheight : 10; //Set default value
+      #if ENABLED(DWIN_ZHOME_MENU)
+        EEPROM_READ(zheight);
+        CZ_AFTER_HOMING = (zheight >= 10) ? zheight : 10; //Set default value
+      #endif
     }
     #endif
 
-    #if ENABLED(SKEW_CORRECTION)
+    #if ENABLED(DWIN_SKEW_MENU)
     {
       float sk_dac, sk_dbd, sk_sad;
       EEPROM_READ(sk_dac);
@@ -4280,13 +4287,16 @@ void MarlinSettings::reset() {
       SERIAL_ECHOLNPGM("   MAX BRIGHTNESS: ", ((MAX_SCREEN_BRIGHTNESS-164)*100)/66);
       SERIAL_ECHOLNPGM("   DIMM BRIGHTNESS: ", ((DIMM_SCREEN_BRIGHTNESS-164)*100)/66);
       SERIAL_ECHOLNPGM("   AUTO OFF TIME: ", TURN_OFF_TIME);
-      SERIAL_ECHOLNPGM("CUSTOM Z Height After Homing: ", CZ_AFTER_HOMING);
-      SERIAL_ECHOLNPGM("SKEW Correction");
-      SERIAL_ECHOLNPGM("   XY DIAG AC: ", xyskew_d_ac);
-      SERIAL_ECHOLNPGM("   XY DIAG BD: ", xyskew_d_bd);
-      SERIAL_ECHOLNPGM("   SIDE AD: ", xyskew_s_ad);
-      SERIAL_ECHOLNPGM("   SKEW FACTOR: ", p_float_t(planner.skew_factor.xy, 6));
-
+      #if ENABLED(DWIN_ZHOME_MENU)
+        SERIAL_ECHOLNPGM("CUSTOM Z Height After Homing: ", CZ_AFTER_HOMING);
+      #endif
+      #if ENABLED(DWIN_SKEW_MENU)
+        SERIAL_ECHOLNPGM("SKEW Correction");
+        SERIAL_ECHOLNPGM("   XY DIAG AC: ", xyskew_d_ac);
+        SERIAL_ECHOLNPGM("   XY DIAG BD: ", xyskew_d_bd);
+        SERIAL_ECHOLNPGM("   SIDE AD: ", xyskew_s_ad);
+        SERIAL_ECHOLNPGM("   SKEW FACTOR: ", p_float_t(planner.skew_factor.xy, 6));
+      #endif  
     #endif
   }
 

@@ -212,7 +212,11 @@ public:
   static void move_z_after_probing() {
     DEBUG_SECTION(mzah, "move_z_after_probing", DEBUGGING(LEVELING));
     #ifdef Z_AFTER_PROBING
-      do_z_clearance(CZ_AFTER_HOMING, true, true); // Move down still permitted
+      #if ENABLED(DWIN_ZHOME_MENU)     
+        do_z_clearance(CZ_AFTER_HOMING, true, true); // Move down still permitted
+      #else
+        do_z_clearance(Z_AFTER_PROBING, true, true); // Move down still
+      #endif
     #endif
   }
 

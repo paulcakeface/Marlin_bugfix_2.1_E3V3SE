@@ -118,6 +118,7 @@ typedef bool (*statusResetFunc_t)();
   typedef struct {
     #if HAS_HOTEND
       celsius_t hotend_temp;
+      int16_t flow_rate;
     #endif
     #if HAS_HEATED_BED
       celsius_t bed_temp;
