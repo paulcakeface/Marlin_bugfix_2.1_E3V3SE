@@ -2619,7 +2619,7 @@
 #endif
 
 //  #define PREHEAT_ALERT           // Enable an alert when preheating is complete
- 
+//  #define DWIN_CUSTOM_EXTRUDE     // Enable LCD Menu for Custom Extrude Functions
 
 /**
  * @section nozzle park

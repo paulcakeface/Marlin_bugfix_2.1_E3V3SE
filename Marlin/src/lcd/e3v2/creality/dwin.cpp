@@ -167,10 +167,10 @@ volatile uint8_t checkkey = 0;
 // 0 Without interruption, 1 runout filament paused 2 remove card pause
 static bool temp_remove_card_flag = false, temp_cutting_line_flag = false /*,temp wifi print flag=false*/;
 
-#if ENABLED(DWIN_RENDER_THUMBNAIL)
-  bool hasThumbnail = false;
-  int clear_UpperArea = 0;
-#endif
+
+bool hasThumbnail = false;
+int clear_UpperArea = 0;
+
 typedef struct
 {
   uint8_t now, last;
@@ -405,34 +405,36 @@ static void Auto_in_out_feedstock(bool dir) // 0 returns material, 1 feeds
   }
 #endif
 
-// Custom Extrude Process
-static void Custom_Extrude_Process(uint16_t temp, uint16_t length) // Extrude material based on user temp & length
-{
-  HMI_flag.Refresh_bottom_flag = false;
-  char str[25]; // Sufficient buffer for string and number
-  snprintf(str, sizeof(str), "Extruding %u mm", length);
-  Popup_Window_Feedstork_Tip(1); // Feeding tips
-  // SERIAL_ECHOLNPGM("Extruding: ", str);
-  // SERIAL_ECHOLNPGM("CurrTEMP: ", thermalManager.degHotend(0));
-  // SERIAL_ECHOLNPGM("TargetTEMP: ", temp);
-  // SERIAL_ECHOLNPGM("Length: ", length);
-  // SERIAL_ECHOLNPGM("Termal Temp", thermalManager.degTargetHotend(0));
-  SET_HOTEND_TEMP(temp, 0);           // First heat to Target Temp
-  WAIT_HOTEND_TEMP(60 * 5 * 1000, 3); // Wait until the hotend temperature reaches the target temperature
+#if ENABLED(DWIN_CUSTOM_EXTRUDE)
+    // Custom Extrude Process
+    static void Custom_Extrude_Process(uint16_t temp, uint16_t length) // Extrude material based on user temp & length
+    {
+      HMI_flag.Refresh_bottom_flag = false;
+      char str[25]; // Sufficient buffer for string and number
+      snprintf(str, sizeof(str), "Extruding %u mm", length);
+      Popup_Window_Feedstork_Tip(1); // Feeding tips
+      // SERIAL_ECHOLNPGM("Extruding: ", str);
+      // SERIAL_ECHOLNPGM("CurrTEMP: ", thermalManager.degHotend(0));
+      // SERIAL_ECHOLNPGM("TargetTEMP: ", temp);
+      // SERIAL_ECHOLNPGM("Length: ", length);
+      // SERIAL_ECHOLNPGM("Termal Temp", thermalManager.degTargetHotend(0));
+      SET_HOTEND_TEMP(temp, 0);           // First heat to Target Temp
+      WAIT_HOTEND_TEMP(60 * 5 * 1000, 3); // Wait until the hotend temperature reaches the target temperature
 
-  delay(1000);                                                                          // Wait for 1s
-  Clear_Title_Bar();                                                                    // Clear title bar
-  DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_Red, Color_Bg_Blue, 10, 4, str); // Draw title
+      delay(1000);                                                                          // Wait for 1s
+      Clear_Title_Bar();                                                                    // Clear title bar
+      DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_Red, Color_Bg_Blue, 10, 4, str); // Draw title
 
-  In_out_feedtock(length, FEEDING_DEF_SPEED, true);                        // Feed material
-  delay(1000);                                                             // Wait for 1s
-  Clear_Title_Bar();                                                       // Clear title bar
-  Popup_Window_Feedstork_Finish(1);                                        // Feed confirmation
-  DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Confirm, 79, 264); // OK button
+      In_out_feedtock(length, FEEDING_DEF_SPEED, true);                        // Feed material
+      delay(1000);                                                             // Wait for 1s
+      Clear_Title_Bar();                                                       // Clear title bar
+      Popup_Window_Feedstork_Finish(1);                                        // Feed confirmation
+      DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Confirm, 79, 264); // OK button
 
-  SET_HOTEND_TEMP(STOP_TEMPERATURE, 0); // Cool down to 140℃
-  checkkey = M117Info;
-}
+      SET_HOTEND_TEMP(STOP_TEMPERATURE, 0); // Cool down to 140℃
+      checkkey = M117Info;
+    }
+#endif    
 
 /*Get the specified g file information *short_file_name: short file name *file: file information pointer Return value*/
 void get_file_info(char *short_file_name, PrintFile_InfoTypeDef *file)
@@ -1399,13 +1401,19 @@ inline bool Apply_Encoder(const ENCODER_DiffState &encoder_diffState, auto &valr
 #define PREPARE_CASE_LANG (PREPARE_CASE_COOL + 1)
 
 #define PREPARE_CASE_DISPLAY (PREPARE_CASE_LANG + 1)
-#define PREPARE_CASE_CUSTOM_EXTRUDE (PREPARE_CASE_DISPLAY + 1)
+
+#if ENABLED(DWIN_CUSTOM_EXTRUDE)
+  #define PREPARE_CASE_CUSTOM_EXTRUDE (PREPARE_CASE_DISPLAY + 1)
+  #define _PREPARE_LAST_CASE PREPARE_CASE_CUSTOM_EXTRUDE
+#else
+  #define _PREPARE_LAST_CASE PREPARE_CASE_DISPLAY
+#endif
 
 #if ENABLED(DWIN_ZHOME_MENU)  
-  #define PREPARE_CASE_ZHEIGHT (PREPARE_CASE_CUSTOM_EXTRUDE + 1)
+  #define PREPARE_CASE_ZHEIGHT (_PREPARE_LAST_CASE + 1)
   #define PREPARE_CASE_TOTAL PREPARE_CASE_ZHEIGHT
 #else
-  #define PREPARE_CASE_TOTAL PREPARE_CASE_CUSTOM_EXTRUDE
+  #define PREPARE_CASE_TOTAL _PREPARE_LAST_CASE
 #endif
 
 
@@ -1889,8 +1897,10 @@ void Draw_Prepare_Menu()
   if (PVISI(PREPARE_CASE_DISPLAY))
     Item_Prepare_Display(PSCROL(PREPARE_CASE_DISPLAY)); // Disable LCD Beeper
 
+#if ENABLED(DWIN_CUSTOM_EXTRUDE)
   if (PVISI(PREPARE_CASE_CUSTOM_EXTRUDE))
     Item_Prepare_CExtrude(PSCROL(PREPARE_CASE_CUSTOM_EXTRUDE)); // Custom Extrude
+#endif
 
 #if ENABLED(DWIN_ZHOME_MENU)     
   if (PVISI(PREPARE_CASE_ZHEIGHT))
@@ -3462,43 +3472,43 @@ static void G29_small(void) //
 }
 #endif
 
-
-// Function to render the print job details from Octoprint in the LCD.
-void Goto_ThumbPrint()
-{
-  checkkey = ThumbPrint;
-  Clear_Below_Area();
-  Draw_Mid_Status_Area(true);
-  // clear_UpperArea++;
-  HMI_flag.Refresh_bottom_flag = false;
-
-  Draw_Print_ProgressBar();
-  
-  
-  DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 123, F("Print Time:")); // Label Print Time
-  // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 123, F(vprint_time));   // value Print Time
-  DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 144, F("Time Left:"));  // Label Time Left
-  // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 144, F(vptime_left));   // value Time Left
-  DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 165, F("Layer:"));      // Label Print Time
-  // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 80, 165, F(show_layers));    // Label Print Time
-
-  ICON_Tune();
-  // Pause --Pause
-  if (HMI_flag.pause_flag)
+#if ENABLED(DWIN_RENDER_THUMBNAIL)
+  // Function to render the print job details from Octoprint in the LCD.
+  void Goto_ThumbPrint()
   {
-    // Show_JPN_pause_title(); //Show title -Show Title
-    ICON_Continue();
-  }
-  else
-  {
-    // Printing --Printing
-    // Show_JPN_print_title();
-    ICON_Pause();
-  }
-  // Stop button --Stop
-  ICON_Stop();
-}
+    checkkey = ThumbPrint;
+    Clear_Below_Area();
+    Draw_Mid_Status_Area(true);
+    // clear_UpperArea++;
+    HMI_flag.Refresh_bottom_flag = false;
 
+    Draw_Print_ProgressBar();
+    
+    
+    DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 123, F("Print Time:")); // Label Print Time
+    // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 123, F(vprint_time));   // value Print Time
+    DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 144, F("Time Left:"));  // Label Time Left
+    // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 144, F(vptime_left));   // value Time Left
+    DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 165, F("Layer:"));      // Label Print Time
+    // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 80, 165, F(show_layers));    // Label Print Time
+
+    ICON_Tune();
+    // Pause --Pause
+    if (HMI_flag.pause_flag)
+    {
+      // Show_JPN_pause_title(); //Show title -Show Title
+      ICON_Continue();
+    }
+    else
+    {
+      // Printing --Printing
+      // Show_JPN_print_title();
+      ICON_Pause();
+    }
+    // Stop button --Stop
+    ICON_Stop();
+  }
+#endif
 
 void Goto_PrintProcess()
 {
@@ -6086,11 +6096,15 @@ void HMI_PauseOrStop()
           SERIAL_ECHOLN("M79 S2"); // 3:cloud print pause
         }
 
+        #if ENABLED(DWIN_RENDER_THUMBNAIL)
         if(hasThumbnail){
           Goto_ThumbPrint();
         } else {
           Goto_PrintProcess();
         }  
+        #else
+          Goto_PrintProcess();
+        #endif
         // Queue.inject p(pstr("m25"));
         RUN_AND_WAIT_GCODE_CMD("M25", true);
         ICON_Continue();
@@ -6098,11 +6112,15 @@ void HMI_PauseOrStop()
       }
       else
       {
+        #if ENABLED(DWIN_RENDER_THUMBNAIL)
         if(hasThumbnail){
           Goto_ThumbPrint();
         } else {
           Goto_PrintProcess();
         }  
+        #else
+          Goto_PrintProcess();
+        #endif
       }
     }
     else if (select_print.now == 2)
@@ -6142,11 +6160,15 @@ void HMI_PauseOrStop()
       }
       else
       {
+        #if ENABLED(DWIN_RENDER_THUMBNAIL)
         if(hasThumbnail){
           Goto_ThumbPrint();
         } else {
           Goto_PrintProcess();
         }  
+        #else
+          Goto_PrintProcess();
+        #endif
       }
     }
     else if (select_print.now == 20)
@@ -6854,164 +6876,166 @@ void HMI_Display_Menu()
   }
 #endif  
 
-void Draw_CExtrude_Menu()
-{
-  Clear_Main_Window();
-  Draw_Mid_Status_Area(true);
-  HMI_flag.Refresh_bottom_flag = false; // Flag refresh bottom parameter
-
-  // Back option
-  Draw_Back_First();
-  // Title
-  Draw_Title(F("Custom Extrude"));
-  // NoozleTemp String Icon
-  DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Hotend, 42, MBASE(1) + JPN_OFFSET);
-  // Menu Line with Nozzle Icon
-  Draw_Menu_Line(1, ICON_HotendTemp);
-  // Current Value of NoozleTemp
-  DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(1) + 3, thermalManager.degTargetHotend(0));
-
-  // There's no graphical asset for this label, so we just write it as string
-  DWIN_Draw_Label(MBASE(2), F("Ext. Length(mm)"));
-  // Menu Line with Extrusion Icon
-  Draw_Menu_Line(2, ICON_StepE);
-  // Current Value of Extrusion Length
-  DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(2) + 3, HMI_ValueStruct.Extrusion_Length);
-
-  // There's no graphical asset for this label, so we just write it as string
-  DWIN_Draw_Label(MBASE(3), F("Proceed"));
-  // Menu Line with Home Icon
-  Draw_Menu_Line(3, ICON_Homing);
-
-  // Help Info
-  // Info Icon
-  DWIN_ICON_Show(ICON, 56, 115, 175);
-  const char *str = "Select Your";
-  const char *str2 = "Desired Temperature";
-  const char *str3 = "& Extrusion Lenght";
-  // Draw Help Strings
-  DWIN_Draw_String(true, true, font8x16, Color_Blue, Color_Bg_Black, (DWIN_WIDTH - strlen(str) * MENU_CHR_W) / 2, 195, F(str));   // Centered Received String
-  DWIN_Draw_String(true, true, font8x16, Color_Blue, Color_Bg_Black, (DWIN_WIDTH - strlen(str2) * MENU_CHR_W) / 2, 215, F(str2)); // Centered Received String
-  DWIN_Draw_String(true, true, font8x16, Color_Blue, Color_Bg_Black, (DWIN_WIDTH - strlen(str3) * MENU_CHR_W) / 2, 235, F(str3)); // Centered Received String
-}
-
-void HMI_CExtrude_Menu()
-{
-  ENCODER_DiffState encoder_diffState = get_encoder_state();
-  if (encoder_diffState == ENCODER_DIFF_NO)
-    return;
-
-  // Avoid flicker by updating only the previous menu
-  if (encoder_diffState == ENCODER_DIFF_CW)
-  {
-    if (select_cextr.inc(1 + 3))
-      Move_Highlight(1, select_cextr.now);
-  }
-  else if (encoder_diffState == ENCODER_DIFF_CCW)
-  {
-    if (select_cextr.dec())
-      Move_Highlight(-1, select_cextr.now);
-  }
-  else if (encoder_diffState == ENCODER_DIFF_ENTER)
-  {
-    switch (select_cextr.now)
+#if ENABLED(DWIN_CUSTOM_EXTRUDE)
+    void Draw_CExtrude_Menu()
     {
-    case 0: // Back
-      checkkey = Prepare;
-      select_prepare.now = PREPARE_CASE_CUSTOM_EXTRUDE;
-      Draw_Prepare_Menu();
-      break;
-    case 1: // Nozzle Temp
-      checkkey = custom_extrude_temp;
-      HMI_ValueStruct.E_Temp = thermalManager.degTargetHotend(0);
-      LIMIT(HMI_ValueStruct.E_Temp, HEATER_0_MINTEMP, thermalManager.hotend_max_target(0));
-      DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(1) + 3, HMI_ValueStruct.E_Temp);
-      EncoderRate.enabled = true;
-      break;
-    case 2: // Extrusion Length
-      checkkey = custom_extrude_length;
-      DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(2) + 3, HMI_ValueStruct.Extrusion_Length);
-      EncoderRate.enabled = true;
-      break;
-    case 3: // Confirm
+      Clear_Main_Window();
+      Draw_Mid_Status_Area(true);
+      HMI_flag.Refresh_bottom_flag = false; // Flag refresh bottom parameter
 
-      if (thermalManager.degTargetHotend(0) < 195)
-      {
-        DWIN_Draw_Rectangle(1, All_Black, 0, 174, 240, 237);
-        // Help Info
-        // Info Icon
-        DWIN_ICON_Show(ICON, 56, 115, 175);
-        const char *str = "Warning!";
-        const char *str2 = "Desired Temperature";
-        const char *str3 = "Too Low! Must be > 195°";
-        // Draw Help Strings
-        DWIN_Draw_String(true, true, font8x16, Color_Yellow, Color_Bg_Black, (DWIN_WIDTH - strlen(str) * MENU_CHR_W) / 2, 195, F(str));   // Centered Received String
-        DWIN_Draw_String(true, true, font8x16, Color_Yellow, Color_Bg_Black, (DWIN_WIDTH - strlen(str2) * MENU_CHR_W) / 2, 215, F(str2)); // Centered Received String
-        DWIN_Draw_String(true, true, font8x16, Color_Yellow, Color_Bg_Black, (DWIN_WIDTH - strlen(str3) * MENU_CHR_W) / 2, 235, F(str3)); // Centered Received String
-      }
-      else if (HMI_ValueStruct.Extrusion_Length < 10)
-      {
-        DWIN_Draw_Rectangle(1, All_Black, 0, 174, 240, 237);
-        // Help Info
-        // Info Icon
-        DWIN_ICON_Show(ICON, 56, 115, 175);
-        const char *str = "Warning!";
-        const char *str2 = "Desired Length";
-        const char *str3 = "Too short! Must be > 10mm";
-        // Draw Help Strings
-        DWIN_Draw_String(true, true, font8x16, Color_Yellow, Color_Bg_Black, (DWIN_WIDTH - strlen(str) * MENU_CHR_W) / 2, 195, F(str));   // Centered Received String
-        DWIN_Draw_String(true, true, font8x16, Color_Yellow, Color_Bg_Black, (DWIN_WIDTH - strlen(str2) * MENU_CHR_W) / 2, 215, F(str2)); // Centered Received String
-        DWIN_Draw_String(true, true, font8x16, Color_Yellow, Color_Bg_Black, (DWIN_WIDTH - strlen(str3) * MENU_CHR_W) / 2, 235, F(str3)); // Centered Received String
-      }
-      else
-      {
-        Custom_Extrude_Process(HMI_ValueStruct.E_Temp, HMI_ValueStruct.Extrusion_Length);
-      }
-      break;
+      // Back option
+      Draw_Back_First();
+      // Title
+      Draw_Title(F("Custom Extrude"));
+      // NoozleTemp String Icon
+      DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Hotend, 42, MBASE(1) + JPN_OFFSET);
+      // Menu Line with Nozzle Icon
+      Draw_Menu_Line(1, ICON_HotendTemp);
+      // Current Value of NoozleTemp
+      DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(1) + 3, thermalManager.degTargetHotend(0));
+
+      // There's no graphical asset for this label, so we just write it as string
+      DWIN_Draw_Label(MBASE(2), F("Ext. Length(mm)"));
+      // Menu Line with Extrusion Icon
+      Draw_Menu_Line(2, ICON_StepE);
+      // Current Value of Extrusion Length
+      DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(2) + 3, HMI_ValueStruct.Extrusion_Length);
+
+      // There's no graphical asset for this label, so we just write it as string
+      DWIN_Draw_Label(MBASE(3), F("Proceed"));
+      // Menu Line with Home Icon
+      Draw_Menu_Line(3, ICON_Homing);
+
+      // Help Info
+      // Info Icon
+      DWIN_ICON_Show(ICON, 56, 115, 175);
+      const char *str = "Select Your";
+      const char *str2 = "Desired Temperature";
+      const char *str3 = "& Extrusion Lenght";
+      // Draw Help Strings
+      DWIN_Draw_String(true, true, font8x16, Color_Blue, Color_Bg_Black, (DWIN_WIDTH - strlen(str) * MENU_CHR_W) / 2, 195, F(str));   // Centered Received String
+      DWIN_Draw_String(true, true, font8x16, Color_Blue, Color_Bg_Black, (DWIN_WIDTH - strlen(str2) * MENU_CHR_W) / 2, 215, F(str2)); // Centered Received String
+      DWIN_Draw_String(true, true, font8x16, Color_Blue, Color_Bg_Black, (DWIN_WIDTH - strlen(str3) * MENU_CHR_W) / 2, 235, F(str3)); // Centered Received String
     }
-  }
-  DWIN_UpdateLCD();
-}
 
-void HMI_CustomExtrudeTemp()
-{
-  ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
-  if (encoder_diffState == ENCODER_DIFF_NO)
-    return;
+    void HMI_CExtrude_Menu()
+    {
+      ENCODER_DiffState encoder_diffState = get_encoder_state();
+      if (encoder_diffState == ENCODER_DIFF_NO)
+        return;
 
-  if (Apply_Encoder(encoder_diffState, HMI_ValueStruct.E_Temp))
-  {
-    EncoderRate.enabled = false;
-    LIMIT(HMI_ValueStruct.E_Temp, 190, thermalManager.hotend_max_target(0));
-    checkkey = CExtrude_Menu;
-    DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(1) + 3, HMI_ValueStruct.E_Temp);
-    thermalManager.setTargetHotend(HMI_ValueStruct.E_Temp, 0);
+      // Avoid flicker by updating only the previous menu
+      if (encoder_diffState == ENCODER_DIFF_CW)
+      {
+        if (select_cextr.inc(1 + 3))
+          Move_Highlight(1, select_cextr.now);
+      }
+      else if (encoder_diffState == ENCODER_DIFF_CCW)
+      {
+        if (select_cextr.dec())
+          Move_Highlight(-1, select_cextr.now);
+      }
+      else if (encoder_diffState == ENCODER_DIFF_ENTER)
+      {
+        switch (select_cextr.now)
+        {
+        case 0: // Back
+          checkkey = Prepare;
+          select_prepare.now = PREPARE_CASE_CUSTOM_EXTRUDE;
+          Draw_Prepare_Menu();
+          break;
+        case 1: // Nozzle Temp
+          checkkey = custom_extrude_temp;
+          HMI_ValueStruct.E_Temp = thermalManager.degTargetHotend(0);
+          LIMIT(HMI_ValueStruct.E_Temp, HEATER_0_MINTEMP, thermalManager.hotend_max_target(0));
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(1) + 3, HMI_ValueStruct.E_Temp);
+          EncoderRate.enabled = true;
+          break;
+        case 2: // Extrusion Length
+          checkkey = custom_extrude_length;
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(2) + 3, HMI_ValueStruct.Extrusion_Length);
+          EncoderRate.enabled = true;
+          break;
+        case 3: // Confirm
 
-    return;
-  }
+          if (thermalManager.degTargetHotend(0) < 195)
+          {
+            DWIN_Draw_Rectangle(1, All_Black, 0, 174, 240, 237);
+            // Help Info
+            // Info Icon
+            DWIN_ICON_Show(ICON, 56, 115, 175);
+            const char *str = "Warning!";
+            const char *str2 = "Desired Temperature";
+            const char *str3 = "Too Low! Must be > 195°";
+            // Draw Help Strings
+            DWIN_Draw_String(true, true, font8x16, Color_Yellow, Color_Bg_Black, (DWIN_WIDTH - strlen(str) * MENU_CHR_W) / 2, 195, F(str));   // Centered Received String
+            DWIN_Draw_String(true, true, font8x16, Color_Yellow, Color_Bg_Black, (DWIN_WIDTH - strlen(str2) * MENU_CHR_W) / 2, 215, F(str2)); // Centered Received String
+            DWIN_Draw_String(true, true, font8x16, Color_Yellow, Color_Bg_Black, (DWIN_WIDTH - strlen(str3) * MENU_CHR_W) / 2, 235, F(str3)); // Centered Received String
+          }
+          else if (HMI_ValueStruct.Extrusion_Length < 10)
+          {
+            DWIN_Draw_Rectangle(1, All_Black, 0, 174, 240, 237);
+            // Help Info
+            // Info Icon
+            DWIN_ICON_Show(ICON, 56, 115, 175);
+            const char *str = "Warning!";
+            const char *str2 = "Desired Length";
+            const char *str3 = "Too short! Must be > 10mm";
+            // Draw Help Strings
+            DWIN_Draw_String(true, true, font8x16, Color_Yellow, Color_Bg_Black, (DWIN_WIDTH - strlen(str) * MENU_CHR_W) / 2, 195, F(str));   // Centered Received String
+            DWIN_Draw_String(true, true, font8x16, Color_Yellow, Color_Bg_Black, (DWIN_WIDTH - strlen(str2) * MENU_CHR_W) / 2, 215, F(str2)); // Centered Received String
+            DWIN_Draw_String(true, true, font8x16, Color_Yellow, Color_Bg_Black, (DWIN_WIDTH - strlen(str3) * MENU_CHR_W) / 2, 235, F(str3)); // Centered Received String
+          }
+          else
+          {
+            Custom_Extrude_Process(HMI_ValueStruct.E_Temp, HMI_ValueStruct.Extrusion_Length);
+          }
+          break;
+        }
+      }
+      DWIN_UpdateLCD();
+    }
 
-  LIMIT(HMI_ValueStruct.E_Temp, 190, thermalManager.hotend_max_target(0));
-  DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(1) + 3, HMI_ValueStruct.E_Temp);
-}
+    void HMI_CustomExtrudeTemp()
+    {
+      ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+      if (encoder_diffState == ENCODER_DIFF_NO)
+        return;
 
-void HMI_CustomExtrudeLength()
-{
-  ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
-  if (encoder_diffState == ENCODER_DIFF_NO)
-    return;
+      if (Apply_Encoder(encoder_diffState, HMI_ValueStruct.E_Temp))
+      {
+        EncoderRate.enabled = false;
+        LIMIT(HMI_ValueStruct.E_Temp, 190, thermalManager.hotend_max_target(0));
+        checkkey = CExtrude_Menu;
+        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(1) + 3, HMI_ValueStruct.E_Temp);
+        thermalManager.setTargetHotend(HMI_ValueStruct.E_Temp, 0);
 
-  if (Apply_Encoder(encoder_diffState, HMI_ValueStruct.Extrusion_Length))
-  {
-    EncoderRate.enabled = false;
-    LIMIT(HMI_ValueStruct.Extrusion_Length, 10, 500);
-    checkkey = CExtrude_Menu;
-    DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(2) + 3, HMI_ValueStruct.Extrusion_Length);
-    return;
-  }
+        return;
+      }
 
-  LIMIT(HMI_ValueStruct.Extrusion_Length, 10, 500);
-  DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(2) + 3, HMI_ValueStruct.Extrusion_Length);
-}
+      LIMIT(HMI_ValueStruct.E_Temp, 190, thermalManager.hotend_max_target(0));
+      DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(1) + 3, HMI_ValueStruct.E_Temp);
+    }
+
+    void HMI_CustomExtrudeLength()
+    {
+      ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+      if (encoder_diffState == ENCODER_DIFF_NO)
+        return;
+
+      if (Apply_Encoder(encoder_diffState, HMI_ValueStruct.Extrusion_Length))
+      {
+        EncoderRate.enabled = false;
+        LIMIT(HMI_ValueStruct.Extrusion_Length, 10, 500);
+        checkkey = CExtrude_Menu;
+        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(2) + 3, HMI_ValueStruct.Extrusion_Length);
+        return;
+      }
+
+      LIMIT(HMI_ValueStruct.Extrusion_Length, 10, 500);
+      DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(2) + 3, HMI_ValueStruct.Extrusion_Length);
+    }
+#endif    
 
 /* Prepare */
 void HMI_Prepare()
@@ -7064,8 +7088,11 @@ void HMI_Prepare()
         if (index_prepare == PREPARE_CASE_DISPLAY)
           Item_Prepare_Display(MROWS);
 
+#if ENABLED(DWIN_CUSTOM_EXTRUDE)
         if (index_prepare == PREPARE_CASE_CUSTOM_EXTRUDE)
           Item_Prepare_CExtrude(MROWS);
+#endif
+
 #if ENABLED(DWIN_ZHOME_MENU)
         if (index_prepare == PREPARE_CASE_ZHEIGHT)
           Item_Prepare_Homeheight(MROWS);
@@ -7108,10 +7135,12 @@ void HMI_Prepare()
           Item_Prepare_PLA(0);
         else if (index_prepare == 13)
           Item_Prepare_TPU(0);
+#if ENABLED(EXTRA_PREHEAT_LABELS)          
         else if (index_prepare == 14)
           Item_Prepare_PETG(0);
         else if (index_prepare == 15)
           Item_Prepare_ABS(0);
+#endif          
       }
       else
       {
@@ -7278,6 +7307,7 @@ void HMI_Prepare()
       break;
 #endif
 
+#if ENABLED(DWIN_CUSTOM_EXTRUDE)
     case PREPARE_CASE_CUSTOM_EXTRUDE: // Pressure height
       // checkkey = Last_Prepare;
       Popup_Window_Home();
@@ -7288,6 +7318,7 @@ void HMI_Prepare()
       select_cextr.reset();
       Draw_CExtrude_Menu();
       break;
+#endif
 
 #if ENABLED(DWIN_ZHOME_MENU)     
     case PREPARE_CASE_ZHEIGHT: // Z height
@@ -11378,6 +11409,8 @@ void DWIN_HandleScreen()
     // case LinAdv_KFactor:
     //   HMI_LinearAdv_KFactor();
     break;
+
+#if ENABLED(DWIN_CUSTOM_EXTRUDE)    
   case CExtrude_Menu:
     HMI_CExtrude_Menu();
     break;
@@ -11387,6 +11420,8 @@ void DWIN_HandleScreen()
   case custom_extrude_length:
     HMI_CustomExtrudeLength();
     break;
+#endif
+
   case Display_Menu:
     HMI_Display_Menu();
     break;

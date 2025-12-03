@@ -117,10 +117,13 @@ enum processID : uint8_t {
   skewxy_dbd,
   skewxy_sad,
 #endif
+#if ENABLED(DWIN_CUSTOM_EXTRUDE)
   CExtrude_Menu,
   custom_extrude_temp,
   custom_extrude_length,
+#endif  
   Display_Menu,
+  
 #if ENABLED(DWIN_DIMM_MENU)  
   Max_LCD_Bright,
   Dimm_Bright,
