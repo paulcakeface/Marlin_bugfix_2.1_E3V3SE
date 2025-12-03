@@ -61,7 +61,7 @@
 // @section info
 
 // Author info of this build printed to the host during boot and M115
-#define STRING_CONFIG_H_AUTHOR "MarlinFirmware, Creality, Kraplax & Navaismo" // Original author or contributor.
+#define STRING_CONFIG_H_AUTHOR "Marlin, Creality, Kraplax & Navaismo" // Original author or contributor.
 //#define CUSTOM_VERSION_FILE Version.h // Path from the root directory (no quotes)
 
 // @section machine
@@ -256,7 +256,7 @@
 #define ENABLE_AUTO_OFF_DISPLAY             // Enable automatic turn-off display function & brightness adjustment function
 #if ENABLED(ENABLE_AUTO_OFF_DISPLAY)
 
-  // #define DWIN_DIMM_MENU                    // Enable LCD Menu to Configure Brightness & DIMM parameters
+  //#define DWIN_DIMM_MENU                    // Enable LCD Menu to Configure Brightness & DIMM parameters
 
   extern int16_t TURN_OFF_TIME;             // turn-off time: 5min
   extern int16_t DIMM_SCREEN_BRIGHTNESS;    // brightness 0x00-0xff:0
@@ -1926,7 +1926,7 @@
 
 #define Z_AFTER_HOMING         10   // (mm) Height to move to after homing (if Z was homed)
 
-// #define DWIN_ZHOME_MENU             // Enable LCD Menu to Configure Z Height after Homing 
+//#define DWIN_ZHOME_MENU             // Enable LCD Menu to Configure Z Height after Homing 
 #if ENABLED(DWIN_ZHOME_MENU)
   extern uint8_t CZ_AFTER_HOMING; 
 #endif

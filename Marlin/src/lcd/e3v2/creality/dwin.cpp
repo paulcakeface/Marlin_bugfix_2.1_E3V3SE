@@ -3745,10 +3745,25 @@ void HMI_Zoffset()
     switch (HMI_ValueStruct.show_mode)
     {
     case -4:
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      if(hasThumbnail)
+        zoff_line = PREPARE_CASE_ZOFF + ThumbMROWS - index_prepare;
+      else
+        zoff_line = PREPARE_CASE_ZOFF + MROWS - index_prepare;
+    #else
       zoff_line = PREPARE_CASE_ZOFF + MROWS - index_prepare;
+    #endif
+
       break;
     default:
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      if(hasThumbnail)
+        zoff_line = TUNE_CASE_ZOFF + ThumbMROWS - thumb_index_tune;
+      else
+        zoff_line = TUNE_CASE_ZOFF + MROWS - index_tune;
+    #else
       zoff_line = TUNE_CASE_ZOFF + MROWS - index_tune;
+    #endif
     }
     if (Apply_Encoder(encoder_diffState, HMI_ValueStruct.offset_value))
     {
@@ -3763,8 +3778,18 @@ void HMI_Zoffset()
       // millis_t end = millis();
       // SERIAL_ECHOLNPGM("pl write time:", end -start);
 #endif
-      checkkey = HMI_ValueStruct.show_mode == -4 ? Prepare : Tune;
-      DWIN_Draw_Signed_Float(font8x16, Color_Bg_Black, 2, 2, VALUERANGE_X - 14, MBASE(zoff_line), TERN(HAS_BED_PROBE, BABY_Z_VAR * 100, HMI_ValueStruct.offset_value));
+      #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        if(hasThumbnail){
+          checkkey = HMI_ValueStruct.show_mode == -4 ? Prepare : ThumbTune;
+          DWIN_Draw_Signed_Float(font8x16, Color_Bg_Black, 2, 2, VALUERANGE_X - 14, THUMB_MBASE(zoff_line), TERN(HAS_BED_PROBE, BABY_Z_VAR * 100, HMI_ValueStruct.offset_value));
+        }else{
+          checkkey = HMI_ValueStruct.show_mode == -4 ? Prepare : Tune;
+          DWIN_Draw_Signed_Float(font8x16, Color_Bg_Black, 2, 2, VALUERANGE_X - 14, MBASE(zoff_line), TERN(HAS_BED_PROBE, BABY_Z_VAR * 100, HMI_ValueStruct.offset_value));
+        }  
+      #else    
+        checkkey = HMI_ValueStruct.show_mode == -4 ? Prepare : Tune;
+        DWIN_Draw_Signed_Float(font8x16, Color_Bg_Black, 2, 2, VALUERANGE_X - 14, MBASE(zoff_line), TERN(HAS_BED_PROBE, BABY_Z_VAR * 100, HMI_ValueStruct.offset_value));
+      #endif  
       DWIN_UpdateLCD();
       return;
     }
@@ -3776,7 +3801,15 @@ void HMI_Zoffset()
     // serialprintPGM("d:babystep\n");
     babystep.add_mm(Z_AXIS, dwin_zoffset - last_zoffset);
 #endif
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      if(hasThumbnail){
+        DWIN_Draw_Signed_Float(font8x16, Select_Color, 2, 2, VALUERANGE_X - 14, THUMB_MBASE(zoff_line), HMI_ValueStruct.offset_value);
+      }else{
+        DWIN_Draw_Signed_Float(font8x16, Select_Color, 2, 2, VALUERANGE_X - 14, MBASE(zoff_line), HMI_ValueStruct.offset_value);
+      }  
+    #else
     DWIN_Draw_Signed_Float(font8x16, Select_Color, 2, 2, VALUERANGE_X - 14, MBASE(zoff_line), HMI_ValueStruct.offset_value);
+    #endif
     DWIN_UpdateLCD();
   }
 }
@@ -3793,7 +3826,14 @@ void HMI_ETemp()
     switch (HMI_ValueStruct.show_mode)
     {
     case -1:
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      if(hasThumbnail)
+        temp_line = select_temp.now + ThumbMROWS - index_temp;
+      else
+        temp_line = select_temp.now + MROWS - index_temp; 
+    #else
       temp_line = select_temp.now + MROWS - index_temp;
+    #endif    
       break;
     case -2:
       temp_line = PREHEAT_CASE_TEMP;
@@ -3808,7 +3848,14 @@ void HMI_ETemp()
       temp_line = PREHEAT_CASE_TEMP;
       break;
     default:
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      if(hasThumbnail)
+        temp_line = TUNE_CASE_TEMP + ThumbMROWS - thumb_index_tune;
+      else
+        temp_line = TUNE_CASE_TEMP + MROWS - index_tune;
+    #else
       temp_line = TUNE_CASE_TEMP + MROWS - index_tune;
+    #endif    
     }
 
     if (Apply_Encoder(encoder_diffState, HMI_ValueStruct.E_Temp))
@@ -3830,6 +3877,7 @@ void HMI_ETemp()
         DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(temp_line) + TEMP_SET_OFFSET, ui.material_preset[1].hotend_temp);
         return;
       }
+    #if ENABLED(PREHEAT_EXTRA_LABELS)
       else if (HMI_ValueStruct.show_mode == -7)
       {
         checkkey = PETGPreheat;
@@ -3844,15 +3892,35 @@ void HMI_ETemp()
         DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(temp_line) + TEMP_SET_OFFSET, ui.material_preset[3].hotend_temp);
         return;
       }
+    #endif
       else if (HMI_ValueStruct.show_mode == -1) // Temperature
       {
         checkkey = TemperatureID;
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        if(hasThumbnail){
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, THUMB_MBASE(temp_line) + TEMP_SET_OFFSET, HMI_ValueStruct.E_Temp);
+        }else{
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(temp_line) + TEMP_SET_OFFSET, HMI_ValueStruct.E_Temp);
+        }
+    #else
         DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(temp_line) + TEMP_SET_OFFSET, HMI_ValueStruct.E_Temp);
+    #endif    
       }
       else
       {
+        
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        if(hasThumbnail){
+          checkkey = ThumbTune;
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, THUMB_MBASE(temp_line) + PRINT_SET_OFFSET, HMI_ValueStruct.E_Temp);
+        }else{
+          checkkey = Tune;
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(temp_line) + PRINT_SET_OFFSET, HMI_ValueStruct.E_Temp);
+        }
+    #else
         checkkey = Tune;
         DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(temp_line) + PRINT_SET_OFFSET, HMI_ValueStruct.E_Temp);
+    #endif
       }
 #if ENABLED(USE_SWITCH_POWER_200W)
       while ((thermalManager.degTargetBed() > 0) && (ABS(thermalManager.degTargetBed() - thermalManager.degBed()) > TEMP_WINDOW))
@@ -3866,10 +3934,27 @@ void HMI_ETemp()
     // E_Temp limit
     LIMIT(HMI_ValueStruct.E_Temp, HEATER_0_MINTEMP, thermalManager.hotend_max_target(0));
     // E_Temp value
+
     if (0 == HMI_ValueStruct.show_mode)
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      if(hasThumbnail){
+        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, THUMB_MBASE(temp_line) + PRINT_SET_OFFSET, HMI_ValueStruct.E_Temp);
+      }else{
+        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(temp_line) + PRINT_SET_OFFSET, HMI_ValueStruct.E_Temp);
+      }  
+    #else 
       DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(temp_line) + PRINT_SET_OFFSET, HMI_ValueStruct.E_Temp);
+    #endif  
     else
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      if(hasThumbnail){
+        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, THUMB_MBASE(temp_line) + TEMP_SET_OFFSET, HMI_ValueStruct.E_Temp);
+      }else{
+        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(temp_line) + TEMP_SET_OFFSET, HMI_ValueStruct.E_Temp);
+      }  
+    #else
       DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(temp_line) + TEMP_SET_OFFSET, HMI_ValueStruct.E_Temp);
+    #endif
   }
 }
 
@@ -3881,21 +3966,48 @@ void HMI_EFlow()
   {
     if (Apply_Encoder(encoder_diffState, HMI_ValueStruct.E_Flow))
     {
-      checkkey = Tune;
       EncoderRate.enabled = false;
       ui.material_preset[0].flow_rate = HMI_ValueStruct.E_Flow;
-      DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(select_tune.now + MROWS - index_tune) + PRINT_SET_OFFSET, HMI_ValueStruct.E_Flow);
-      planner.set_flow(0, HMI_ValueStruct.E_Flow);
+      
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        if(hasThumbnail){
+          checkkey = ThumbTune;
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, THUMB_MBASE(select_tune.now + ThumbMROWS - thumb_index_tune) + PRINT_SET_OFFSET, HMI_ValueStruct.E_Flow);
+        }else{
+          checkkey = Tune;
+           DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(select_tune.now + MROWS - index_tune) + PRINT_SET_OFFSET, HMI_ValueStruct.E_Flow);
+        }
+         planner.set_flow(0, HMI_ValueStruct.E_Flow);  
+    #else
+        checkkey = Tune;
+        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(select_tune.now + MROWS - index_tune) + PRINT_SET_OFFSET, HMI_ValueStruct.E_Flow);
+        planner.set_flow(0, HMI_ValueStruct.E_Flow);
+    #endif
+     
+
+
       return;
     }
     // E_Flow limit
     LIMIT(HMI_ValueStruct.E_Flow, FLOW_MINVAL, FLOW_MAXVAL);
-    // E_Flow value
-    if (0 == HMI_ValueStruct.show_mode)
-      DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(select_tune.now + MROWS - index_tune) + PRINT_SET_OFFSET, HMI_ValueStruct.E_Flow);
+
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        if(hasThumbnail){
+            DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, THUMB_MBASE(select_tune.now + ThumbMROWS - thumb_index_tune) + PRINT_SET_OFFSET, HMI_ValueStruct.E_Flow);
+        }else{
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(select_tune.now + MROWS - index_tune) + PRINT_SET_OFFSET, HMI_ValueStruct.E_Flow);
+        }  
+    #else
+        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(select_tune.now + MROWS - index_tune) + PRINT_SET_OFFSET, HMI_ValueStruct.E_Flow);
+    #endif
+
+
+    // // E_Flow value
+    // if (0 == HMI_ValueStruct.show_mode)
+    //   DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(select_tune.now + MROWS - index_tune) + PRINT_SET_OFFSET, HMI_ValueStruct.E_Flow);
       
-    else
-      DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(select_tune.now + MROWS - index_tune) + PRINT_SET_OFFSET, HMI_ValueStruct.E_Flow);
+    // else
+    //   DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(select_tune.now + MROWS - index_tune) + PRINT_SET_OFFSET, HMI_ValueStruct.E_Flow);
       
   }
 }
@@ -3915,7 +4027,14 @@ void HMI_BedTemp()
     switch (HMI_ValueStruct.show_mode)
     {
     case -1:
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      if(hasThumbnail)
+        bed_line = select_temp.now + ThumbMROWS - index_temp;
+      else
+        bed_line = select_temp.now + MROWS - index_temp;
+    #else
       bed_line = select_temp.now + MROWS - index_temp;
+    #endif
       break;
     case -2:
       bed_line = PREHEAT_CASE_BED;
@@ -3930,7 +4049,14 @@ void HMI_BedTemp()
       bed_line = PREHEAT_CASE_BED;
       break;
     default:
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      if(hasThumbnail)
+        bed_line = TUNE_CASE_BED + ThumbMROWS - thumb_index_tune;
+      else
+        bed_line = TUNE_CASE_BED + MROWS - index_tune;
+    #else
       bed_line = TUNE_CASE_BED + MROWS - index_tune;
+    #endif
     }
     // Bed_Temp limit
     LIMIT(HMI_ValueStruct.Bed_Temp, BED_MINTEMP, BED_MAX_TARGET);
@@ -3943,39 +4069,91 @@ void HMI_BedTemp()
       {
         checkkey = PLAPreheat;
         ui.material_preset[0].bed_temp = HMI_ValueStruct.Bed_Temp;
+      #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        if(hasThumbnail){
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, THUMB_MBASE(bed_line) + TEMP_SET_OFFSET, ui.material_preset[0].bed_temp);
+        }else{
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(bed_line) + TEMP_SET_OFFSET, ui.material_preset[0].bed_temp);
+        }  
+      #else
         DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(bed_line) + TEMP_SET_OFFSET, ui.material_preset[0].bed_temp);
+      #endif
         return;
       }
       else if (HMI_ValueStruct.show_mode == -3)
       {
         checkkey = TPUPreheat;
         ui.material_preset[1].bed_temp = HMI_ValueStruct.Bed_Temp;
+      #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        if(hasThumbnail){
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, THUMB_MBASE(bed_line) + TEMP_SET_OFFSET, ui.material_preset[1].bed_temp);
+        }else{
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(bed_line) + TEMP_SET_OFFSET, ui.material_preset[1].bed_temp);
+        }  
+      #else
         DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(bed_line) + TEMP_SET_OFFSET, ui.material_preset[1].bed_temp);
+      #endif
         return;
       }
+    #if ENABLED(PREHEAT_EXTRA_LABELS)  
       else if (HMI_ValueStruct.show_mode == -7)
       {
         checkkey = PETGPreheat;
         ui.material_preset[2].bed_temp = HMI_ValueStruct.Bed_Temp;
+      #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        if(hasThumbnail){
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, THUMB_MBASE(bed_line) + TEMP_SET_OFFSET, ui.material_preset[2].bed_temp);
+        }else{
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(bed_line) + TEMP_SET_OFFSET, ui.material_preset[2].bed_temp);
+        }  
+      #else
         DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(bed_line) + TEMP_SET_OFFSET, ui.material_preset[2].bed_temp);
+      #endif
         return;
       }
       else if (HMI_ValueStruct.show_mode == -8)
       {
         checkkey = ABSPreheat;
         ui.material_preset[3].bed_temp = HMI_ValueStruct.Bed_Temp;
+      #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        if(hasThumbnail){
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, THUMB_MBASE(bed_line) + TEMP_SET_OFFSET, ui.material_preset[3].bed_temp);
+        }else{
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(bed_line) + TEMP_SET_OFFSET, ui.material_preset[3].bed_temp);
+        }  
+      #else
         DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(bed_line) + TEMP_SET_OFFSET, ui.material_preset[3].bed_temp);
+      #endif
         return;
       }
+    #endif
       else if (HMI_ValueStruct.show_mode == -1)
       {
         checkkey = TemperatureID;
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        if(hasThumbnail){
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, THUMB_MBASE(bed_line) + TEMP_SET_OFFSET, HMI_ValueStruct.Bed_Temp);
+        }else{
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(bed_line) + TEMP_SET_OFFSET, HMI_ValueStruct.Bed_Temp);
+        }  
+    #else
         DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(bed_line) + TEMP_SET_OFFSET, HMI_ValueStruct.Bed_Temp);
+    #endif
       }
       else
       {
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        if(hasThumbnail){
+          checkkey = ThumbTune;
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, THUMB_MBASE(bed_line) + PRINT_SET_OFFSET, HMI_ValueStruct.Bed_Temp);
+        }else{
         checkkey = Tune;
         DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(bed_line) + PRINT_SET_OFFSET, HMI_ValueStruct.Bed_Temp);
+        }
+    #else
+        checkkey = Tune;
+        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(bed_line) + PRINT_SET_OFFSET, HMI_ValueStruct.Bed_Temp);
+    #endif      
       }
 #if ENABLED(USE_SWITCH_POWER_200W)
       while (((thermalManager.degTargetHotend(0) > 0) && ABS(thermalManager.degTargetHotend(0) - thermalManager.degHotend(0)) > TEMP_WINDOW))
@@ -3991,11 +4169,27 @@ void HMI_BedTemp()
     // Bed_Temp value
     if (0 == HMI_ValueStruct.show_mode)
     {
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      if(hasThumbnail){
+        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, THUMB_MBASE(bed_line) + PRINT_SET_OFFSET, HMI_ValueStruct.Bed_Temp);
+      }else{
+        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(bed_line) + PRINT_SET_OFFSET, HMI_ValueStruct.Bed_Temp);
+      }  
+    #else
       DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(bed_line) + PRINT_SET_OFFSET, HMI_ValueStruct.Bed_Temp);
+    #endif  
     }
     else
     {
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      if(hasThumbnail){
+        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, THUMB_MBASE(bed_line) + TEMP_SET_OFFSET, HMI_ValueStruct.Bed_Temp);
+      }else{
+        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(bed_line) + TEMP_SET_OFFSET, HMI_ValueStruct.Bed_Temp);
+      }  
+    #else
       DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(bed_line) + TEMP_SET_OFFSET, HMI_ValueStruct.Bed_Temp);
+    #endif  
     }
   }
 }
@@ -4023,7 +4217,15 @@ void HMI_FanSpeed()
       break;
     // case -4: fan_line = TEMP_CASE_FAN + MROWS -index_temp;break;
     default:
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      if(hasThumbnail){
+        fan_line = TUNE_CASE_FAN + ThumbMROWS - index_tune;
+      }else{
+        fan_line = TUNE_CASE_FAN + MROWS - index_tune;
+      }  
+    #else
       fan_line = TUNE_CASE_FAN + MROWS - index_tune;
+    #endif  
     }
 
     if (Apply_Encoder(encoder_diffState, HMI_ValueStruct.Fan_speed))
@@ -4033,25 +4235,60 @@ void HMI_FanSpeed()
       {
         checkkey = PLAPreheat;
         ui.material_preset[0].fan_speed = HMI_ValueStruct.Fan_speed;
-        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(fan_line) + TEMP_SET_OFFSET, ui.material_preset[0].fan_speed);
+        #if ENABLED(DWIN_RENDER_THUMBNAIL)
+          if(hasThumbnail){
+            DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, THUMB_MBASE(fan_line) + TEMP_SET_OFFSET, ui.material_preset[0].fan_speed);
+          }else{
+            DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(fan_line) + TEMP_SET_OFFSET, ui.material_preset[0].fan_speed);
+          }  
+        #else
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(fan_line) + TEMP_SET_OFFSET, ui.material_preset[0].fan_speed);
+        #endif
         return;
       }
       else if (HMI_ValueStruct.show_mode == -3)
       {
         checkkey = TPUPreheat;
         ui.material_preset[1].fan_speed = HMI_ValueStruct.Fan_speed;
-        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(fan_line) + TEMP_SET_OFFSET, ui.material_preset[1].fan_speed);
+        
+        #if ENABLED(DWIN_RENDER_THUMBNAIL)
+          if(hasThumbnail){
+            DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, THUMB_MBASE(fan_line) + TEMP_SET_OFFSET, ui.material_preset[1].fan_speed);
+          }else{
+            DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(fan_line) + TEMP_SET_OFFSET, ui.material_preset[1].fan_speed);
+          }  
+        #else
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(fan_line) + TEMP_SET_OFFSET, ui.material_preset[1].fan_speed);
+        #endif
         return;
       }
       else if (HMI_ValueStruct.show_mode == -1)
       {
         checkkey = TemperatureID;
-        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(fan_line) + TEMP_SET_OFFSET, HMI_ValueStruct.Fan_speed);
+        #if ENABLED(DWIN_RENDER_THUMBNAIL)
+          if(hasThumbnail){
+            DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, THUMB_MBASE(fan_line) + TEMP_SET_OFFSET, HMI_ValueStruct.Fan_speed);
+          }else{
+            DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(fan_line) + TEMP_SET_OFFSET, HMI_ValueStruct.Fan_speed);
+          }  
+        #else
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(fan_line) + TEMP_SET_OFFSET, HMI_ValueStruct.Fan_speed);
+        #endif
       }
       else
       {
-        checkkey = Tune;
-        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(fan_line) + PRINT_SET_OFFSET, HMI_ValueStruct.Fan_speed);
+      #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        if(hasThumbnail){
+          checkkey = ThumbTune;
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, THUMB_MBASE(fan_line) + PRINT_SET_OFFSET, HMI_ValueStruct.Fan_speed);
+        }else{  
+          checkkey = Tune;
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(fan_line) + PRINT_SET_OFFSET, HMI_ValueStruct.Fan_speed);
+        }
+      #else
+          checkkey = Tune;
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(fan_line) + PRINT_SET_OFFSET, HMI_ValueStruct.Fan_speed);
+      #endif    
       }
       thermalManager.set_fan_speed(0, HMI_ValueStruct.Fan_speed);
       return;
@@ -4061,11 +4298,27 @@ void HMI_FanSpeed()
     // Fan_speed value
     if (0 == HMI_ValueStruct.show_mode)
     {
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        if(hasThumbnail){
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, THUMB_MBASE(fan_line) + PRINT_SET_OFFSET, HMI_ValueStruct.Fan_speed);
+        }else{
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(fan_line) + PRINT_SET_OFFSET, HMI_ValueStruct.Fan_speed);
+        }  
+    #else
       DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(fan_line) + PRINT_SET_OFFSET, HMI_ValueStruct.Fan_speed);
+    #endif  
     }
     else
     {
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        if(hasThumbnail){
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, THUMB_MBASE(fan_line) + TEMP_SET_OFFSET, HMI_ValueStruct.Fan_speed);
+        }else{
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(fan_line) + TEMP_SET_OFFSET, HMI_ValueStruct.Fan_speed);
+        }  
+    #else
       DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(fan_line) + TEMP_SET_OFFSET, HMI_ValueStruct.Fan_speed);
+    #endif  
     }
   }
 }
@@ -4100,7 +4353,16 @@ void HMI_PrintSpeed()
     // print_speed limit
     LIMIT(HMI_ValueStruct.print_speed, MIN_PRINT_SPEED, MAX_PRINT_SPEED);
     // print_speed value
-    DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(select_tune.now + MROWS - index_tune) + PRINT_SET_OFFSET, HMI_ValueStruct.print_speed);
+     #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        if(hasThumbnail){
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, THUMB_MBASE(select_tune.now + ThumbMROWS - thumb_index_tune) + PRINT_SET_OFFSET, HMI_ValueStruct.print_speed);
+        }else{
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(select_tune.now + MROWS - index_tune) + PRINT_SET_OFFSET, HMI_ValueStruct.print_speed);
+        }  
+      #else
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(select_tune.now + MROWS - index_tune) + PRINT_SET_OFFSET, HMI_ValueStruct.print_speed);
+      #endif          
+
   }
 }
 
@@ -7943,74 +8205,368 @@ void HMI_Temperature()
   {
     if (select_temp.inc(1 + TEMP_CASE_TOTAL))
     {
-      if (select_temp.now > MROWS && select_temp.now > index_temp)
-      {
-        index_temp = select_temp.now;
-
-        // Scroll up and draw a blank bottom line
-        Scroll_Menu(DWIN_SCROLL_UP);
-        switch (index_temp)
-        {
-        
-      #if ENABLED(EXTRA_PREHEAT_LABELS)    
-        case TEMP_CASE_PETG:
-          Item_Temp_PETG(MROWS);
-          Draw_Menu_Icon(MROWS, ICON_SetBedTemp);
-          DWIN_ICON_Show(ICON, ICON_More, 208, MBASE(MROWS) - 3);
-          break;
-        case TEMP_CASE_ABS:
-          DWIN_Draw_Rectangle(1, Color_Bg_Black, 60, MBASE(MROWS) - 8, 240, MBASE(6) - 12); // Clear the last line
-          Item_Temp_ABS(MROWS);
-          Draw_Menu_Icon(MROWS, ICON_SetBedTemp);
-          DWIN_ICON_Show(ICON, ICON_More, 208, MBASE(MROWS) - 3);
-          break;
-      #endif    
-        // Manual pid setting
-        case TEMP_CASE_HM_PID:
-          DWIN_Draw_Rectangle(1, Color_Bg_Black, 60, MBASE(MROWS) - 8, 240, MBASE(6) - 12); // Clear the last line
-
-          Draw_Menu_Icon(MROWS, ICON_HM_PID);
-          Draw_Menu_Line(MROWS, ICON_HM_PID);
-          if (HMI_flag.language < Language_Max)
+      #if ENABLED(DWIN_RENDER_THUMBNAIL) // ? Thumb Enabled
+        if(hasThumbnail){  // ! Has Thumb
+          if (select_temp.now > ThumbMROWS && select_temp.now > index_temp)
           {
-#if ENABLED(DWIN_CREALITY_480_LCD)
-            DWIN_ICON_Show(HMI_flag.language, LANGUAGE_PID_Manually, 42, MBASE(MROWS) + JPN_OFFSET);
-#elif ENABLED(DWIN_CREALITY_320_LCD)
-            DWIN_ICON_Show(HMI_flag.language, LANGUAGE_PID_Manually, 42, MBASE(MROWS) + JPN_OFFSET);
-#endif
-          }
-          break;
-        case TEMP_CASE_Auto_PID:                                                            // Automatic pid setting
-          DWIN_Draw_Rectangle(1, Color_Bg_Black, 60, MBASE(MROWS) - 8, 240, MBASE(6) - 12); // Clear the last line
+            index_temp = select_temp.now;
 
-          Draw_Menu_Icon(MROWS, ICON_Auto_PID);
-          Draw_Menu_Line(MROWS, ICON_Auto_PID);
-          if (HMI_flag.language < Language_Max)
-          {
-#if ENABLED(DWIN_CREALITY_480_LCD)
-#elif ENABLED(DWIN_CREALITY_320_LCD)
-            DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Auto_PID, 42, MBASE(MROWS) + JPN_OFFSET);
-#endif
+            // Scroll up and draw a blank bottom line
+            Scroll_Menu_Thumb(DWIN_SCROLL_UP);
+            switch (index_temp)
+            {
+            
+          #if ENABLED(EXTRA_PREHEAT_LABELS)    
+            case TEMP_CASE_PETG:
+              Item_Temp_PETG(ThumbMROWS);
+              Draw_Menu_Icon(ThumbMROWS, ICON_SetBedTemp);
+              DWIN_ICON_Show(ICON, ICON_More, 208, THUMB_MBASE(ThumbMROWS) - 3);
+              break;
+            case TEMP_CASE_ABS:
+              DWIN_Draw_Rectangle(1, Color_Bg_Black, 60, THUMB_MBASE(ThumbMROWS) - 8, 240, THUMB_MBASE(6) - 12); // Clear the last line
+              Item_Temp_ABS(ThumbMROWS);
+              Draw_Menu_Icon(ThumbMROWS, ICON_SetBedTemp);
+              DWIN_ICON_Show(ICON, ICON_More, 208, THUMB_MBASE(ThumbMROWS) - 3);
+              break;
+          #endif    
+            // Manual pid setting
+            case TEMP_CASE_HM_PID:
+              DWIN_Draw_Rectangle(1, Color_Bg_Black, 60, THUMB_MBASE(ThumbMROWS) - 8, 240, THUMB_MBASE(6) - 12); // Clear the last line
+
+              Draw_Menu_Icon(ThumbMROWS, ICON_HM_PID);
+              Draw_Menu_Line(ThumbMROWS, ICON_HM_PID);
+              if (HMI_flag.language < Language_Max)
+              {
+    #if ENABLED(DWIN_CREALITY_480_LCD)
+                DWIN_ICON_Show(HMI_flag.language, LANGUAGE_PID_Manually, 42, THUMB_MBASE(ThumbMROWS) + JPN_OFFSET);
+    #elif ENABLED(DWIN_CREALITY_320_LCD)
+                DWIN_ICON_Show(HMI_flag.language, LANGUAGE_PID_Manually, 42, THUMB_MBASE(ThumbMROWS) + JPN_OFFSET);
+    #endif
+              }
+              break;
+            case TEMP_CASE_Auto_PID:                                                            // Automatic pid setting
+              DWIN_Draw_Rectangle(1, Color_Bg_Black, 60, THUMB_MBASE(ThumbMROWS) - 8, 240, THUMB_MBASE(6) - 12); // Clear the last line
+
+              Draw_Menu_Icon(ThumbMROWS, ICON_Auto_PID);
+              Draw_Menu_Line(ThumbMROWS, ICON_Auto_PID);
+              if (HMI_flag.language < Language_Max)
+              {
+    #if ENABLED(DWIN_CREALITY_480_LCD)
+    #elif ENABLED(DWIN_CREALITY_320_LCD)
+                DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Auto_PID, 42, THUMB_MBASE(ThumbMROWS) + JPN_OFFSET);
+    #endif
+              }
+              // queue.inject_P(G28_STR); //G28 will set home_flag
+              // // Popup_Window_Home();
+              break;
+            default:
+              break;
+            }
+            Draw_More_Icon(ThumbMROWS);
           }
-          // queue.inject_P(G28_STR); //G28 will set home_flag
-          // // Popup_Window_Home();
-          break;
-        default:
-          break;
-        }
-        Draw_More_Icon(MROWS);
-      }
-      else
-      {
-        Move_Highlight(1, select_temp.now + MROWS - index_temp);
-      }
+          else
+          {
+            Move_Highlight(1, select_temp.now + ThumbMROWS - index_temp);
+          }
+
+        }else{ // ! Not Thumb 
+          if (select_temp.now > MROWS && select_temp.now > index_temp)
+          {
+            index_temp = select_temp.now;
+
+            // Scroll up and draw a blank bottom line
+            Scroll_Menu(DWIN_SCROLL_UP);
+            switch (index_temp)
+            {
+            
+          #if ENABLED(EXTRA_PREHEAT_LABELS)    
+            case TEMP_CASE_PETG:
+              Item_Temp_PETG(MROWS);
+              Draw_Menu_Icon(MROWS, ICON_SetBedTemp);
+              DWIN_ICON_Show(ICON, ICON_More, 208, MBASE(MROWS) - 3);
+              break;
+            case TEMP_CASE_ABS:
+              DWIN_Draw_Rectangle(1, Color_Bg_Black, 60, MBASE(MROWS) - 8, 240, MBASE(6) - 12); // Clear the last line
+              Item_Temp_ABS(MROWS);
+              Draw_Menu_Icon(MROWS, ICON_SetBedTemp);
+              DWIN_ICON_Show(ICON, ICON_More, 208, MBASE(MROWS) - 3);
+              break;
+          #endif    
+            // Manual pid setting
+            case TEMP_CASE_HM_PID:
+              DWIN_Draw_Rectangle(1, Color_Bg_Black, 60, MBASE(MROWS) - 8, 240, MBASE(6) - 12); // Clear the last line
+
+              Draw_Menu_Icon(MROWS, ICON_HM_PID);
+              Draw_Menu_Line(MROWS, ICON_HM_PID);
+              if (HMI_flag.language < Language_Max)
+              {
+    #if ENABLED(DWIN_CREALITY_480_LCD)
+                DWIN_ICON_Show(HMI_flag.language, LANGUAGE_PID_Manually, 42, MBASE(MROWS) + JPN_OFFSET);
+    #elif ENABLED(DWIN_CREALITY_320_LCD)
+                DWIN_ICON_Show(HMI_flag.language, LANGUAGE_PID_Manually, 42, MBASE(MROWS) + JPN_OFFSET);
+    #endif
+              }
+              break;
+            case TEMP_CASE_Auto_PID:                                                            // Automatic pid setting
+              DWIN_Draw_Rectangle(1, Color_Bg_Black, 60, MBASE(MROWS) - 8, 240, MBASE(6) - 12); // Clear the last line
+
+              Draw_Menu_Icon(MROWS, ICON_Auto_PID);
+              Draw_Menu_Line(MROWS, ICON_Auto_PID);
+              if (HMI_flag.language < Language_Max)
+              {
+    #if ENABLED(DWIN_CREALITY_480_LCD)
+    #elif ENABLED(DWIN_CREALITY_320_LCD)
+                DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Auto_PID, 42, MBASE(MROWS) + JPN_OFFSET);
+    #endif
+              }
+              // queue.inject_P(G28_STR); //G28 will set home_flag
+              // // Popup_Window_Home();
+              break;
+            default:
+              break;
+            }
+            Draw_More_Icon(MROWS);
+          }
+          else
+          {
+            Move_Highlight(1, select_temp.now + MROWS - index_temp);
+          }
+        } // ! end Thumb 
+
+      #else  // ? Thumb Not Enabled
+         if (select_temp.now > MROWS && select_temp.now > index_temp)
+          {
+            index_temp = select_temp.now;
+
+            // Scroll up and draw a blank bottom line
+            Scroll_Menu(DWIN_SCROLL_UP);
+            switch (index_temp)
+            {
+            
+          #if ENABLED(EXTRA_PREHEAT_LABELS)    
+            case TEMP_CASE_PETG:
+              Item_Temp_PETG(MROWS);
+              Draw_Menu_Icon(MROWS, ICON_SetBedTemp);
+              DWIN_ICON_Show(ICON, ICON_More, 208, MBASE(MROWS) - 3);
+              break;
+            case TEMP_CASE_ABS:
+              DWIN_Draw_Rectangle(1, Color_Bg_Black, 60, MBASE(MROWS) - 8, 240, MBASE(6) - 12); // Clear the last line
+              Item_Temp_ABS(MROWS);
+              Draw_Menu_Icon(MROWS, ICON_SetBedTemp);
+              DWIN_ICON_Show(ICON, ICON_More, 208, MBASE(MROWS) - 3);
+              break;
+          #endif    
+            // Manual pid setting
+            case TEMP_CASE_HM_PID:
+              DWIN_Draw_Rectangle(1, Color_Bg_Black, 60, MBASE(MROWS) - 8, 240, MBASE(6) - 12); // Clear the last line
+
+              Draw_Menu_Icon(MROWS, ICON_HM_PID);
+              Draw_Menu_Line(MROWS, ICON_HM_PID);
+              if (HMI_flag.language < Language_Max)
+              {
+    #if ENABLED(DWIN_CREALITY_480_LCD)
+                DWIN_ICON_Show(HMI_flag.language, LANGUAGE_PID_Manually, 42, MBASE(MROWS) + JPN_OFFSET);
+    #elif ENABLED(DWIN_CREALITY_320_LCD)
+                DWIN_ICON_Show(HMI_flag.language, LANGUAGE_PID_Manually, 42, MBASE(MROWS) + JPN_OFFSET);
+    #endif
+              }
+              break;
+            case TEMP_CASE_Auto_PID:                                                            // Automatic pid setting
+              DWIN_Draw_Rectangle(1, Color_Bg_Black, 60, MBASE(MROWS) - 8, 240, MBASE(6) - 12); // Clear the last line
+
+              Draw_Menu_Icon(MROWS, ICON_Auto_PID);
+              Draw_Menu_Line(MROWS, ICON_Auto_PID);
+              if (HMI_flag.language < Language_Max)
+              {
+    #if ENABLED(DWIN_CREALITY_480_LCD)
+    #elif ENABLED(DWIN_CREALITY_320_LCD)
+                DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Auto_PID, 42, MBASE(MROWS) + JPN_OFFSET);
+    #endif
+              }
+              // queue.inject_P(G28_STR); //G28 will set home_flag
+              // // Popup_Window_Home();
+              break;
+            default:
+              break;
+            }
+            Draw_More_Icon(MROWS);
+          }
+          else
+          {
+            Move_Highlight(1, select_temp.now + MROWS - index_temp);
+          }
+    
+      #endif // ? End Thumb Enabled
     }
   }
   else if (encoder_diffState == ENCODER_DIFF_CCW)
   {
     if (select_temp.dec())
     {
-      if (select_temp.now < index_temp - MROWS)
+      #if ENABLED(DWIN_RENDER_THUMBNAIL) // ? Thumb Enabled
+        if (hasThumbnail){ // ! has Thumb
+          if (select_temp.now < index_temp - ThumbMROWS)
+          {
+            index_temp--;
+
+            Scroll_Menu_Thumb(DWIN_SCROLL_DOWN);
+            if (index_temp == ThumbMROWS)
+            {
+              Draw_Back_First();
+              Show_Temp_Default_Data(1, 1);
+              Show_Temp_Default_Data(2, 2);
+              Show_Temp_Default_Data(3, 3);
+              Draw_More_Icon(4);
+            }
+            else if (index_temp == 5)
+            {
+              Show_Temp_Default_Data(1, 1);
+              Show_Temp_Default_Data(2, 2);
+              Show_Temp_Default_Data(3, 3);
+              Draw_More_Icon(4);
+            }
+            else if (index_temp == 6)
+            {
+              if (HMI_flag.language < Language_Max)
+              {
+                DWIN_Draw_Rectangle(1, Color_Bg_Black, 200, THUMB_MBASE(0) - 8, 240, THUMB_MBASE(0 + 2) - 12); // Clear previos line
+                Draw_Menu_Line(0, ICON_SetEndTemp);
+                DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Hotend, 42, THUMB_MBASE(0) + JPN_OFFSET);
+                Show_Temp_Default_Data(0, 1);
+                Show_Temp_Default_Data(1, 2);
+                Show_Temp_Default_Data(2, 3);
+              }
+            }
+            else if (index_temp == 7)
+            {
+              if (HMI_flag.language < Language_Max)
+              {
+                DWIN_Draw_Rectangle(1, Color_Bg_Black, 200, THUMB_MBASE(0) - 8, 240, THUMB_MBASE(0 + 2) - 12); // Clear previos line
+                Draw_Menu_Line(0, ICON_SetBedTemp);
+                DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Bedend, 42, THUMB_MBASE(0) + JPN_OFFSET);
+                Show_Temp_Default_Data(0, 2);
+                Show_Temp_Default_Data(1, 3);
+              }
+            }
+            else if (index_temp == 8)
+            {
+              if (HMI_flag.language < Language_Max)
+              {
+                DWIN_Draw_Rectangle(1, Color_Bg_Black, 200, THUMB_MBASE(0) - 8, 240, THUMB_MBASE(0 + 2) - 12); // Clear previos line
+                Draw_Menu_Line(0, ICON_FanSpeed);
+                DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Fan, 42, THUMB_MBASE(0) + JPN_OFFSET);
+                Show_Temp_Default_Data(0, 3);
+              }
+            }
+            else if (index_temp == 9)
+            {
+              if (HMI_flag.language < Language_Max)
+              {
+                Draw_Menu_Line(0, ICON_SetPLAPreheat);
+                Draw_More_Icon(0);
+                DWIN_ICON_Show(HMI_flag.language, LANGUAGE_PLASetup, 42, THUMB_MBASE(0) + JPN_OFFSET);
+              }
+            }
+            // switch (select_temp.now)
+            // {
+            // case 0:
+            //   Draw_Back_First();
+            //   break;
+            // case 1:
+            //   Draw_Nozzle_Temp_Label();
+            //   break;
+            // default:
+            //   break;
+            // }
+          }
+          else
+          {
+            Move_Highlight(-1, select_temp.now + ThumbMROWS - index_temp);
+          }
+
+        }else{ // ! hasnt Thumb
+          if (select_temp.now < index_temp - MROWS)
+          {
+            index_temp--;
+
+            Scroll_Menu(DWIN_SCROLL_DOWN);
+            if (index_temp == MROWS)
+            {
+              Draw_Back_First();
+              Show_Temp_Default_Data(1, 1);
+              Show_Temp_Default_Data(2, 2);
+              Show_Temp_Default_Data(3, 3);
+              Draw_More_Icon(4);
+            }
+            else if (index_temp == 5)
+            {
+              Show_Temp_Default_Data(1, 1);
+              Show_Temp_Default_Data(2, 2);
+              Show_Temp_Default_Data(3, 3);
+              Draw_More_Icon(4);
+            }
+            else if (index_temp == 6)
+            {
+              if (HMI_flag.language < Language_Max)
+              {
+                DWIN_Draw_Rectangle(1, Color_Bg_Black, 200, MBASE(0) - 8, 240, MBASE(0 + 2) - 12); // Clear previos line
+                Draw_Menu_Line(0, ICON_SetEndTemp);
+                DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Hotend, 42, MBASE(0) + JPN_OFFSET);
+                Show_Temp_Default_Data(0, 1);
+                Show_Temp_Default_Data(1, 2);
+                Show_Temp_Default_Data(2, 3);
+              }
+            }
+            else if (index_temp == 7)
+            {
+              if (HMI_flag.language < Language_Max)
+              {
+                DWIN_Draw_Rectangle(1, Color_Bg_Black, 200, MBASE(0) - 8, 240, MBASE(0 + 2) - 12); // Clear previos line
+                Draw_Menu_Line(0, ICON_SetBedTemp);
+                DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Bedend, 42, MBASE(0) + JPN_OFFSET);
+                Show_Temp_Default_Data(0, 2);
+                Show_Temp_Default_Data(1, 3);
+              }
+            }
+            else if (index_temp == 8)
+            {
+              if (HMI_flag.language < Language_Max)
+              {
+                DWIN_Draw_Rectangle(1, Color_Bg_Black, 200, MBASE(0) - 8, 240, MBASE(0 + 2) - 12); // Clear previos line
+                Draw_Menu_Line(0, ICON_FanSpeed);
+                DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Fan, 42, MBASE(0) + JPN_OFFSET);
+                Show_Temp_Default_Data(0, 3);
+              }
+            }
+            else if (index_temp == 9)
+            {
+              if (HMI_flag.language < Language_Max)
+              {
+                Draw_Menu_Line(0, ICON_SetPLAPreheat);
+                Draw_More_Icon(0);
+                DWIN_ICON_Show(HMI_flag.language, LANGUAGE_PLASetup, 42, MBASE(0) + JPN_OFFSET);
+              }
+            }
+            // switch (select_temp.now)
+            // {
+            // case 0:
+            //   Draw_Back_First();
+            //   break;
+            // case 1:
+            //   Draw_Nozzle_Temp_Label();
+            //   break;
+            // default:
+            //   break;
+            // }
+          }
+          else
+          {
+            Move_Highlight(-1, select_temp.now + MROWS - index_temp);
+          }
+        } // ! End has Thumb 
+
+      #else // ? Thumb not Enabled
+        if (select_temp.now < index_temp - MROWS)
       {
         index_temp--;
 
@@ -8088,6 +8644,10 @@ void HMI_Temperature()
       {
         Move_Highlight(-1, select_temp.now + MROWS - index_temp);
       }
+
+      #endif // ? End ThumbEnabled
+
+      
     }
   }
   else if (encoder_diffState == ENCODER_DIFF_ENTER)
@@ -8105,8 +8665,16 @@ void HMI_Temperature()
       checkkey = ETemp;
       HMI_ValueStruct.E_Temp = thermalManager.degTargetHotend(0);
       LIMIT(HMI_ValueStruct.E_Temp, HEATER_0_MINTEMP, thermalManager.hotend_max_target(0));
-      DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(select_temp.now + MROWS - index_temp) + TEMP_SET_OFFSET, HMI_ValueStruct.E_Temp);
-      EncoderRate.enabled = true;
+      #if ENABLED(DWIN_RENDER_THUMBNAIL) // ? Thumb Enabled
+        if (hasThumbnail){
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, THUMB_MBASE(select_temp.now + ThumbMROWS - index_temp) + TEMP_SET_OFFSET, HMI_ValueStruct.E_Temp);
+        }else{
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(select_temp.now + MROWS - index_temp) + TEMP_SET_OFFSET, HMI_ValueStruct.E_Temp);
+        }
+      #else // ? Thumb Not Enabled
+        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(select_temp.now + MROWS - index_temp) + TEMP_SET_OFFSET, HMI_ValueStruct.E_Temp);
+      #endif // ? End ThumbEnabled
+        EncoderRate.enabled = true;
       HMI_ValueStruct.show_mode = -1;
       break;
 #endif
@@ -8115,16 +8683,32 @@ void HMI_Temperature()
       checkkey = BedTemp;
       HMI_ValueStruct.Bed_Temp = thermalManager.degTargetBed();
       LIMIT(HMI_ValueStruct.Bed_Temp, BED_MINTEMP, BED_MAX_TARGET);
-      DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(select_temp.now + MROWS - index_temp) + TEMP_SET_OFFSET, HMI_ValueStruct.Bed_Temp);
+      
+      #if ENABLED(DWIN_RENDER_THUMBNAIL) // ? Thumb Enabled
+        if (hasThumbnail){
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, THUMB_MBASE(select_temp.now + ThumbMROWS - index_temp) + TEMP_SET_OFFSET, HMI_ValueStruct.Bed_Temp);
+        }else{
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(select_temp.now + MROWS - index_temp) + TEMP_SET_OFFSET, HMI_ValueStruct.Bed_Temp);
+        }
+      #else // ? Thumb Not Enabled
+        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(select_temp.now + MROWS - index_temp) + TEMP_SET_OFFSET, HMI_ValueStruct.Bed_Temp);
+      #endif // ? End ThumbEnabled
       EncoderRate.enabled = true;
       HMI_ValueStruct.show_mode = -1;
       break;
-#endif
-#if HAS_FAN
+
     case TEMP_CASE_FAN: // Fan speed
       checkkey = FanSpeed;
       HMI_ValueStruct.Fan_speed = thermalManager.fan_speed[0];
-      DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(select_temp.now + MROWS - index_temp) + TEMP_SET_OFFSET, HMI_ValueStruct.Fan_speed);
+      #if ENABLED(DWIN_RENDER_THUMBNAIL) // ? Thumb Enabled
+        if (hasThumbnail){
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, THUMB_MBASE(select_temp.now + ThumbMROWS - index_temp) + TEMP_SET_OFFSET, HMI_ValueStruct.Fan_speed);
+        }else{
+          DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(select_temp.now + MROWS - index_temp) + TEMP_SET_OFFSET, HMI_ValueStruct.Fan_speed);
+        }
+      #else // ? Thumb Not Enabled
+        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(select_temp.now + MROWS - index_temp) + TEMP_SET_OFFSET, HMI_ValueStruct.Fan_speed);
+      #endif // ? End ThumbEnabled
       EncoderRate.enabled = true;
       HMI_ValueStruct.show_mode = -1; // Solve the problem of wrong rows of selected numbers 20230721
       break;
