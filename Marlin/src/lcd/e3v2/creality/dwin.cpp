@@ -1026,6 +1026,18 @@ void Draw_Title(const __FlashStringHelper *title)
   DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_White, Color_Bg_Blue, 14, 4, (char *)title);
 }
 
+
+// void Draw_Title2(const char *const title)
+// {
+//   DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_Red, Color_Bg_Blue, 14, 4, (char *)title);
+// }
+
+// void Draw_Title2(const __FlashStringHelper *title)
+// {
+//   DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_Red, Color_Bg_Blue, 14, 4, (char *)title);
+// }
+
+
 void Clear_Menu_Area()
 {
 #if ENABLED(DWIN_CREALITY_480_LCD)
@@ -3298,9 +3310,24 @@ void Draw_Print_ProgressElapsed()
     {
       Clear_Print_Time();
     }
-    DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, NUM_PRINT_TIME_X, NUM_PRINT_TIME_Y, elapsed.value / 3600);
-    DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, NUM_PRINT_TIME_X + 24, NUM_PRINT_TIME_Y, (elapsed.value % 3600) / 60);
-    DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, NUM_PRINT_TIME_X + 22, NUM_PRINT_TIME_Y - 3, F(":"));
+
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      if(hasThumbnail)
+      {
+        DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, 126, 123, elapsed.value / 3600);
+        DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, 150, 123, (elapsed.value % 3600) / 60);
+        DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, 149, 121, F(":"));
+      }else{
+        DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, NUM_PRINT_TIME_X, NUM_PRINT_TIME_Y, elapsed.value / 3600);
+        DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, NUM_PRINT_TIME_X + 24, NUM_PRINT_TIME_Y, (elapsed.value % 3600) / 60);
+        DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, NUM_PRINT_TIME_X + 22, NUM_PRINT_TIME_Y - 3, F(":"));
+      }
+    #else
+      DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, NUM_PRINT_TIME_X, NUM_PRINT_TIME_Y, elapsed.value / 3600);
+      DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, NUM_PRINT_TIME_X + 24, NUM_PRINT_TIME_Y, (elapsed.value % 3600) / 60);
+      DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, NUM_PRINT_TIME_X + 22, NUM_PRINT_TIME_Y - 3, F(":"));
+    #endif  
+  
   }
   else
   {
@@ -3309,7 +3336,16 @@ void Draw_Print_ProgressElapsed()
     {
       Clear_Print_Time();
     }
-    DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, NUM_PRINT_TIME_X, NUM_PRINT_TIME_Y, F(">100H"));
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      if(hasThumbnail)
+      {
+        DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 123, F(">100H"));
+      }else{
+        DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, NUM_PRINT_TIME_X, NUM_PRINT_TIME_Y, F(">100H"));
+      }
+    #else
+      DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, NUM_PRINT_TIME_X, NUM_PRINT_TIME_Y, F(">100H"));
+    #endif
   }
 #endif
   temp_elapsed_record_flag = temp_flash_elapsed_time;
@@ -3325,7 +3361,16 @@ void Draw_Print_ProgressRemain()
   if (HMI_flag.cloud_printing_flag)
   {
     Clear_Remain_Time();
-    DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, 153, 131 + 3, F("------"));
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      if(hasThumbnail)
+      {
+        DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, 126, 144, F("------"));
+      }else{
+        DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, 153, 131 + 3, F("------"));
+      }
+    #else
+      DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, 153, 131 + 3, F("------"));
+    #endif  
     return;
   }
   if (ui.get_remaining_time() < 360000) // Rock 20210903
@@ -3335,9 +3380,22 @@ void Draw_Print_ProgressRemain()
     {
       Clear_Remain_Time();
     }
-    DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, NUM_RAMAIN_TIME_X, NUM_RAMAIN_TIME_Y, ui.get_remaining_time() / 3600);
-    DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, NUM_RAMAIN_TIME_X + 24, NUM_RAMAIN_TIME_Y, (ui.get_remaining_time() % 3600) / 60);
-    DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, NUM_RAMAIN_TIME_X + 22, NUM_RAMAIN_TIME_Y - 3, F(":"));
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      if(hasThumbnail)
+      {
+        DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, 126, 144, ui.get_remaining_time() / 3600);
+        DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, 150, 144, (ui.get_remaining_time() % 3600) / 60);
+        DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, 149, 143, F(":"));
+      }else{
+        DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, NUM_RAMAIN_TIME_X, NUM_RAMAIN_TIME_Y, ui.get_remaining_time() / 3600);
+        DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, NUM_RAMAIN_TIME_X + 24, NUM_RAMAIN_TIME_Y, (ui.get_remaining_time() % 3600) / 60);
+        DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, NUM_RAMAIN_TIME_X + 22, NUM_RAMAIN_TIME_Y - 3, F(":"));
+      }
+    #else
+      DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, NUM_RAMAIN_TIME_X, NUM_RAMAIN_TIME_Y, ui.get_remaining_time() / 3600);
+      DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, NUM_RAMAIN_TIME_X + 24, NUM_RAMAIN_TIME_Y, (ui.get_remaining_time() % 3600) / 60);
+      DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, NUM_RAMAIN_TIME_X + 22, NUM_RAMAIN_TIME_Y - 3, F(":"));
+    #endif  
   }
   else
   {
@@ -3346,7 +3404,16 @@ void Draw_Print_ProgressRemain()
     {
       Clear_Remain_Time();
     }
-    DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, NUM_RAMAIN_TIME_X, NUM_RAMAIN_TIME_Y, F(">100H"));
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      if(hasThumbnail)
+      {
+        DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, 126, 144, F(">100H"));
+      }else{
+        DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, NUM_RAMAIN_TIME_X, NUM_RAMAIN_TIME_Y, F(">100H"));
+      }
+    #else
+      DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, NUM_RAMAIN_TIME_X, NUM_RAMAIN_TIME_Y, F(">100H"));
+    #endif
   }
 #endif
   temp_record_flag = temp_flash_remain_time;
@@ -3473,7 +3540,7 @@ static void G29_small(void) //
 #endif
 
 #if ENABLED(DWIN_RENDER_THUMBNAIL)
-  // Function to render the print job details from Octoprint in the LCD.
+  // Function to render the print job details with Thumbnail in the LCD.
   void Goto_ThumbPrint()
   {
     checkkey = ThumbPrint;
@@ -3485,9 +3552,11 @@ static void G29_small(void) //
     Draw_Print_ProgressBar();
     
     
-    DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 123, F("Print Time:")); // Label Print Time
+    DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 123, F("Total Time:")); // Label Print Time
+    Draw_Print_ProgressElapsed();
     // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 123, F(vprint_time));   // value Print Time
     DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 144, F("Time Left:"));  // Label Time Left
+    Draw_Print_ProgressRemain();
     // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 144, F(vptime_left));   // value Time Left
     DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 165, F("Layer:"));      // Label Print Time
     // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 80, 165, F(show_layers));    // Label Print Time
@@ -6002,7 +6071,7 @@ static void Image_Preview_Information_Show(uint8_t ret)
     Image_Preview_Information_Show(ret);    
 
     // search and render thumbnail  
-    Draw_Title("Finding thumbnail, wait...");
+    DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_Red, Color_Bg_Blue, 10, 4, F("Rendering Thumbnail... Wait"));
     hasThumbnail = DWIN_RenderThumb(my_short_fn);
 
     if (!hasThumbnail) {
@@ -11159,7 +11228,7 @@ void EachMomentUpdate()
     return;
   next_rts_update_ms = ms + DWIN_SCROLL_UPDATE_INTERVAL;
 
-  if (checkkey == PrintProcess)
+  if (checkkey == PrintProcess || checkkey == ThumbPrint)
   {
     // if print done
     if (HMI_flag.print_finish && !HMI_flag.done_confirm_flag)
@@ -11292,7 +11361,7 @@ void EachMomentUpdate()
   }
 
   // Cloud Printing Status Update
-  if (HMI_flag.cloud_printing_flag && (checkkey == PrintProcess) && !HMI_flag.filement_resume_flag)
+  if (HMI_flag.cloud_printing_flag && (checkkey == PrintProcess  || checkkey == ThumbPrint) && !HMI_flag.filement_resume_flag)
   {
     static uint16_t last_Printtime = 0;
     static uint16_t last_card_percent = 0;
@@ -11322,7 +11391,7 @@ void EachMomentUpdate()
     }
   }
 
-  if (card.isPrinting() && checkkey == PrintProcess)
+  if (card.isPrinting() && (checkkey == PrintProcess || checkkey == ThumbPrint))
   {
     // print process
     const uint16_t progress = ui.get_progress_permyriad();

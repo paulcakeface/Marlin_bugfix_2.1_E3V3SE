@@ -36,7 +36,7 @@
  */
 
 // Change EEPROM version if the structure changes
-#define EEPROM_VERSION "V92"
+#define EEPROM_VERSION "V93"
 #define EEPROM_OFFSET 100
 
 // Check the integrity of data offsets.
@@ -719,15 +719,27 @@ typedef struct SettingsDataStruct {
    uint8_t lcdtime;                
    int16_t lcddimm;             
    int16_t lcdbright;       
-   uint8_t czheight;       
   #endif
+
+  #if ENABLED(DWIN_ZHOME_MENU)
+    uint8_t czheight;       
+  #endif
+
   #if ENABLED(DWIN_SKEW_MENU)
    float skew_dac;
    float skew_dbd;
    float skew_sad;
   #endif
+
   #if ENABLED(ADVANCED_HELP_MESSAGES)
     bool advanced_help_messages_enabled;
+  #endif
+
+  //
+  // GCODE_MACROS
+  //
+  #if ENABLED(GCODE_MACROS_IN_EEPROM)
+    char gcode_macros[GCODE_MACROS_SLOTS][GCODE_MACROS_SLOT_SIZE + 1];
   #endif
 
 } SettingsData;
@@ -1866,17 +1878,17 @@ void MarlinSettings::postprocess() {
        int16_t dimmBright = DIMM_SCREEN_BRIGHTNESS;
        int16_t bright = MAX_SCREEN_BRIGHTNESS;
 
-       #if ENABLED(DWIN_ZHOME_MENU)
-         uint8_t zheight = CZ_AFTER_HOMING;
-       #else
-          uint8_t zheight = Z_AFTER_HOMING;
-       #endif     
        EEPROM_WRITE(sleep);              
        EEPROM_WRITE(dimmBright);         
        EEPROM_WRITE(bright);             
-       EEPROM_WRITE(zheight); 
      }             
      #endif
+
+     #if ENABLED(DWIN_ZHOME_MENU)
+        uint8_t zheight = CZ_AFTER_HOMING;
+        EEPROM_WRITE(zheight); 
+    #endif   
+
      #if ENABLED(DWIN_SKEW_MENU)
      {
         float sk_dac = xyskew_d_ac;
@@ -1887,6 +1899,7 @@ void MarlinSettings::postprocess() {
         EEPROM_WRITE(sk_sad);
      }
     #endif
+
     #if ENABLED(ADVANCED_HELP_MESSAGES)
     {
       bool advanced_help_messages_enabled = true;
@@ -1894,6 +1907,14 @@ void MarlinSettings::postprocess() {
       advanced_help_messages_enabled = HMI_flag.advanced_help_enabled_flag;
       EEPROM_WRITE(advanced_help_messages_enabled);
     }
+    #endif
+
+    //
+    // GCODE_MACROS
+    //
+    #if ENABLED(GCODE_MACROS_IN_EEPROM)
+      _FIELD_TEST(gcode_macros);
+      EEPROM_WRITE(gcode.macros);
     #endif
 
     //
@@ -3057,14 +3078,12 @@ void MarlinSettings::postprocess() {
       #if ENABLED(DWIN_LCD_BEEP)
       {
         uint8_t beep;
-
         EEPROM_READ(beep); //Read LCD_Beeper state
         toggle_LCDBeep = (beep > 0) ? 1 : 0;
 
         // uint8_t prealert;
         // EEPROM_READ(prealert); //Read LCD_Beeper state
         // toggle_PreHAlert = (prealert > 0) ? 1 : 0;
-
       }
       #endif
 
@@ -3074,19 +3093,20 @@ void MarlinSettings::postprocess() {
       uint8_t sleep;                 
       int16_t dimmBright;
       int16_t bright;
-      uint8_t zheight;
+      
       EEPROM_READ(sleep);
       TURN_OFF_TIME = (sleep > 60 || sleep < 2) ? 5 : sleep;              
       EEPROM_READ(dimmBright);
       DIMM_SCREEN_BRIGHTNESS = (dimmBright > 175 || dimmBright < 5) ? 175  : dimmBright;         
       EEPROM_READ(bright);             
       MAX_SCREEN_BRIGHTNESS = ( bright > 230 || bright < 20) ? 230 : bright;
-
-      #if ENABLED(DWIN_ZHOME_MENU)
-        EEPROM_READ(zheight);
-        CZ_AFTER_HOMING = (zheight >= 10) ? zheight : 10; //Set default value
-      #endif
     }
+    #endif
+
+    #if ENABLED(DWIN_ZHOME_MENU)
+      uint8_t zheight;
+      EEPROM_READ(zheight);
+      CZ_AFTER_HOMING = (zheight >= 10) ? zheight : 10; //Set default value  
     #endif
 
     #if ENABLED(DWIN_SKEW_MENU)
@@ -3115,6 +3135,14 @@ void MarlinSettings::postprocess() {
       HMI_flag.advanced_help_enabled_flag = advanced_help_messages_enabled;
     }
     #endif
+
+    //
+    // GCODE_MACROS
+    //
+    #if ENABLED(GCODE_MACROS_IN_EEPROM)
+      EEPROM_READ(gcode.macros);
+    #endif
+
 
       //
       // Validate Final Size and CRC
@@ -3936,6 +3964,11 @@ void MarlinSettings::reset() {
   #endif
 
   //
+  // G-code Macros
+  //
+  TERN_(GCODE_MACROS_IN_EEPROM, gcode.reset_macros());
+
+  //
   // Hotend Idle Timeout
   //
   TERN_(HOTEND_IDLE_TIMEOUT, hotend_idle.cfg.set_defaults());
@@ -4169,6 +4202,11 @@ void MarlinSettings::reset() {
     // Homing Feedrate
     //
     TERN_(EDITABLE_HOMING_FEEDRATE, gcode.M210_report(forReplay));
+    
+    //
+    // G-Code Macros
+    //
+    TERN_(GCODE_MACROS, gcode.M810_819_report(forReplay));
 
     //
     // Probe Offset
