@@ -3552,7 +3552,7 @@ static void G29_small(void) //
     Draw_Print_ProgressBar();
     
     
-    DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 123, F("Total Time:")); // Label Print Time
+    DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 123, F("Elapsed Time:")); // Label Print Time
     Draw_Print_ProgressElapsed();
     // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 123, F(vprint_time));   // value Print Time
     DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 144, F("Time Left:"));  // Label Time Left
@@ -11235,6 +11235,7 @@ void EachMomentUpdate()
     {
       HMI_flag.print_finish = false;
       HMI_flag.done_confirm_flag = true;
+      hasThumbnail = false;
       // New display needs to be placed at the bottom and needs to be cleared
       DWIN_Draw_Rectangle(1, Color_Bg_Black, CLEAR_50_X, CLEAR_50_Y, DWIN_WIDTH - 1, STATUS_Y - 1);
       Clear_Title_Bar();                   // clear title

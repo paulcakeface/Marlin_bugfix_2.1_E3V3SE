@@ -2,7 +2,7 @@
  * Config.h - Marlin Firmware distilled configuration
  * Usage: Place this file in the 'Marlin' folder with the name 'Config.h'.
  *
- * Exported by Marlin build on 2025-12-03 at 22:28:39.
+ * Exported by Marlin build on 2025-12-03 at 23:26:40.
  */
 
 //
@@ -20,7 +20,6 @@
 // EEPROM
 //
 #define EEPROM_BOOT_SILENT
-#define EEPROM_CHITCHAT
 #define EEPROM_SETTINGS
 #define EEPROM_AUTO_INIT
 
