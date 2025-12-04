@@ -3351,31 +3351,38 @@ void Draw_Print_ProgressElapsed()
   temp_elapsed_record_flag = temp_flash_elapsed_time;
 }
 
+#if ENABLED(DWIN_RENDER_THUMBNAIL)
+ 
+    void Draw_Layer_Number(bool force_refresh = false)
+    {
 
-void Draw_Layer_Number()
-{
-  static int last_current_layer = -1;
-  static int last_total_layer = -1;
-  
-  int current_layer = ui.get_current_layer();
-  int total_layer = ui.get_total_layer_count();
-  
-  // Only redraw if values have changed
-  if (current_layer == last_current_layer && total_layer == last_total_layer) {
-    return;
-  }
-  
-  last_current_layer = current_layer;
-  last_total_layer = total_layer;
-  
-  char buffer_layer[20];
-  snprintf(buffer_layer, sizeof(buffer_layer), "%d/%d", current_layer, total_layer);
+      if(!hasThumbnail) return; // rerturn if no thumbnail
 
-  // Clear the area and draw the string
-  DWIN_Draw_Rectangle(1, Color_Bg_Black, 80, 165, 144, 177);
-  DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 80, 165, buffer_layer); 
-}
+      static int last_current_layer = -1;
+      static int last_total_layer = -1;
+      
+      int current_layer = ui.get_current_layer();
+      int total_layer = ui.get_total_layer_count();
+      
+      if (!force_refresh) {
+        // Only redraw if values have changed
+        if (current_layer == last_current_layer && total_layer == last_total_layer) {
+          return;
+        }
+      }
+      
+      last_current_layer = current_layer;
+      last_total_layer = total_layer;
+      
+      char buffer_layer[20];
+      snprintf(buffer_layer, sizeof(buffer_layer), "%d/%d", current_layer, total_layer);
 
+      // Clear the area and draw the string
+      DWIN_Draw_Rectangle(1, Color_Bg_Black, 75, 165, 240, 177);
+      DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, (DWIN_WIDTH + 80 - strlen(buffer_layer) * MENU_CHR_W) / 2, 165, buffer_layer); 
+    }
+
+#endif
 
 
 void Draw_Print_ProgressRemain()
@@ -3575,8 +3582,8 @@ static void G29_small(void) //
     Draw_Mid_Status_Area(true);
     // clear_UpperArea++;
     HMI_flag.Refresh_bottom_flag = false;
-    ui.set_progress(0);
-    ui.set_current_layer(0);
+    ui.progress_reset();
+    ui.get_current_layer();
     Draw_Print_ProgressBar();
     
     
@@ -3588,7 +3595,7 @@ static void G29_small(void) //
     // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 144, F(vptime_left));   // value Time Left
     DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 165, F("Layer:"));      // Label Print Time
     // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 80, 165, F(show_layers));    // Label Print Time
-    Draw_Layer_Number();
+    Draw_Layer_Number(true);
 
     ICON_Tune();
     // Pause --Pause
@@ -5602,17 +5609,15 @@ void Draw_PStats_Menu()
   // Total Prints
   DWIN_Draw_Small_Label(MBASE(1), F("Total Prints"));
   Draw_Menu_Line(1, ICON_Info);
-  DWIN_Draw_IntValue(true, true, 0, font6x12, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(1) + 3, totalPrints);
+  DWIN_Draw_IntValue(true, true, 0, font6x12, Color_White, Color_Bg_Black, 6, 152, MBASE(1) + 3, totalPrints);
   // Completed Prints
   DWIN_Draw_Small_Label(MBASE(2), F("Completed Prints"));
   Draw_Menu_Line(2, ICON_Info);
-  DWIN_Draw_IntValue(true, true, 0, font6x12, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(2) + 3, finishedPrints);
-
+  DWIN_Draw_IntValue(true, true, 0, font6x12, Color_White, Color_Bg_Black, 6, 152, MBASE(2) + 3, finishedPrints);
   // Failed Prints
   DWIN_Draw_Small_Label(MBASE(3), F("Failed Prints"));
   Draw_Menu_Line(3, ICON_Info);
-  DWIN_Draw_IntValue(true, true, 0, font6x12, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(3) + 3, failedPrints);
-
+  DWIN_Draw_IntValue(true, true, 0, font6x12, Color_White, Color_Bg_Black, 6, 152, MBASE(3) + 3, failedPrints);
   // Total Time
   DWIN_Draw_Small_Label(MBASE(4), F("Total Time"));
   DWIN_ICON_Not_Filter_Show(ICON, ICON_Info, 20, MBASE(4));
@@ -11277,7 +11282,7 @@ void EachMomentUpdate()
     {
       HMI_flag.print_finish = false;
       HMI_flag.done_confirm_flag = true;
-      hasThumbnail = false;
+     
       // New display needs to be placed at the bottom and needs to be cleared
       DWIN_Draw_Rectangle(1, Color_Bg_Black, CLEAR_50_X, CLEAR_50_Y, DWIN_WIDTH - 1, STATUS_Y - 1);
       Clear_Title_Bar();                   // clear title
@@ -11288,15 +11293,18 @@ void EachMomentUpdate()
 
       // show percent bar and value
       // rock_20211122
-      Draw_Layer_Number();
+
       ui.set_progress_done();
       ui.reset_remaining_time();
       ui.total_time_reset();
-      ui.set_total_layers(0);
-      ui.set_current_layer(0);
+      
       // Show remaining time
       Draw_Print_ProgressRemain();
       Draw_Print_ProgressBar();
+
+      #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        Draw_Layer_Number();
+      #endif
 #if ENABLED(DWIN_CREALITY_480_LCD)
       // show print done confirm
       if (HMI_flag.language < Language_Max) // Rock 20211120
@@ -11423,7 +11431,9 @@ void EachMomentUpdate()
       last_card_percent = progress;
       Draw_Print_ProgressBar();
       Draw_Print_ProgressRemain();
-      Draw_Layer_Number();
+      #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        Draw_Layer_Number();
+      #endif
     }
     // Update printing time
     if (last_Printtime != min)
@@ -11453,7 +11463,9 @@ void EachMomentUpdate()
       {
         // _card_percent = card_pct;
         Draw_Print_ProgressBar();
-        Draw_Layer_Number();
+        #if ENABLED(DWIN_RENDER_THUMBNAIL)
+          Draw_Layer_Number();
+        #endif
       }
     }
 
