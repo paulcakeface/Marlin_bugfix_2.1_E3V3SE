@@ -3351,6 +3351,33 @@ void Draw_Print_ProgressElapsed()
   temp_elapsed_record_flag = temp_flash_elapsed_time;
 }
 
+
+void Draw_Layer_Number()
+{
+  static int last_current_layer = -1;
+  static int last_total_layer = -1;
+  
+  int current_layer = ui.get_current_layer();
+  int total_layer = ui.get_total_layer_count();
+  
+  // Only redraw if values have changed
+  if (current_layer == last_current_layer && total_layer == last_total_layer) {
+    return;
+  }
+  
+  last_current_layer = current_layer;
+  last_total_layer = total_layer;
+  
+  char buffer_layer[20];
+  snprintf(buffer_layer, sizeof(buffer_layer), "%d/%d", current_layer, total_layer);
+
+  // Clear the area and draw the string
+  DWIN_Draw_Rectangle(1, Color_Bg_Black, 80, 165, 144, 177);
+  DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 80, 165, buffer_layer); 
+}
+
+
+
 void Draw_Print_ProgressRemain()
 {
   bool temp_flash_remain_time = false;
@@ -3548,7 +3575,8 @@ static void G29_small(void) //
     Draw_Mid_Status_Area(true);
     // clear_UpperArea++;
     HMI_flag.Refresh_bottom_flag = false;
-
+    ui.set_progress(0);
+    ui.set_current_layer(0);
     Draw_Print_ProgressBar();
     
     
@@ -3560,6 +3588,7 @@ static void G29_small(void) //
     // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 144, F(vptime_left));   // value Time Left
     DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 165, F("Layer:"));      // Label Print Time
     // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 80, 165, F(show_layers));    // Label Print Time
+    Draw_Layer_Number();
 
     ICON_Tune();
     // Pause --Pause
@@ -3645,6 +3674,14 @@ void Goto_PrintProcess()
 
 void Goto_MainMenu()
 {
+  #if ENABLED(DWIN_RENDER_THUMBNAIL)
+    ui.set_current_layer(0);
+    ui.set_progress(0);
+    ui.set_remaining_time(0);
+    ui.set_total_layers(0);
+  #endif
+
+  hasThumbnail = false; // Reset thumbnail flag
   DWIN_Backlight_SetLuminance(MAX_SCREEN_BRIGHTNESS);
   checkkey = MainMenu;
   Clear_Main_Window();
@@ -4276,7 +4313,14 @@ void HMI_FanSpeed()
     switch (HMI_ValueStruct.show_mode)
     {
     case -1:
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      if(hasThumbnail)
+        fan_line = select_temp.now + ThumbMROWS - index_temp;
+      else
+        fan_line = select_temp.now + MROWS - index_temp;
+    #else
       fan_line = select_temp.now + MROWS - index_temp;
+    #endif
       break;
     case -2:
       fan_line = PREHEAT_CASE_FAN;
@@ -4288,7 +4332,7 @@ void HMI_FanSpeed()
     default:
     #if ENABLED(DWIN_RENDER_THUMBNAIL)
       if(hasThumbnail){
-        fan_line = TUNE_CASE_FAN + ThumbMROWS - index_tune;
+        fan_line = TUNE_CASE_FAN + ThumbMROWS - thumb_index_tune;
       }else{
         fan_line = TUNE_CASE_FAN + MROWS - index_tune;
       }  
@@ -5315,13 +5359,13 @@ void HMI_SDCardUpdate()
       {
         Redraw_SD_List();
       }
-      else if (checkkey == PrintProcess || checkkey == Tune || printingIsActive())
+      else if (checkkey == PrintProcess || checkkey == Tune || checkkey == ThumbPrint || checkkey == ThumbTune || printingIsActive())
       {
         // TODO: Move card removed abort handling
         //       to CardReader::manage_media.
-        // card.abortFilePrintSoon();
+        card.abortFilePrintSoon();
         // wait_for_heatup = wait_for_user = false;
-        // dwin_abort_flag = true; //Reset feedrate, return to Home
+         dwin_abort_flag = true; //Reset feedrate, return to Home
       }
     }
     DWIN_UpdateLCD();
@@ -6038,8 +6082,8 @@ static void Image_Preview_Information_Show(uint8_t ret)
 #if ENABLED(DWIN_RENDER_THUMBNAIL)
   void Goto_ThumbPreview(){
 
-    SERIAL_ECHOLNPGM("Image Preview Info");
-    SERIAL_ECHOLNPGM("File Name: ", my_short_fn);
+    // SERIAL_ECHOLNPGM("Image Preview Info");
+    // SERIAL_ECHOLNPGM("File Name: ", my_short_fn);
     checkkey = Show_gcode_pic;
     select_show_pic.reset();
     HMI_flag.select_flag = true;
@@ -6075,10 +6119,10 @@ static void Image_Preview_Information_Show(uint8_t ret)
     hasThumbnail = DWIN_RenderThumb(my_short_fn);
 
     if (!hasThumbnail) {
-      SERIAL_ECHOLNPGM("No thumbnail found, displaying default image.");
+      // SERIAL_ECHOLNPGM("No thumbnail found, displaying default image.");
       DC_Show_defaut_image(); // Show default image if no thumbnail is found
     } else {
-      SERIAL_ECHOLNPGM("Thumbnail displayed successfully.");
+      // SERIAL_ECHOLNPGM("Thumbnail displayed successfully.");
     }
     Clear_Title_Bar();
     Draw_Title(str);
@@ -10155,8 +10199,6 @@ void HMI_ThumbTune() {
       DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, THUMB_MBASE(TUNE_CASE_BED + ThumbMROWS - thumb_index_tune) + PRINT_SET_OFFSET, HMI_ValueStruct.Bed_Temp);
       EncoderRate.enabled = true;
       break;
-    #endif
-    #if HAS_FAN
     case TUNE_CASE_FAN: // Fan speed
       HMI_flag.Refresh_bottom_flag = true;
       checkkey = ThumbFanSpeed;
@@ -11246,9 +11288,12 @@ void EachMomentUpdate()
 
       // show percent bar and value
       // rock_20211122
+      Draw_Layer_Number();
       ui.set_progress_done();
       ui.reset_remaining_time();
       ui.total_time_reset();
+      ui.set_total_layers(0);
+      ui.set_current_layer(0);
       // Show remaining time
       Draw_Print_ProgressRemain();
       Draw_Print_ProgressBar();
@@ -11378,6 +11423,7 @@ void EachMomentUpdate()
       last_card_percent = progress;
       Draw_Print_ProgressBar();
       Draw_Print_ProgressRemain();
+      Draw_Layer_Number();
     }
     // Update printing time
     if (last_Printtime != min)
@@ -11407,6 +11453,7 @@ void EachMomentUpdate()
       {
         // _card_percent = card_pct;
         Draw_Print_ProgressBar();
+        Draw_Layer_Number();
       }
     }
 

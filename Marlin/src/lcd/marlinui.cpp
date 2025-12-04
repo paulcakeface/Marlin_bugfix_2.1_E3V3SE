@@ -116,6 +116,11 @@ constexpr uint8_t epps = ENCODER_PULSES_PER_STEP;
   }
 #endif
 
+#if ENABLED(DWIN_RENDER_THUMBNAIL)
+  uint16_t MarlinUI::current_layer = 0;
+  uint16_t MarlinUI::total_layers = 0;
+#endif
+
 #if HAS_LCD_BRIGHTNESS
   #if ENABLED(DWIN_CREALITY_LCD)
       uint32_t MarlinUI::model_total_time_s = 0;

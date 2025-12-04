@@ -28,6 +28,7 @@
 #include "../../lcd/marlinui.h"
 #include "../../sd/cardreader.h"
 #include "../../libs/numtostr.h"
+#include "../../lcd/e3v2/creality/dwin.h"
 
 /**
  * M73: Set Print Progress
@@ -70,6 +71,10 @@ void GcodeSuite::M73() {
     if (parser.seenval('C')) ui.set_interaction_time(60 * parser.value_ulong());
   #endif
 
+  #if ENABLED(DWIN_RENDER_THUMBNAIL)
+    if(parser.seen('L')) ui.set_current_layer(parser.value_int()); 
+  #endif
+
   #if ENABLED(M73_REPORT)
     if (TERN1(M73_REPORT_SD_ONLY, card.isStillPrinting())) {
       SERIAL_ECHO_START();
@@ -82,6 +87,9 @@ void GcodeSuite::M73() {
       #endif
       #if ENABLED(SET_INTERACTION_TIME)
         SERIAL_ECHOPGM(" Change: ", ui.interaction_time / 60, "m;");
+      #endif
+      #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        SERIAL_ECHOPGM(" Layer: ", ui.get_current_layer(), ";");
       #endif
       SERIAL_EOL();
     }

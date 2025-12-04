@@ -330,6 +330,14 @@ public:
   #endif
 
   #if HAS_PRINT_PROGRESS
+    #if ENABLED(DWIN_RENDER_THUMBNAIL)
+      static uint16_t current_layer, total_layers;
+      FORCE_INLINE static void set_total_layers(const uint16_t layer) { total_layers = layer; }
+      FORCE_INLINE static uint16_t get_total_layer_count() { return total_layers; }
+      FORCE_INLINE static void set_current_layer(const uint16_t layer) { current_layer = layer; }
+      FORCE_INLINE static uint16_t get_current_layer() { return current_layer; }
+    #endif
+    
     #if ENABLED(SET_PROGRESS_PERCENT)
       static progress_t progress_override;
       static void set_progress(const progress_t p) { progress_override = _MIN(p, 100U * (PROGRESS_SCALE)); }

@@ -724,7 +724,7 @@ bool find_thumb_raw16_header(uint16_t &w, uint16_t &h) {
     }
   }
 
-  SERIAL_ECHOLNPGM("RAW16 header NOT found in first 50 lines.");
+  // SERIAL_ECHOLNPGM("RAW16 header NOT found in first 50 lines.");
   return false;
 }
 
@@ -733,12 +733,12 @@ static constexpr uint16_t THUMB_X_START = 12;
 static constexpr uint16_t THUMB_Y_START = 25;
 
  bool DWIN_RenderThumb(const char *filename) {
-  SERIAL_ECHOLNPGM("DWIN_RenderThumb using: ", filename);
-  SERIAL_ECHOLNPGM("Card current filename (before open): ", card.filename);
+  // SERIAL_ECHOLNPGM("DWIN_RenderThumb using: ", filename);
+  // SERIAL_ECHOLNPGM("Card current filename (before open): ", card.filename);
 
   card.openFileRead(filename);
   if (!card.isFileOpen()) {
-    SERIAL_ECHOLNPGM("No file open.");
+    // SERIAL_ECHOLNPGM("No file open.");
     return false;
   }
 
@@ -766,33 +766,33 @@ static constexpr uint16_t THUMB_Y_START = 25;
 
     // Have we reached the END?
     if (strncmp(p, "E3V3SE_THUMB_RAW16_END", 23) == 0) {
-      SERIAL_ECHOLNPGM("RAW16 end reached.");
+      // SERIAL_ECHOLNPGM("RAW16 end reached.");
       break;
     }
 
     const size_t len = strlen(p);
     if (len < w * 4) {
-      SERIAL_ECHOLNPGM("Line too short for RAW16: len=", len);
+      // SERIAL_ECHOLNPGM("Line too short for RAW16: len=", len);
       break;
     }
 
     // Quick debug of the first row
-    if (y == 35) {
-      SERIAL_ECHOLNPGM("RAW16 data row: ");
-      SERIAL_ECHO(p);
-      SERIAL_ECHOLNPGM("");
-    }
+    // if (y == 35) {
+    //   SERIAL_ECHOLNPGM("RAW16 data row: ");
+    //   SERIAL_ECHO(p);
+    //   SERIAL_ECHOLNPGM("");
+    // }
 
     for (uint16_t x = 0; x < w; x++) {
       const char *px = p + x * 4;
       const uint16_t color = parse_hex4(px);
 
       // Debug some points to see if they come out other than 0
-      if ((y == 35 && (x == 0 || x == w/2 || x == w-1))) {
-        SERIAL_ECHOPGM("px(", x);
-        SERIAL_ECHOPGM(",", y);
-        SERIAL_ECHOLNPGM(") color=", color);
-      }
+      // if ((y == 35 && (x == 0 || x == w/2 || x == w-1))) {
+      //   SERIAL_ECHOPGM("px(", x);
+      //   SERIAL_ECHOPGM(",", y);
+      //   SERIAL_ECHOLNPGM(") color=", color);
+      // }
 
       DWIN_Draw_Rectangle(1, color,THUMB_X_START + x, THUMB_Y_START + y, THUMB_X_START + x, THUMB_Y_START + y);
       delay(4); // give some time to DWIN to process the data
@@ -803,7 +803,7 @@ static constexpr uint16_t THUMB_Y_START = 25;
   }
 
   card.closefile();
-  SERIAL_ECHOLNPGM("RAW16 drawn rows: ", y);
+  // SERIAL_ECHOLNPGM("RAW16 drawn rows: ", y);
   return y > 0;
 }
 
@@ -860,13 +860,15 @@ uint8_t read_gcode_model_information(const char* fileName) {
   char string_buf[_GCODE_METADATA_STRING_LENGTH_MAX + 1];
   char byte;
   uint16_t line_idx = 0;
-  SERIAL_ECHOLNPGM("read_gcode_model using: ", fileName);
-  SERIAL_ECHOLNPGM("Card current filename: ", card.filename);
+  // SERIAL_ECHOLNPGM("read_gcode_model using: ", fileName);
+  // SERIAL_ECHOLNPGM("Card current filename: ", card.filename);
 
   // SERIAL_ECHOLNPAIR("Reading model information from G-code file: ", fileName);
   // SERIAL_ECHOLN("Resetting model information variables.");
   ui.reset_remaining_time();
   ui.total_time_reset();
+  ui.set_total_layers(0);
+  ui.set_current_layer(0);
   
   // memset(&model_information, 0, sizeof(model_information)); 
   memset(model_information.filament, 0, sizeof(model_information.filament));
@@ -1061,6 +1063,7 @@ uint8_t read_gcode_model_information(const char* fileName) {
         while (*p == ' ' || *p == '\t') p++;
         orca_layers = (uint16_t)atoi(p);
         have_layers = (orca_layers > 0);
+        ui.set_total_layers(orca_layers);
       }
     }
 
