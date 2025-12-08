@@ -1,4 +1,4 @@
-name: Build Marlin custom
+name: Build Custom Marlin 2.1.x E3V3SE Firmware 
 
 on:
   workflow_dispatch:
@@ -126,4 +126,5 @@ jobs:
           path: |
             .pio/build/${{ github.event.inputs.env }}/firmware*.bin
             .pio/build/${{ github.event.inputs.env }}/*.bin
+          retention-days: 1  
           if-no-files-found: error
