@@ -2,7 +2,7 @@
  * Config.h - Marlin Firmware distilled configuration
  * Usage: Place this file in the 'Marlin' folder with the name 'Config.h'.
  *
- * Exported by Marlin build on 2025-12-08 at 16:38:17.
+ * Exported by Marlin build on 2025-12-08 at 21:01:22.
  */
 
 //
@@ -13,7 +13,7 @@
 //
 // Machine
 //
-#define MOTHERBOARD                              BOARD_CREALITY_V3_GD303
+#define MOTHERBOARD                              BOARD_CREALITY_F401RE
 #define CUSTOM_MACHINE_NAME                      "Ender-3 V3 SE"
 
 //
