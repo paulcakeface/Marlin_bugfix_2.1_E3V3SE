@@ -20,7 +20,7 @@ From now on the Firmware will be modular, meaning that you must choose which com
 
 ## Installation
 
-The Binary provided will contain just the followinf features:
+The Binary provided will contain just the following features:
 
 * [D ROUTINE AUTO Z OFFSET](#delta-routine).
 * [DWIN RENDER THUMBNAIL](#thumbnail).
@@ -85,7 +85,7 @@ For this version you can Enable 2 routines to calculate the Z offset based on 5 
 
 <div align="left" >
 
-  <img src="https://github.com/user-attachments/assets/f6977688-94e3-4438-b58a-fdf8a378cf0a" width="20%" height="20%"/>
+  <img src="https://github.com/user-attachments/assets/f6977688-94e3-4438-b58a-fdf8a378cf0a" width="40%" height="40%"/>
 
 </div>  
 
@@ -98,7 +98,7 @@ Enable in configuration.h
 
 <div align="left" >
 
-  <img src="https://github.com/user-attachments/assets/f0a8cc2a-b196-4064-a417-54862a30370d" width="20%" height="20%"/>
+  <img src="https://github.com/user-attachments/assets/f0a8cc2a-b196-4064-a417-54862a30370d" width="40%" height="40%"/>
 
 </div>  
 
