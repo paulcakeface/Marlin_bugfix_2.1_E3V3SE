@@ -23,11 +23,12 @@ From now on the Firmware will be modular, meaning that you must choose which com
 The Binary provided will contain just the following features:
 
 * [D ROUTINE AUTO Z OFFSET](#delta-routine).
-* [DWIN RENDER THUMBNAIL](#thumbnail).
-* [INPUT SHAPING](#input-shaping).
-* [LINEAR ADVANCE](#linear-advance).
-* [Mcodes for LCD Dimm & Brightness](#lcd-dimm-&-brightness-menu).
-* [Mute or Unmute Buzzer](#mute-buzzer).
+* [DWIN RENDER THUMBNAIL](#-thumbnail).
+* [INPUT SHAPING](#-input-shaping).
+* [LINEAR ADVANCE](#-linear-advance).
+* [Mcodes for LCD Dimm & Brightness](#-lcd-dimm-&-brightness-menu).
+* [Mute or Unmute Buzzer](#-mute-buzzer).
+* [CRTouch test functions](#-crtouch-test-functions).
 
 With a Memory cost of:
 
