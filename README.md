@@ -59,7 +59,7 @@ It is recommended to create your own Binary with your desired features, using ei
 
 <div align="left" >
 
-<img src="./media/PrintPage.gif" width="45%" height="45%"/>
+<img src="./media/PrintPage.gif" width="55%" height="55%"/>
 
 
 </div>  
@@ -118,7 +118,7 @@ Enable in configuration.h
 
 <div align="left" >
 
-  <img src="./media/LevelingMenu.gif" width="45%" height="45%"/>
+  <img src="./media/LevelingMenu.gif" width="55%" height="55%"/>
 
 </div>  
 
@@ -130,7 +130,7 @@ We have splitted the Leveling features to avoid a complete reset like routine. N
 
 <div align="left" >
 
-  <img src="./media/SkewFactor.gif" width="45%" height="45%"/>
+  <img src="./media/SkewFactor.gif" width="55%" height="55%"/>
 
 </div> 
 
@@ -148,7 +148,7 @@ We have created a Menu to set and calculate the bed Skew of your printer.
 
 <div align="left" >
 
-  <img src="./media/InputShaping.gif" width="45%" height="45%"/>
+  <img src="./media/InputShaping.gif" width="55%" height="55%"/>
 
 </div> 
 
@@ -170,7 +170,7 @@ To Enable the Display Menu
 
 <div align="left" >
 
-  <img src="./media/DisplayMenu.gif" width="45%" height="45%"/>
+  <img src="./media/DisplayMenu.gif" width="55%" height="55%"/>
 
 </div> 
 
@@ -188,7 +188,7 @@ If you don't enable you can use the Mcodes M255 & 256
 
 <div align="left" >
 
-  <img src="./media/DisplayMenu.gif" width="45%" height="45%"/>
+  <img src="./media/DisplayMenu.gif" width="55%" height="55%"/>
 
 </div> 
 
@@ -200,7 +200,7 @@ This feature is enabled by default.
 
 <div align="left" >
 
-  <img src="./media/Probe.gif" width="45%" height="45%"/>
+  <img src="./media/Probe.gif" width="55%" height="55%"/>
 
 </div> 
 
@@ -212,7 +212,7 @@ This feature is enabled by default.
 
 <div align="left" >
 
-  <img src="./media/ZHeight.gif" width="45%" height="45%"/>
+  <img src="./media/ZHeight.gif" width="55%" height="55%"/>
 
 </div> 
 
@@ -227,7 +227,7 @@ Enable in configuration.h
 
 <div align="left" >
 
-  <img src="./media/PreheatLabels.gif" width="45%" height="45%"/>
+  <img src="./media/PreheatLabels.gif" width="55%" height="55%"/>
 
 </div> 
 
@@ -243,7 +243,7 @@ Enable in configuration.h
 
 <div align="left" >
 
-  <img src="./media/CExtrude.gif" width="45%" height="45%"/>
+  <img src="./media/CExtrude.gif" width="55%" height="55%"/>
 
 </div> 
 
