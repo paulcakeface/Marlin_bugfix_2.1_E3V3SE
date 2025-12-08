@@ -142,27 +142,44 @@
 #define DWIN_RENDER_THUMBNAIL  // Enable the Rendering of the Thumbnail Image from Gcode Script for E3V3SE
 
 
+// |                |
+// |  *          *  |   
+// |                |
+// |       *        |
+// |                |
+// |  *          *  |
+// #define X_ROUTINE_AUTO_OFFSET  // Enable this to calculate the Z offset automatically using the 5 points of the bed, (X) pattern
+
+// |                |
+// |  *             |   
+// |                |
+// |       *        |
+// |                |
+// |  *          *  |
+#define D_ROUTINE_AUTO_OFFSET  // Enable this to calculate the Z offset automatically using the 4 points of the bed, (Delta) pattern
+
+
 #define USE_SWITCH_POWER_200W  0 //Default 1: Using a 200W power supply, the nozzle and heating bed cannot be heated at the same time. 0: The >200w power supply used has sufficient power and can be heated at the same time.
-#define CREALITY_LEVEL_COMPENSATION_ALGORITHM   1 //1 Use algorithm 0 Algorithm not applicable
-#if ENABLED(CREALITY_LEVEL_COMPENSATION_ALGORITHM)
-  #define COMPEN_FACTOR_15   0.15
-  #define COMPEN_FACTOR_10   0.10
-  #define COMPEN_FACTOR_8    0.08
-  #define COMPEN_FACTOR_5    0.05
-  #define COMPEN_FACTOR_3    0.03
-  #define COMPEN_FACTOR_2    0.02
-  #define COMPEN_FACTOR_1    0.01
-  #define ALGORITHM_INFO_PRINT  0   //Print leveling algorithm information
-  #define LEVEL_ALGORITHM_MIN  -0.7 //Use auto-leveling algorithm lower bound
-  #define LEVEL_ALGORITHM_MAX   0.7 //Use the upper boundary of the automatic leveling algorithm
-#endif
-#define USE_BEEPER 1
+// #define CREALITY_LEVEL_COMPENSATION_ALGORITHM   1 //1 Use algorithm 0 Algorithm not applicable
+// #if ENABLED(CREALITY_LEVEL_COMPENSATION_ALGORITHM)
+//   // #define COMPEN_FACTOR_15   0.15
+//   // #define COMPEN_FACTOR_10   0.10
+//   // #define COMPEN_FACTOR_8    0.08
+//   // #define COMPEN_FACTOR_5    0.05
+//   // #define COMPEN_FACTOR_3    0.03
+//   // #define COMPEN_FACTOR_2    0.02
+//   // #define COMPEN_FACTOR_1    0.01
+//   // #define ALGORITHM_INFO_PRINT  0   //Print leveling algorithm information
+//   // #define LEVEL_ALGORITHM_MIN  -0.7 //Use auto-leveling algorithm lower bound
+//   // #define LEVEL_ALGORITHM_MAX   0.7 //Use the upper boundary of the automatic leveling algorithm
+// #endif
+// #define USE_BEEPER 1
 #define PLATFORM_OFFSET         1 //1: The structural part backplate is 2.5mm, and the firmware needs to be offset. 0: The structural part backplate is not offset.
 #define HIGH_SPEED              1 //High speed mode 1: Turn on high speed mode 150mm/s; 0: Low speed mode 80mm/s
 #define HIGH_SPEED_1            1 //Only switch high-speed macros
 #define SHOW_GRID_VALUES        1 //1 displays the automatic leveling grid value 0 does not display the automatic leveling grid value
 #define COMPACT_GRID_VALUES     1 // 0 - original Creality style, 1 - compact style for tight grids
-#define K8_EXTRUDER             0 //1 is K8 extruder 0 is Elf extruder
+// #define K8_EXTRUDER             0 //1 is K8 extruder 0 is Elf extruder
 #define USER_LEVEL_CHECK        1 //Leveling calibration enable
 #define WUHAN_CHENGE_PLATFORM   1 //Wuhan changed platform board 20230913_Rock
 
@@ -256,7 +273,7 @@
 #define ENABLE_AUTO_OFF_DISPLAY             // Enable automatic turn-off display function & brightness adjustment function
 #if ENABLED(ENABLE_AUTO_OFF_DISPLAY)
 
-  //#define DWIN_DIMM_MENU                    // Enable LCD Menu to Configure Brightness & DIMM parameters
+  // #define DWIN_DIMM_MENU                    // Enable LCD Menu to Configure Brightness & DIMM parameters
 
   extern int16_t TURN_OFF_TIME;             // turn-off time: 5min
   extern int16_t DIMM_SCREEN_BRIGHTNESS;    // brightness 0x00-0xff:0
@@ -1926,7 +1943,7 @@
 
 #define Z_AFTER_HOMING         10   // (mm) Height to move to after homing (if Z was homed)
 
-//#define DWIN_ZHOME_MENU             // Enable LCD Menu to Configure Z Height after Homing 
+// #define DWIN_ZHOME_MENU             // Enable LCD Menu to Configure Z Height after Homing 
 #if ENABLED(DWIN_ZHOME_MENU)
   extern uint8_t CZ_AFTER_HOMING; 
 #endif
@@ -2500,7 +2517,7 @@
  *    +-------------->X     +-------------->X     +-------------->Y
  *     XY_SKEW_FACTOR        XZ_SKEW_FACTOR        YZ_SKEW_FACTOR
  */
-#define SKEW_CORRECTION
+// #define SKEW_CORRECTION
 
 #if ENABLED(SKEW_CORRECTION)
   // Input all length measurements here:
@@ -2619,7 +2636,7 @@
 #endif
 
 //  #define PREHEAT_ALERT           // Enable an alert when preheating is complete
-//  #define DWIN_CUSTOM_EXTRUDE     // Enable LCD Menu for Custom Extrude Functions
+// #define DWIN_CUSTOM_EXTRUDE     // Enable LCD Menu for Custom Extrude Functions
 
 /**
  * @section nozzle park

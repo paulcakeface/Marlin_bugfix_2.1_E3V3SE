@@ -168,8 +168,7 @@ def main():
     if len(sys.argv) >= 3:
         out_path = sys.argv[2]
     else:
-        base, ext = os.path.splitext(in_path)
-        out_path = base + ".gcode"
+        out_path = in_path
 
     with open(in_path, "r", encoding="utf-8", errors="ignore") as f:
         lines = f.readlines()

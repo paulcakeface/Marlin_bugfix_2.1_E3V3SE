@@ -1,3 +1,370 @@
+# Marlin Firmware 2.1.x For Ender 3 V3 SE
+
+This version of Firmware uses the Marlin Bugfix 2.1.x Branch to bring all the goodies of the updated version into the Ender 3 V3 SE.
+
+I have ported many of the features and fixes from the community stock version in the old repo: https://github.com/navaismo/Ender-3V3-SE. It may look we have the same but at the core is different.
+
+
+## Modular
+
+<div align="left"  >
+
+  <img src="./media/puzzle.png" width="30%" height="30%"/>
+
+</div>  
+
+<br>
+
+From now on the Firmware will be modular, meaning that you must choose which components want to have considering the limit of the memory which must be RAM less than 40% and Flash less than 46%.
+
+
+## Installation
+
+The Binary provided will contain just the followinf features:
+
+* [D ROUTINE AUTO Z OFFSET](#delta-routine).
+* [DWIN RENDER THUMBNAIL](#thumbnail).
+* [INPUT SHAPING](#input-shaping).
+* [LINEAR ADVANCE](#linear-advance).
+* [Mcodes for LCD Dimm & Brightness](#lcd-dimm-&-brightness-menu).
+* [Mute or Unmute Buzzer](#mute-buzzer).
+
+With a Memory cost of:
+
+``` c++
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [===       ]  31.7% (used 20756 bytes from 65536 bytes)
+Flash: [====      ]  44.6% (used 221092 bytes from 495616 bytes)
+``` 
+
+> [!TIP]
+> 
+> Follow the [Wiki Article to Flash Firmware](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/wiki/Flashing-your-Printer).
+>
+
+It is recommended to create your own Binary with your desired features, using either the configuration files or the Marlin autobuild VSCode extension.
+
+> [!IMPORTANT]
+> 
+> For this version is importnat that you check the e-Steps pf your extruder before start a print job.
+> in my case old firmware had **424.9** as value for a normal extrusion but for Marlin 2.1 needed to adjust to **715.12**
+>
+> So please calibrate it after the Z offset calculation finished.
+
+
+
+## Features
+
+### * Thumbnail
+
+<div align="left" >
+
+<img src="./media/PrintPage.gif" width="30%" height="30%"/>
+
+
+</div>  
+
+A new feature is available to Render the Thumbnail of the Gcode file, this time you dont need Octoprint it can be donde from the SD, but you need patience.
+```c++
+#define DWIN_RENDER_THUMBNAIL  // Enable the Rendering of the Thumbnail Image from Gcode Script for E3V3SE
+
+```
+
+> [!TIP]
+> 
+> Follow the [Wiki Article to enable the Thumbnail](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/wiki/OrcaSlicer-Thumbnail-Setup).
+>
+
+<br>
+
+### * Enhanced Z Offset Calculation.
+
+For this version you can Enable 2 routines to calculate the Z offset based on 5 or 4 points of the BED.
+
+#### X Routine
+
+<div align="left" >
+
+  <img src="https://github.com/user-attachments/assets/f6977688-94e3-4438-b58a-fdf8a378cf0a" width="20%" height="20%"/>
+
+</div>  
+
+Enable in configuration.h
+```c++
+#define X_ROUTINE_AUTO_OFFSET  // Enable this to calculate the Z offset automatically using the 5 points of the bed, (X) pattern
+```
+
+#### Delta Routine
+
+<div align="left" >
+
+  <img src="https://github.com/user-attachments/assets/f0a8cc2a-b196-4064-a417-54862a30370d" width="20%" height="20%"/>
+
+</div>  
+
+Enable in configuration.h
+```c++
+#define D_ROUTINE_AUTO_OFFSET  // Enable this to calculate the Z offset automatically using the 4 points of the bed, (Delta) pattern
+```
+
+> [!TIP]
+> 
+> Follow the [Wiki Article to set your Z offset](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/wiki/Z-offset/)
+>
+
+<br>
+
+### * Leveling Menu
+
+<div align="left" >
+
+  <img src="./media/LevelingMenu.gif" width="30%" height="30%"/>
+
+</div>  
+
+We have splitted the Leveling features to avoid a complete reset like routine. Now you can Level the bed, get the offset and edit the point individually.
+
+<br>
+
+### * Skew Correction Menu
+
+<div align="left" >
+
+  <img src="./media/SkewFactor.gif" width="30%" height="30%"/>
+
+</div> 
+
+We have created a Menu to set and calculate the bed Skew of your printer.
+
+> [!TIP]
+> 
+> Follow the [Wiki Article to set the Skew Factor](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/wiki/Fixing-Skew)
+>
+
+
+## Ported Features.
+
+### * Input Shaping.
+
+<div align="left" >
+
+  <img src="./media/InputShaping.gif" width="30%" height="30%"/>
+
+</div> 
+
+Enable in configuration.h
+```c++
+#define INPUT_SHAPING_X
+#define INPUT_SHAPING_Y
+```
+
+To Enable the Display Menu
+
+```c++
+#define DWIN_INPUT_SHAPING_MENU        // Enable LCD Menu to Configure Input Shaping parameters
+```
+
+<br>
+
+### * LCD Dimm & Brightness Menu.
+
+<div align="left" >
+
+  <img src="./media/DisplayMenu.gif" width="30%" height="30%"/>
+
+</div> 
+
+Enable in configuration.h
+```c++
+#define DWIN_DIMM_MENU                    // Enable LCD Menu to Configure Brightness & DIMM parameters
+```
+
+If you don't enable you can use the Mcodes M255 & 256
+
+<br>
+
+
+### * Mute Buzzer.
+
+<div align="left" >
+
+  <img src="./media/DisplayMenu.gif" width="30%" height="30%"/>
+
+</div> 
+
+This feature is enabled by default.
+
+<br>
+
+### * CRTouch test functions.
+
+<div align="left" >
+
+  <img src="./media/Probe.gif" width="30%" height="30%"/>
+
+</div> 
+
+This feature is enabled by default.
+
+<br>
+
+### * Z Height after Homing.
+
+<div align="left" >
+
+  <img src="./media/ZHeight.gif" width="30%" height="30%"/>
+
+</div> 
+
+Enable in configuration.h
+
+```c++
+#define DWIN_ZHOME_MENU             // Enable LCD Menu to Configure Z Height after Homing
+```
+<br>
+
+### * Extra Preheat Labels.
+
+<div align="left" >
+
+  <img src="./media/PreheatLabels.gif" width="30%" height="30%"/>
+
+</div> 
+
+Enable in configuration.h
+
+```c++
+#define EXTRA_PREHEAT_LABELS    // Enable LCD Menu to Configure 2 Extra Preheat Materials
+```
+
+<br>
+
+### * Custom Extrude Menu.
+
+<div align="left" >
+
+  <img src="./media/CExtrude.gif" width="30%" height="30%"/>
+
+</div> 
+
+Enable in configuration.h
+
+```c++
+#define DWIN_CUSTOM_EXTRUDE     // Enable LCD Menu for Custom Extrude Functions
+```
+
+<br>
+
+### * Linear Advance.
+
+### * Increased Temperature for BED and Noozle.
+
+<br>
+
+## Explore new features.
+
+You can explore the new features on the Marlin 2.1 like:
+
+* **FT_MOTION** Which enables different filters of Shapers for the machine, like Klipper does. 
+```c++
+#define FT_MOTION
+#if ENABLED(FT_MOTION)
+  #define FTM_IS_DEFAULT_MOTION               // Use FT Motion as the factory default?
+  //#define FT_MOTION_MENU                      // Provide a MarlinUI menu to set M493 and M494 parameters
+  //#define FTM_HOME_AND_PROBE                  // Use FT Motion for homing / probing. Disable if FT Motion breaks these functions.
+
+  #define FTM_DEFAULT_DYNFREQ_MODE dynFreqMode_DISABLED // Default mode of dynamic frequency calculation. (DISABLED, Z_BASED, MASS_BASED)
+
+  #define FTM_DEFAULT_SHAPER_X      ftMotionShaper_3HEI // Default shaper mode on X axis (NONE, ZV, ZVD, ZVDD, ZVDDD, EI, 2HEI, 3HEI, MZV)
+  #define FTM_SHAPING_DEFAULT_FREQ_X   40.0f    // (Hz) Default peak frequency used by input shapers
+  #define FTM_SHAPING_ZETA_X            0.1f    // Zeta used by input shapers for X axis
+  #define FTM_SHAPING_V_TOL_X           0.05f   // Vibration tolerance used by EI input shapers for X axis
+
+  #define FTM_DEFAULT_SHAPER_Y      ftMotionShaper_3HEI // Default shaper mode on Y axis
+  #define FTM_SHAPING_DEFAULT_FREQ_Y   42.0f    // (Hz) Default peak frequency used by input shapers
+  #define FTM_SHAPING_ZETA_Y            0.1f    // Zeta used by input shapers for Y axis
+  #define FTM_SHAPING_V_TOL_Y           0.05f   // Vibration tolerance used by EI input shapers for Y axis
+
+  //#define FTM_SHAPER_Z                        // Include Z shaping support
+  #define FTM_DEFAULT_SHAPER_Z      ftMotionShaper_NONE // Default shaper mode on Z axis
+  #define FTM_SHAPING_DEFAULT_FREQ_Z   21.0f    // (Hz) Default peak frequency used by input shapers
+  #define FTM_SHAPING_ZETA_Z            0.03f   // Zeta used by input shapers for Z axis
+  #define FTM_SHAPING_V_TOL_Z           0.05f   // Vibration tolerance used by EI input shapers for Z axis
+
+  //#define FTM_SHAPER_E                        // Include E shaping support
+                                                // Required to synchronize extruder with XYZ (better quality)
+  #define FTM_DEFAULT_SHAPER_E      ftMotionShaper_NONE // Default shaper mode on Extruder axis
+  #define FTM_SHAPING_DEFAULT_FREQ_E   21.0f    // (Hz) Default peak frequency used by input shapers
+  #define FTM_SHAPING_ZETA_E            0.03f   // Zeta used by input shapers for E axis
+  #define FTM_SHAPING_V_TOL_E           0.05f   // Vibration tolerance used by EI input shapers for E axis
+
+  #define FTM_SMOOTHING                       // Smoothing can reduce artifacts and make steppers quieter
+                                                // on sharp corners, but too much will round corners.
+  #if ENABLED(FTM_SMOOTHING)
+    #define FTM_MAX_SMOOTHING_TIME      0.10f   // (s) Maximum smoothing time. Higher values consume more RAM.
+                                                // Increase smoothing time to reduce jerky motion, ghosting and noises.
+    #define FTM_SMOOTHING_TIME_X        0.00f   // (s) Smoothing time for X axis. Zero means disabled.
+    #define FTM_SMOOTHING_TIME_Y        0.00f   // (s) Smoothing time for Y axis
+    #define FTM_SMOOTHING_TIME_Z        0.00f   // (s) Smoothing time for Z axis
+    #define FTM_SMOOTHING_TIME_E        0.02f   // (s) Smoothing time for E axis. Prevents noise/skipping from LA by
+                                                //     smoothing acceleration peaks, which may also smooth curved surfaces.
+  #endif
+
+  #define FTM_TRAJECTORY_TYPE   TRAPEZOIDAL // Block acceleration profile (TRAPEZOIDAL, POLY5, POLY6)
+                                            // TRAPEZOIDAL: Continuous Velocity. Max acceleration is respected.
+                                            // POLY5:       Like POLY6 with 1.5x but uses less CPU.
+                                            // POLY6:       Continuous Acceleration (aka S_CURVE).
+                                            // POLY trajectories not only reduce resonances without rounding corners, but also
+                                            // reduce extruder strain due to linear advance.
+
+  #define FTM_POLY6_ACCELERATION_OVERSHOOT 1.875f // Max acceleration overshoot factor for POLY6 (1.25 to 1.875)
+
+  /**
+   * Advanced configuration
+   */
+  #define FTM_BUFFER_SIZE             128   // Window size for trajectory generation, must be a power of 2 (e.g 64, 128, 256, ...)
+                                            // The total buffered time in seconds is (FTM_BUFFER_SIZE/FTM_FS)
+  #define FTM_FS                     1000   // (Hz) Frequency for trajectory generation.
+  #define FTM_STEPPER_FS        2'000'000   // (Hz) Time resolution of stepper I/O update. Shouldn't affect CPU much (slower board testing needed)
+  #define FTM_MIN_SHAPE_FREQ           20   // (Hz) Minimum shaping frequency, lower consumes more RAM
+
+#endif // FT_MOTION
+``` 
+
+
+> [!TIP]
+> 
+> Check the [Octoprint Pinput-Shaping plugin](https://github.com/navaismo/Octoprint-Pinput_Shaping) to get the frequencies.
+>
+> Check the [comparison between Marlin & Klipper Input Shaping](https://github.com/navaismo/Octoprint-Pinput_Shaping/discussions/27).
+>
+
+<br>
+
+* **AXIS TWIST COMPENSATION** 
+```c++
+ // Add calibration in the Probe Offsets menu to compensate for X-axis twist.
+    #define X_AXIS_TWIST_COMPENSATION
+    #if ENABLED(X_AXIS_TWIST_COMPENSATION)
+      /**
+       * Enable to init the Probe Z-Offset when starting the Wizard.
+       * Use a height slightly above the estimated nozzle-to-probe Z offset.
+       * For example, with an offset of -5, consider a starting height of -4.
+       */
+      #define XATC_START_Z 0.0
+      #define XATC_MAX_POINTS 3             // Number of points to probe in the wizard
+      #define XATC_Y_POSITION Y_CENTER      // (mm) Y position to probe
+      #define XATC_Z_OFFSETS { 0, 0, 0 }    // Z offsets for X axis sample points
+    #endif
+```    
+
+And so on.
+
+
+<br>
+<br>
+<hr>
+<br>
 <p align="center"><img src="buildroot/share/pixmaps/logo/marlin-outrun-nf-500.png" height="250" alt="MarlinFirmware's logo" /></p>
 
 <h1 align="center">Marlin 3D Printer Firmware</h1>

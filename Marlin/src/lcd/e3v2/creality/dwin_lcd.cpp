@@ -867,9 +867,11 @@ uint8_t read_gcode_model_information(const char* fileName) {
   // SERIAL_ECHOLN("Resetting model information variables.");
   ui.reset_remaining_time();
   ui.total_time_reset();
-  ui.set_total_layers(0);
-  ui.set_current_layer(0);
   
+  #if ENABLED(DWIN_RENDER_THUMBNAIL)
+    ui.set_total_layers(0);
+    ui.set_current_layer(0);
+  #endif
   // memset(&model_information, 0, sizeof(model_information)); 
   memset(model_information.filament, 0, sizeof(model_information.filament));
   memset(model_information.height,   0, sizeof(model_information.height));
@@ -1063,7 +1065,9 @@ uint8_t read_gcode_model_information(const char* fileName) {
         while (*p == ' ' || *p == '\t') p++;
         orca_layers = (uint16_t)atoi(p);
         have_layers = (orca_layers > 0);
-        ui.set_total_layers(orca_layers);
+        #if ENABLED(DWIN_RENDER_THUMBNAIL)
+          ui.set_total_layers(orca_layers);
+        #endif
       }
     }
 

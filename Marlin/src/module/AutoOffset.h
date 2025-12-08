@@ -68,7 +68,7 @@
 #define PRESS_XYZ_POS                   {AUTOZ_TOOL_X, AUTOZ_TOOL_Y, 0}
 //The temperature expansion compensation of the nozzle, that is, the length of the nozzle extension when the temperature is 26 to 200 degrees
 #define NOZ_TEMP_OFT_MM                 0.05
-#define NOZ_AUTO_OFT_MM                 0.03 //0.04
+#define NOZ_AUTO_OFT_MM                 0.02 //0.04
 //low pass filter coefficient
 #define LFILTER_K1_NEW                  0.9f
 //Taking the nozzle as the reference point 0, the installation position of cr touch

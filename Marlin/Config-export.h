@@ -2,7 +2,7 @@
  * Config.h - Marlin Firmware distilled configuration
  * Usage: Place this file in the 'Marlin' folder with the name 'Config.h'.
  *
- * Exported by Marlin build on 2025-12-04 at 18:55:17.
+ * Exported by Marlin build on 2025-12-08 at 16:38:17.
  */
 
 //
@@ -131,6 +131,16 @@
 #define ADAPTIVE_STEP_SMOOTHING
 #define MULTISTEPPING_LIMIT                      16
 #define MINIMUM_STEPPER_POST_DIR_DELAY           50000
+
+//
+// Motion Control
+//
+#define SHAPING_ZETA_X                           0.15
+#define SHAPING_ZETA_Y                           0.15
+#define INPUT_SHAPING_X
+#define INPUT_SHAPING_Y
+#define SHAPING_FREQ_X                           42.0
+#define SHAPING_FREQ_Y                           40.0
 
 //
 // Endstops
@@ -302,8 +312,6 @@
 #define LEVELING_BED_TEMP                        50
 #define MESH_TEST_NOZZLE_SIZE                    0.4
 #define MESH_TEST_BED_TEMP                       60
-#define XY_DIAG_AC                               282.84
-#define XY_DIAG_BD                               282.84
 #define G26_RETRACT_MULTIPLIER                   1.0
 #define MESH_TEST_HOTEND_TEMP                    205
 #define GRID_MAX_POINTS_X                        6
@@ -311,10 +319,7 @@
 #define LEVELED_SEGMENT_LENGTH                   1.0
 #define G26_XY_FEEDRATE                          20
 #define AUTO_BED_LEVELING_BILINEAR
-#define SKEW_CORRECTION
 #define ABL_BILINEAR_SUBDIVISION
-#define SKEW_CORRECTION_GCODE
-#define XY_SIDE_AD                               200.69
 #define ENABLE_LEVELING_AFTER_G28
 #define MESH_TEST_LAYER_HEIGHT                   0.2
 #define PREHEAT_BEFORE_LEVELING
@@ -422,26 +427,14 @@
 #define PROPORTIONAL_FONT_RATIO                  1.0
 #define SERIAL_OVERRUN_PROTECTION
 #define TX_BUFFER_SIZE                           64
-#define CREALITY_LEVEL_COMPENSATION_ALGORITHM    1
+#define D_ROUTINE_AUTO_OFFSET
 #define USER_LEVEL_CHECK                         1
 #define WUHAN_CHENGE_PLATFORM                    1
-#define USE_BEEPER                               1
-#define COMPEN_FACTOR_1                          0.01
-#define COMPEN_FACTOR_2                          0.02
-#define COMPEN_FACTOR_3                          0.03
-#define COMPEN_FACTOR_5                          0.05
-#define COMPEN_FACTOR_8                          0.08
 #define PLATFORM_OFFSET                          1
-#define COMPEN_FACTOR_10                         0.10
-#define COMPEN_FACTOR_15                         0.15
-#define LEVEL_ALGORITHM_MAX                      0.7
 #define COMPACT_GRID_VALUES                      1
-#define LEVEL_ALGORITHM_MIN                      -0.7
 #define HIGH_SPEED_1                             1
 #define DWIN_RENDER_THUMBNAIL
 #define USE_SWITCH_POWER_200W                    0
-#define K8_EXTRUDER                              0
-#define ALGORITHM_INFO_PRINT                     0
 #define HIGH_SPEED                               1
 #define SHOW_GRID_VALUES                         1
 #define EMERGENCY_PARSER

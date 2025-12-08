@@ -55,7 +55,7 @@ void GcodeSuite::M8015()
     // else
     // {
     probe.offset.z = zOffset;
-    probe.offset.z -= NOZ_AUTO_OFT_MM; // Press down the final Z-axis compensation value by 0.05mm. Rock_20230516
+    // probe.offset.z -= NOZ_AUTO_OFT_MM; // Press down the final Z-axis compensation value by 0.02mm. Rock_20230516
     // TERN_(EEPROM_SETTINGS, settings.save());
     // TERN_(USE_AUTOZ_TOOL_2, DWIN_CompletedHeight());
     RUN_AND_WAIT_GCODE_CMD("G28", true); // Get the home point first before measuring

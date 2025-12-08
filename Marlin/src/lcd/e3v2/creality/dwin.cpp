@@ -5366,7 +5366,12 @@ void HMI_SDCardUpdate()
       {
         Redraw_SD_List();
       }
-      else if (checkkey == PrintProcess || checkkey == Tune || checkkey == ThumbPrint || checkkey == ThumbTune || printingIsActive())
+
+      #if ENABLED(DWIN_RENDER_THUMBNAIL)
+        else if (checkkey == PrintProcess || checkkey == Tune || checkkey == ThumbPrint || checkkey == ThumbTune || printingIsActive())
+      #else
+        else if (checkkey == PrintProcess || checkkey == Tune || printingIsActive())
+      #endif
       {
         // TODO: Move card removed abort handling
         //       to CardReader::manage_media.
@@ -11275,7 +11280,12 @@ void EachMomentUpdate()
     return;
   next_rts_update_ms = ms + DWIN_SCROLL_UPDATE_INTERVAL;
 
-  if (checkkey == PrintProcess || checkkey == ThumbPrint)
+  
+  #if ENABLED(DWIN_RENDER_THUMBNAIL)
+    if (checkkey == PrintProcess || checkkey == ThumbPrint)
+  #else
+    if (checkkey == PrintProcess)
+  #endif
   {
     // if print done
     if (HMI_flag.print_finish && !HMI_flag.done_confirm_flag)
@@ -11415,7 +11425,12 @@ void EachMomentUpdate()
   }
 
   // Cloud Printing Status Update
-  if (HMI_flag.cloud_printing_flag && (checkkey == PrintProcess  || checkkey == ThumbPrint) && !HMI_flag.filement_resume_flag)
+
+  #if ENABLED(DWIN_RENDER_THUMBNAIL)
+    if (HMI_flag.cloud_printing_flag && (checkkey == PrintProcess  || checkkey == ThumbPrint) && !HMI_flag.filement_resume_flag)
+  #else
+    if (HMI_flag.cloud_printing_flag && (checkkey == PrintProcess) && !HMI_flag.filement_resume_flag)
+  #endif  
   {
     static uint16_t last_Printtime = 0;
     static uint16_t last_card_percent = 0;
@@ -11448,7 +11463,11 @@ void EachMomentUpdate()
     }
   }
 
-  if (card.isPrinting() && (checkkey == PrintProcess || checkkey == ThumbPrint))
+  #if ENABLED(DWIN_RENDER_THUMBNAIL)
+    if (card.isPrinting() && (checkkey == PrintProcess || checkkey == ThumbPrint))
+  #else
+    if (card.isPrinting() && (checkkey == PrintProcess))
+  #endif
   {
     // print process
     const uint16_t progress = ui.get_progress_permyriad();

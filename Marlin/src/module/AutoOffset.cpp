@@ -234,16 +234,54 @@ float ProbeAcq::probeTimes(int max_times, xyz_float_t rdy_pos, float step_mm, fl
  *Purpose: Vibrate the Z-axis to eliminate gap stress
  *Params: (int)times the number of vibrations
  */
-void ProbeAcq::shakeZAxis(int times)
-{
-  // Version compatible with 2.1.x using scheduler (not raw STEP)
+// void ProbeAcq::shakeZAxis(int times)
+// {
+//   // Version compatible with 2.1.x using scheduler (not raw STEP)
+//   const float z0 = current_position[Z_AXIS];
+//   const float amp = 0.06f; // 0.06 mm up/down per cycle
+//   FOR_LOOP_TIMES(i, 0, times, {
+//     DO_BLOCKING_MOVE_TO_Z(z0 + amp, 60);
+//     DO_BLOCKING_MOVE_TO_Z(z0, 60);
+//   });
+// }
+void ProbeAcq::shakeZAxis(int times) {
   const float z0 = current_position[Z_AXIS];
-  const float amp = 0.20f; // 0.2 mm up/down per cycle
-  FOR_LOOP_TIMES(i, 0, times, {
-    DO_BLOCKING_MOVE_TO_Z(z0 + amp, 120);
-    DO_BLOCKING_MOVE_TO_Z(z0, 120);
-  });
+
+  //Approximate equivalent to the old version:
+  //4 *0.01 mm = 0.04 mm rise and 0.04 mm fall
+  constexpr float SHAKE_STEP_MM      = 0.01f;
+  constexpr uint8_t STEPS_PER_SIDE   = 4;
+  constexpr float AMP_MM             = SHAKE_STEP_MM * STEPS_PER_SIDE; // 0.04 mm
+
+  // Very low speed to be quiet
+  constexpr float SHAKE_FEED_MM_S    = 1.0f;  // 1 mm/s
+
+  const float old_feedrate_mm_s = feedrate_mm_s;
+
+  // Optional: lower acceleration only for Z while shaking
+  const float old_z_accel = planner.settings.max_acceleration_mm_per_s2[Z_AXIS];
+  planner.settings.max_acceleration_mm_per_s2[Z_AXIS] = 20.0f; // adjust as needed
+
+  planner.synchronize();           // Ensure nothing is pending
+  feedrate_mm_s = SHAKE_FEED_MM_S; // Set smooth feedrate
+
+  for (uint8_t i = 0; i < times; ++i) {
+    // Move up a bit
+    current_position[Z_AXIS] = z0 + AMP_MM;
+    line_to_current_position();
+
+    // Return to original position
+    current_position[Z_AXIS] = z0;
+    line_to_current_position();
+  }
+
+  planner.synchronize(); // Execute the entire sequence at once
+
+  // Restore parameters
+  planner.settings.max_acceleration_mm_per_s2[Z_AXIS] = old_z_accel;
+  feedrate_mm_s = old_feedrate_mm_s;
 }
+
 
 /*
  *Function Name: calMinZ()
@@ -347,12 +385,12 @@ ProbeAcq* ProbeAcq::probePointByStep() {
   DO_BLOCKING_MOVE_TO_Z (this->basePos_mm.z, this->baseSpdZ_mm_s);
 
   // 1) Small vibration
-  {
-    const float z0 = current_position[Z_AXIS];
-    const float ampZ = 0.20f;
-    DO_BLOCKING_MOVE_TO_Z(z0 + ampZ, 120);
-    DO_BLOCKING_MOVE_TO_Z(z0,        120);
-  }
+  // {
+  //   const float z0 = current_position[Z_AXIS];
+  //   const float ampZ = 0.20f;
+  //   DO_BLOCKING_MOVE_TO_Z(z0 + ampZ, 120);
+  //   DO_BLOCKING_MOVE_TO_Z(z0,        120);
+  // }
 
   // 2) Fast Baseline HX711
   int unfitAvgVal = 0;
@@ -646,8 +684,12 @@ static float Multiple_Hight_At(xyz_float_t basePos, bool isRunProByPress, bool i
  */
 bool getZOffset(bool isNozzleClr, bool isRunProByPress, bool isRunProByTouch, float *outOffset)
 {
-  SERIAL_ECHOLNPGM_P("=== Starting Get Z Offset (5 points) ===");
-
+  #if ENABLED(X_ROUTINE_AUTO_OFFSET)
+    SERIAL_ECHOLNPGM_P("=== Starting Get Z Offset (5 points, X Routine) ===");
+  #elif ENABLED(D_ROUTINE_AUTO_OFFSET)
+    SERIAL_ECHOLNPGM_P("=== Starting Get Z Offset (4 points, D Routine) ===");
+  #endif
+  
   // Preparation
   SET_Z_OFFSET(0, false);
   RUN_AND_WAIT_GCODE_CMD("G28", true);
@@ -669,6 +711,7 @@ bool getZOffset(bool isNozzleClr, bool isRunProByPress, bool isRunProByTouch, fl
   CHECK_AND_RUN(isNozzleClr, clearByBed(startPos, endPos, 140, 175));
   Popup_Window_Height(Nozz_Hight);
 
+#if ENABLED(X_ROUTINE_AUTO_OFFSET)
   // Points requested
   const xyz_float_t Probes[5] = {
     {  28,  28, 0},   // Left front
@@ -682,7 +725,9 @@ bool getZOffset(bool isNozzleClr, bool isRunProByPress, bool isRunProByTouch, fl
   float vals[5] = {0};
   uint8_t vcount = 0;
 
-  for (uint8_t i = 0; i < 5; ++i) {
+  for (uint8_t i = 0; i < 5; ++i)
+  
+  {
     float zoff = Multiple_Hight_At(Probes[i], isRunProByPress, isRunProByTouch);
     // Filters invalid values ​​(≈0, out of range)
     if (is_valid_offset(zoff)) {
@@ -701,14 +746,58 @@ bool getZOffset(bool isNozzleClr, bool isRunProByPress, bool isRunProByTouch, fl
 
   // Median valid
   float work[5];
+#else if ENABLED(D_ROUTINE_AUTO_OFFSET)
+  // Points requested
+  const xyz_float_t Probes[4] = {
+    {  28,  28, 0},   // Left front
+    { 110, 110, 0},   // center approx
+    { 180,  28, 0},   // Right front
+    {  28, 180, 0},   // Back left
+  };
+
+  // Measure each point using the same robust routine (Multiple_Hight_) but centered on the coordinate
+  float vals[4] = {0};
+  uint8_t vcount = 0;
+
+  for (uint8_t i = 0; i < 4; ++i)
+  
+  {
+    float zoff = Multiple_Hight_At(Probes[i], isRunProByPress, isRunProByTouch);
+    // Filters invalid values ​​(≈0, out of range)
+    if (is_valid_offset(zoff)) {
+      vals[vcount++] = zoff;
+      PRINTF("***POINT[%d @ %s,%s] => zOffset=%s (kept)\n", i, getStr(Probes[i].x), getStr(Probes[i].y), getStr(zoff));
+    } else {
+      PRINTF("***POINT[%d @ %s,%s] => zOffset=%s (discarded)\n", i, getStr(Probes[i].x), getStr(Probes[i].y), getStr(zoff));
+    }
+    // RUN_AND_WAIT_GCODE_CMD("G28", true);  // not needed between points
+  }
+
+  if (vcount == 0) {
+    SERIAL_ECHOLNPGM_P("No valid readings across 4 points.");
+    return false;
+  }
+
+  // Median valid
+  float work[4];
+
+#endif
+
+
   for (uint8_t i=0;i<vcount;++i) work[i] = vals[i];
   const float z_med = median_of(work, vcount);
 
   *outOffset = z_med;
-  SERIAL_ECHOLNPGM_P("=== Z Offset Measurement Completed (5 points) ===");
-  SERIAL_ECHOLNPGM("OUTPUT_ZOFFSET(5pt MEDIAN): ", *outOffset);
 
-  if ((*outOffset > ZOFFSET_VALUE_MAX) || (*outOffset < ZOFFSET_VALUE_MIN))
+#if ENABLED(X_ROUTINE_AUTO_OFFSET)
+    SERIAL_ECHOLNPGM_P("=== Z Offset Measurement Completed (5 points) ===");
+    SERIAL_ECHOLNPGM("OUTPUT_ZOFFSET(5pt MEDIAN): ", *outOffset);
+#elif ENABLED(D_ROUTINE_AUTO_OFFSET)
+    SERIAL_ECHOLNPGM_P("=== Z Offset Measurement Completed (4 points) ===");
+    SERIAL_ECHOLNPGM("OUTPUT_ZOFFSET(4pt MEDIAN): ", *outOffset);
+#endif
+ 
+if ((*outOffset > ZOFFSET_VALUE_MAX) || (*outOffset < ZOFFSET_VALUE_MIN))
   {
     SERIAL_ECHOLNPGM_P("=== Z Offset Measurement Failed: Out of Range ===");
     return false;
