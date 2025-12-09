@@ -1,4 +1,14 @@
-# Marlin Firmware 2.1.x For Ender 3 V3 SE
+<p align="center">
+  <img src="https://i.imgur.com/WWSDqK9.png" alt="Marlin 2.1.x for Ender-3 V3 SE" width="50%">
+</p>
+
+<p align="center">
+  <a href="https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE">
+    <img src="https://img.shields.io/badge/Firmware-Marlin%202.1.x-blue?style=for-the-badge" alt="Marlin 2.1.x">
+  </a>
+  <img src="https://img.shields.io/badge/Printer-Ender%203%20V3%20SE-orange?style=for-the-badge" alt="Ender 3 V3 SE">
+  <img src="https://img.shields.io/badge/Profile-Custom%20Tuned-success?style=for-the-badge" alt="Custom tuned profile">
+</p>
 
 This version of Firmware uses the Marlin Bugfix 2.1.x Branch to bring all the goodies of the updated version into the Ender 3 V3 SE.
 
