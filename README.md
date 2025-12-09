@@ -390,7 +390,7 @@ You can explore the new features on the Marlin 2.1 like:
 
 ### * Marlin 2.1.x is also copmatible with the CacomixtlePad for Android
 
-![demo](./extras/demo_fast.gif)
+![demo](./media/demo_fast.gif)
 
 
 
