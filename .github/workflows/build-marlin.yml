@@ -7,8 +7,8 @@ on:
         description: "PlatformIO environment to compile"
         required: true
         type: choice
-          default: "STM32F401RE_creality"
-          options:
+        default: "STM32F401RE_creality"
+        options:
           - STM32F401RE_creality
 
       x_routine_auto_offset:
