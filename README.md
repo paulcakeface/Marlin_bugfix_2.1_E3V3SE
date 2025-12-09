@@ -4,6 +4,28 @@ This version of Firmware uses the Marlin Bugfix 2.1.x Branch to bring all the go
 
 I have ported many of the features and fixes from the community stock version in the old repo: https://github.com/navaismo/Ender-3V3-SE. It may look we have the same but at the core is different.
 
+## Table of Contents
+- [Modular](#modular)
+- [Installation](#installation)
+- [Features](#features)
+  - [Thumbnail](#-thumbnail)
+  - [Enhanced Z Offset Calculation](#-enhanced-z-offset-calculation)
+    - [X Routine](#x-routine)
+    - [Delta Routine](#delta-routine)
+  - [Leveling Menu](#-leveling-menu)
+  - [Skew Correction Menu](#-skew-correction-menu)
+- [Ported Features](#ported-features)
+  - [Input Shaping](#-input-shaping)
+  - [LCD Dimm & Brightness Menu](#-lcd-dimm--brightness-menu)
+  - [Mute Buzzer](#-mute-buzzer)
+  - [CRTouch Test Functions](#-crtouch-test-functions)
+  - [Z Height after Homing](#-z-height-after-homing)
+  - [Extra Preheat Labels](#-extra-preheat-labels)
+  - [Custom Extrude Menu](#-custom-extrude-menu)
+  - [Linear Advance](#-linear-advance)
+  - [Increased Temperature for BED and Noozle](#-increased-temperature-for-bed-and-noozle)
+- [Explore New Features](#explore-new-features)
+
 
 ## Modular
 
@@ -164,6 +186,12 @@ To Enable the Display Menu
 ```c++
 #define DWIN_INPUT_SHAPING_MENU        // Enable LCD Menu to Configure Input Shaping parameters
 ```
+
+> [!TIP]
+> 
+> Follow the [Wiki Article to understand Input Shaping](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/wiki/Input-Shaping)
+>
+
 
 <br>
 
