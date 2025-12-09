@@ -286,7 +286,28 @@ Enable in configuration.h
 
 ### * Linear Advance.
 
+Enable by default in Configuration_adv.h
+```c++
+#define LIN_ADVANCE
+``` 
+
+> [!TIP]
+> 
+> Follow the [Wiki Article to understand Linear Advance.](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/wiki/Linear-Advance)
+>
+
+
+
 ### * Increased Temperature for BED and Noozle.
+
+* **BED 120°C**
+* **Nozzle 300°C**
+
+> [!CAUTION]
+> 
+> Beware of the ptfe tube that present deformation starting at 250°C degrees, for Higher temps replace the noozle for the unicorn.
+>
+
 
 <br>
 
