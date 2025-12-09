@@ -43,7 +43,7 @@ Flash: [====      ]  42.6% (used 219260 bytes from 514288 bytes)
 > Follow the [Wiki Article to Flash Firmware](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/wiki/Flashing-your-Printer).
 >
 
-It is recommended to create your own Binary with your desired features, using either the configuration files or the Marlin autobuild VSCode extension.
+It is recommended to create your own Binary with your desired features, using either the configuration files, the Marlin autobuild VSCode extension or Follow the [Wiki Article to compile the firmware using Github Actions](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/wiki/Compiling-the-Firmware-using-Github-Actions).
 
 > [!IMPORTANT]
 > 
