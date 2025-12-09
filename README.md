@@ -294,7 +294,7 @@ Enable in configuration.h
 
 You can explore the new features on the Marlin 2.1 like:
 
-* **FT_MOTION** Which enables different filters of Shapers for the machine, like Klipper does. 
+### * **FT_MOTION** Which enables different filters of Shapers for the machine, like Klipper does. 
 ```c++
 #define FT_MOTION
 #if ENABLED(FT_MOTION)
@@ -370,7 +370,7 @@ You can explore the new features on the Marlin 2.1 like:
 
 <br>
 
-* **AXIS TWIST COMPENSATION** 
+### * **AXIS TWIST COMPENSATION** 
 ```c++
  // Add calibration in the Probe Offsets menu to compensate for X-axis twist.
     #define X_AXIS_TWIST_COMPENSATION
@@ -387,7 +387,14 @@ You can explore the new features on the Marlin 2.1 like:
     #endif
 ```    
 
-And so on.
+
+### * Marlin 2.1.x is also copmatible with the CacomixtlePad for Android
+
+![demo](./extras/demo_fast.gif)
+
+
+
+And so on...
 
 
 <br>
