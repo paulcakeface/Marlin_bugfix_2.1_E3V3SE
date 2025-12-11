@@ -1,8 +1,40 @@
-# Marlin Firmware 2.1.x For Ender 3 V3 SE
+<p align="center">
+  <img src="https://i.imgur.com/WWSDqK9.png" alt="Marlin 2.1.x for Ender-3 V3 SE" width="50%">
+</p>
+
+<p align="center">
+  <a href="https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE">
+    <img src="https://img.shields.io/badge/Firmware-Marlin%202.1.x-blue?style=for-the-badge" alt="Marlin 2.1.x">
+  </a>
+  <img src="https://img.shields.io/badge/Printer-Ender%203%20V3%20SE-orange?style=for-the-badge" alt="Ender 3 V3 SE">
+  <img src="https://img.shields.io/badge/Profile-Custom%20Tuned-success?style=for-the-badge" alt="Custom tuned profile">
+</p>
 
 This version of Firmware uses the Marlin Bugfix 2.1.x Branch to bring all the goodies of the updated version into the Ender 3 V3 SE.
 
 I have ported many of the features and fixes from the community stock version in the old repo: https://github.com/navaismo/Ender-3V3-SE. It may look we have the same but at the core is different.
+
+## Table of Contents
+- [Modular](#modular)
+- [Installation](#installation)
+- [Features](#features)
+  - [Thumbnail](#-thumbnail)
+  - [Enhanced Z Offset Calculation](#-enhanced-z-offset-calculation)
+    - [X Routine](#x-routine)
+    - [Delta Routine](#delta-routine)
+  - [Leveling Menu](#-leveling-menu)
+  - [Skew Correction Menu](#-skew-correction-menu)
+- [Ported Features](#ported-features)
+  - [Input Shaping](#-input-shaping)
+  - [LCD Dimm & Brightness Menu](#-lcd-dimm--brightness-menu)
+  - [Mute Buzzer](#-mute-buzzer)
+  - [CRTouch Test Functions](#-crtouch-test-functions)
+  - [Z Height after Homing](#-z-height-after-homing)
+  - [Extra Preheat Labels](#-extra-preheat-labels)
+  - [Custom Extrude Menu](#-custom-extrude-menu)
+  - [Linear Advance](#-linear-advance)
+  - [Increased Temperature for BED and Noozle](#-increased-temperature-for-bed-and-noozle)
+- [Explore New Features](#explore-new-features)
 
 
 ## Modular
@@ -34,8 +66,8 @@ With a Memory cost of:
 
 ``` c++
 Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
-RAM:   [===       ]  31.3% (used 20504 bytes from 65536 bytes)
-Flash: [====      ]  42.6% (used 219260 bytes from 514288 bytes)
+RAM:   [===       ]  31.7% (used 20756 bytes from 65536 bytes)
+Flash: [====      ]  44.6% (used 221092 bytes from 495616 bytes)
 ``` 
 
 > [!TIP]
@@ -165,6 +197,12 @@ To Enable the Display Menu
 #define DWIN_INPUT_SHAPING_MENU        // Enable LCD Menu to Configure Input Shaping parameters
 ```
 
+> [!TIP]
+> 
+> Follow the [Wiki Article to understand Input Shaping](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/wiki/Input-Shaping)
+>
+
+
 <br>
 
 ### * LCD Dimm & Brightness Menu.
@@ -258,7 +296,28 @@ Enable in configuration.h
 
 ### * Linear Advance.
 
+Enable by default in Configuration_adv.h
+```c++
+#define LIN_ADVANCE
+``` 
+
+> [!TIP]
+> 
+> Follow the [Wiki Article to understand Linear Advance.](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/wiki/Linear-Advance)
+>
+
+
+
 ### * Increased Temperature for BED and Noozle.
+
+* **BED 120°C**
+* **Nozzle 300°C**
+
+> [!CAUTION]
+> 
+> Beware of the ptfe tube that present deformation starting at 250°C degrees, for Higher temps replace the noozle for the unicorn.
+>
+
 
 <br>
 
@@ -266,7 +325,7 @@ Enable in configuration.h
 
 You can explore the new features on the Marlin 2.1 like:
 
-* **FT_MOTION** Which enables different filters of Shapers for the machine, like Klipper does. 
+### * **FT_MOTION** Which enables different filters of Shapers for the machine, like Klipper does. 
 ```c++
 #define FT_MOTION
 #if ENABLED(FT_MOTION)
@@ -342,7 +401,7 @@ You can explore the new features on the Marlin 2.1 like:
 
 <br>
 
-* **AXIS TWIST COMPENSATION** 
+### * **AXIS TWIST COMPENSATION** 
 ```c++
  // Add calibration in the Probe Offsets menu to compensate for X-axis twist.
     #define X_AXIS_TWIST_COMPENSATION
@@ -359,7 +418,14 @@ You can explore the new features on the Marlin 2.1 like:
     #endif
 ```    
 
-And so on.
+
+### * Marlin 2.1.x is also compatible with the [CacomixtlePad for Android](https://github.com/navaismo/cacomixtlePad)
+
+![demo](./media/demo_fast.gif)
+
+
+
+And so on...
 
 
 <br>
