@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./media/shore.png" alt="Marlin 2.1.x for Ender-3 V3 SE" width="50%">
+  <img src="./media/shore.png" alt="Marlin 2.1.x for Ender-3 V3 SE" width="70%">
 </p>
 
 <p align="center">
