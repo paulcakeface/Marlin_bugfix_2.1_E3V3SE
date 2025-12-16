@@ -51,6 +51,7 @@ def main():
     parser.add_argument("--input_shaping_x", required=True)
     parser.add_argument("--input_shaping_y", required=True)
     parser.add_argument("--dwin_input_shaping_menu", required=True)
+    parser.add_argument("--one_click_print", required=True)
 
     args = parser.parse_args()
 
@@ -77,6 +78,7 @@ def main():
     ish_x = str_to_bool(args.input_shaping_x)
     ish_y = str_to_bool(args.input_shaping_y)
     dwin_ish_menu = str_to_bool(args.dwin_input_shaping_menu)
+    one_click_print = str_to_bool(args.one_click_print)
 
     # Dependencies:
     # DWIN_SKEW_MENU only if SKEW_CORRECTION is active
@@ -102,6 +104,7 @@ def main():
     set_define(cfg_adv, "INPUT_SHAPING_X", ish_x)
     set_define(cfg_adv, "INPUT_SHAPING_Y", ish_y)
     set_define(cfg_adv, "DWIN_INPUT_SHAPING_MENU", dwin_ish_menu)
+    set_define(cfg_adv, "ONE_CLICK_PRINT", one_click_print)
 
 if __name__ == "__main__":
     main()

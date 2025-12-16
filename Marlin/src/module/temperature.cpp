@@ -248,7 +248,7 @@
 #endif
 
 Temperature thermalManager;
-
+raw_pid_t auto_pid = { 0, 0, 0 };   // p, i, d
 PGMSTR(str_t_thermal_runaway, STR_T_THERMAL_RUNAWAY);
 PGMSTR(str_t_heating_failed, STR_T_HEATING_FAILED);
 
@@ -1014,6 +1014,11 @@ void Temperature::factory_reset() {
       if (cycles > ncycles && cycles > 2) {
         SERIAL_ECHOPGM(STR_PID_AUTOTUNE); SERIAL_ECHOLNPGM(STR_PID_AUTOTUNE_FINISHED);
         TERN_(HOST_PROMPT_SUPPORT, hostui.notify(GET_TEXT_F(MSG_PID_AUTOTUNE_DONE)));
+        HMI_flag.PID_autotune_end = true;
+        end_flag=false;
+        auto_pid.p = tune_pid.p;
+        auto_pid.i = tune_pid.i;
+        auto_pid.d = tune_pid.d;
 
         #if ANY(PIDTEMPBED, PIDTEMPCHAMBER)
           FSTR_P const estring = GHV(F("chamber"), F("bed"), FPSTR(NUL_STR));
@@ -1056,6 +1061,8 @@ void Temperature::factory_reset() {
 
         goto EXIT_M303;
       }
+
+      TERN(DWIN_CREALITY_LCD, DWIN_Update(), ui.update());
     }
     wait_for_heatup = false;
 

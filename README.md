@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./media/shore.png" alt="Marlin 2.1.x for Ender-3 V3 SE" width="70%">
+  <img src="./media/shore.png" alt="Marlin 2.1.x for Ender-3 V3 SE" width="50%">
 </p>
 
 <p align="center">
@@ -41,7 +41,7 @@ I have ported many of the features and fixes from the community stock version in
 
 <div align="left"  >
 
-  <img src="./media/puzzle.png" width="40%" height="40%"/>
+  <img src="./media/puzzle2.png" width="40%" height="40%"/>
 
 </div>  
 
@@ -56,6 +56,7 @@ The Binary provided will contain just the following features:
 
 * [D ROUTINE AUTO Z OFFSET](#delta-routine).
 * [DWIN RENDER THUMBNAIL](#-thumbnail).
+* [ONE CLICK PRINT](#-one-click-print)
 * [INPUT SHAPING](#-input-shaping).
 * [LINEAR ADVANCE](#-linear-advance).
 * [Mcodes for LCD Dimm & Brightness](#-lcd-dimm-&-brightness-menu).
@@ -66,8 +67,8 @@ With a Memory cost of:
 
 ``` c++
 Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
-RAM:   [===       ]  31.7% (used 20756 bytes from 65536 bytes)
-Flash: [====      ]  44.6% (used 221092 bytes from 495616 bytes)
+RAM:   [===       ]  31.7% (used 20788 bytes from 65536 bytes)
+Flash: [====      ]  44.8% (used 221924 bytes from 495616 bytes)
 ``` 
 
 > [!TIP]
@@ -107,6 +108,23 @@ A new feature is available to Render the Thumbnail of the Gcode file, this time 
 > 
 > Follow the [Wiki Article to enable the Thumbnail](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/wiki/OrcaSlicer-Thumbnail-Setup).
 >
+
+<br>
+
+### * One Click Print
+
+<div align="left" >
+
+<img src="./media/OCP.gif" width="55%" height="55%"/>
+
+
+</div>  
+
+A new feature is available, when you insert the SD Card automatically will search the latest file and ask if you want to print it now!
+```c++
+#define ONE_CLICK_PRINT  // Prompt to print the newest file on inserted media
+
+```
 
 <br>
 
@@ -176,6 +194,14 @@ We have created a Menu to set and calculate the bed Skew of your printer.
 
 
 ## Ported Features.
+
+
+### * Compact 6x6 GRID
+<div align="left" >
+
+  <img src="./media/grid.jpg" width="55%" height="55%"/>
+
+</div> 
 
 ### * Input Shaping.
 
