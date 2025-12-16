@@ -60,9 +60,9 @@
   #include "../feature/pause.h"
 #endif
 
-#if ENABLED(ONE_CLICK_PRINT)
-  #include "../../src/lcd/menu/menu.h"
-#endif
+// #if ENABLED(ONE_CLICK_PRINT)
+//   #include "../../src/lcd/menu/menu.h"
+// #endif
 
 #define DEBUG_OUT ANY(DEBUG_CARDREADER, MARLIN_DEV_MODE)
 #include "../core/debug_out.h"
@@ -1025,7 +1025,8 @@ void CardReader::write_command(char * const buf) {
   bool CardReader::one_click_check() {
     const bool found = selectNewestFile();    // Changes the current workDir if found
     if (found) {
-      //SERIAL_ECHO_MSG(" OCP File: ", longest_filename(), "\n");
+      SERIAL_ECHO_MSG(" OCP File: ", longest_filename(), "\n");
+      SERIAL_ECHOLNPGM("One-Click Print: Found newest file. TODO-> print");
       //ui.init();
       one_click_print();                      // Restores workkDir to root (eventually)
     }

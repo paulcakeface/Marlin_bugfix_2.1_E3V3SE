@@ -2,7 +2,7 @@
  * Config.h - Marlin Firmware distilled configuration
  * Usage: Place this file in the 'Marlin' folder with the name 'Config.h'.
  *
- * Exported by Marlin build on 2025-12-11 at 17:30:24.
+ * Exported by Marlin build on 2025-12-16 at 19:43:51.
  */
 
 //
@@ -208,10 +208,10 @@
 #define TEMP_SENSOR_0                            1
 #define TEMP_HYSTERESIS                          3
 #define HEATER_0_MINTEMP                         0
-#define HEATER_0_MAXTEMP                         300
+#define HEATER_0_MAXTEMP                         310
 #define PREHEAT_1_TEMP_HOTEND                    200
 #define BED_OVERSHOOT                            10
-#define HOTEND_OVERSHOOT                         15
+#define HOTEND_OVERSHOOT                         10
 #define PREHEAT_1_FAN_SPEED                      0
 #define PREHEAT_1_LABEL                          "PLA"
 #define PREHEAT_1_TEMP_BED                       60
@@ -235,7 +235,7 @@
 #define PREHEAT_2_FAN_SPEED                      0
 #define BED_MINTEMP                              0
 #define PREHEAT_2_TEMP_HOTEND                    230
-#define BED_MAXTEMP                              120
+#define BED_MAXTEMP                              125
 #define AUTOTEMP_FACTOR                          0.1f
 #define AUTOTEMP_MIN                             210
 #define THERMAL_PROTECTION_BED_PERIOD            180
@@ -378,6 +378,7 @@
 #define AUTOZ_BRUSH_Z                            0
 #define TOOL_BRUSH_X                             -5
 #define TOOL_BRUSH_Y                             50
+#define ONE_CLICK_PRINT
 #define SD_FINISHED_STEPPERRELEASE               true
 #define AUTOZ_TOOL_X                             25
 #define AUTOZ_TOOL_Y                             28
@@ -388,6 +389,7 @@
 #define USE_AUTOZ_TOOL_2
 #define SHOW_PROGRESS_PERCENT
 #define EVENT_GCODE_SD_ABORT                     "G28XY\nG1 X0 Y215\nM84"
+#define NO_SD_AUTOSTART
 #define SDCARD_RATHERRECENTFIRST
 #define AUTOTOOL_RESULT
 #define POWER_LOSS_MIN_Z_CHANGE                  0.05

@@ -68,8 +68,7 @@
 
 // Choose the name from boards.h that matches your setup
 #ifndef MOTHERBOARD
-  // #define MOTHERBOARD BOARD_CREALITY_V3_GD303
-   #define MOTHERBOARD BOARD_CREALITY_F401RE 
+  #define MOTHERBOARD BOARD_CREALITY_F401RE
 #endif
 
 // Name displayed in the LCD "Ready" message and Info menu
@@ -703,15 +702,15 @@
 // Above this temperature the heater will be switched off.
 // This can protect components from overheating, but NOT from shorts and failures.
 // (Use MINTEMP for thermistor short/failure protection.)
-#define HEATER_0_MAXTEMP 300
-#define HEATER_1_MAXTEMP 300
-#define HEATER_2_MAXTEMP 300
-#define HEATER_3_MAXTEMP 300
-#define HEATER_4_MAXTEMP 300
-#define HEATER_5_MAXTEMP 300
-#define HEATER_6_MAXTEMP 300
-#define HEATER_7_MAXTEMP 300
-#define BED_MAXTEMP      120
+#define HEATER_0_MAXTEMP 310
+#define HEATER_1_MAXTEMP 310
+#define HEATER_2_MAXTEMP 310
+#define HEATER_3_MAXTEMP 310
+#define HEATER_4_MAXTEMP 310
+#define HEATER_5_MAXTEMP 310
+#define HEATER_6_MAXTEMP 310
+#define HEATER_7_MAXTEMP 310
+#define BED_MAXTEMP      125
 #define CHAMBER_MAXTEMP  60
 
 /**
@@ -720,7 +719,7 @@
  * (especially before PID tuning). Setting the target temperature too close to MAXTEMP guarantees
  * a MAXTEMP shutdown! Use these values to forbid temperatures being set too close to MAXTEMP.
  */
-#define HOTEND_OVERSHOOT 15   // (°C) Forbid temperatures over MAXTEMP - OVERSHOOT
+#define HOTEND_OVERSHOOT 10   // (°C) Forbid temperatures over MAXTEMP - OVERSHOOT
 #define BED_OVERSHOOT    10   // (°C) Forbid temperatures over MAXTEMP - OVERSHOOT
 #define COOLER_OVERSHOOT  2   // (°C) Forbid temperatures closer than OVERSHOOT
 

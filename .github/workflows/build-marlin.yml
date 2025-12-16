@@ -83,6 +83,12 @@ on:
         type: boolean
         default: false
 
+      one_click_print:
+        description: "ONE_CLICK_PRINT"
+        required: true
+        type: boolean
+        default: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -113,8 +119,8 @@ jobs:
             --dwin_skew_menu "${{ github.event.inputs.dwin_skew_menu }}" \
             --input_shaping_x "${{ github.event.inputs.input_shaping_x }}" \
             --input_shaping_y "${{ github.event.inputs.input_shaping_y }}" \
-            --dwin_input_shaping_menu "${{ github.event.inputs.dwin_input_shaping_menu }}"
-
+            --dwin_input_shaping_menu "${{ github.event.inputs.dwin_input_shaping_menu }}" \
+            --one_click_print "${{ github.event.inputs.one_click_print }}"
       - name: Compile firmware
         run: |
           pio run -e "${{ github.event.inputs.env }}"

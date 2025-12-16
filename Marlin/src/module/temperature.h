@@ -1497,3 +1497,4 @@ class Temperature {
 };
 
 extern Temperature thermalManager;
+extern raw_pid_t auto_pid;

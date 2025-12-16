@@ -980,5 +980,10 @@ void CR_Touch_error_func();//CR_TOUCH错误
     #define CHECK_ERROR_MIN_VALUE  0.05
     #define CHECK_ERROR_MAX_VALUE  0.1
 #endif
+
+#if ENABLED(ONE_CLICK_PRINT)
+  void one_click_print();
+#endif
+
 extern uint8_t G29_level_num;//Record how many points G29 has been leveled to determine whether G29 is leveled normally.
 ///////////////////////////

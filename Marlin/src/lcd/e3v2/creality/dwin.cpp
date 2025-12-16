@@ -3143,6 +3143,15 @@ void Popup_window_PauseOrStop()
     {
       DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_White, Color_Bg_Window, 14, 45, F("Reset Settings?"));
     }
+  #if ENABLED(ONE_CLICK_PRINT)  
+    else if (select_print.now == 30)
+    {
+      char * const filename = card.longest_filename();
+      DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_White, Color_Bg_Window, 14, 55, F("Do you want to Print File:"));
+      DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_White, Color_Bg_Window, 14, 85, filename);
+    }
+  #endif
+
     DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Confirm, 26, 194);
     DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Cancel, 132, 194);
     // DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Confirm, 26, 194);
@@ -3686,6 +3695,13 @@ void Goto_MainMenu()
     ui.set_progress(0);
     ui.set_remaining_time(0);
     ui.set_total_layers(0);
+  #endif
+
+  #if ENABLED(ONE_CLICK_PRINT)
+    my_short_fn[0] = '\0'; // clear my_short_fn to avoid caching issues
+    select_print.reset();  // Reset select_print to avoid issues
+    select_file.reset();  // Reset select_file to avoid issues
+    card.closefile();     // Close the file to avoid SD card issues
   #endif
 
   hasThumbnail = false; // Reset thumbnail flag
@@ -6579,6 +6595,70 @@ void HMI_PauseOrStop()
         Goto_MainMenu();
       }
     }
+
+  #if ENABLED(ONE_CLICK_PRINT)
+    else if (select_print.now == 30){
+      if (HMI_flag.select_flag)
+      {
+        
+          strncpy(my_short_fn, card.filename, sizeof(my_short_fn) - 1);
+          my_short_fn[sizeof(my_short_fn) - 1] = '\0';
+          #if ENABLED(DWIN_RENDER_THUMBNAIL)
+           Goto_ThumbPreview();
+          #else
+
+            checkkey = Show_gcode_pic;
+            select_show_pic.reset();
+            HMI_flag.select_flag = true;
+            Clear_Main_Window();
+            Draw_Mid_Status_Area(true); // Rock 20230529
+            if (HMI_flag.language < Language_Max)
+            {
+              #if ENABLED(DWIN_CREALITY_480_LCD)
+                        DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Confirm, 26, 315);
+                        DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Cancel, 146, 315);
+              #elif ENABLED(DWIN_CREALITY_320_LCD)
+                        DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Confirm, BUTTON_X, BUTTON_Y);
+                        DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Cancel, BUTTON_X + BUTTON_OFFSET_X, BUTTON_Y);
+              #endif
+            }
+              #if ENABLED(USER_LEVEL_CHECK)
+                      select_show_pic.now = 0; // Default selection
+              #else
+                      select_show_pic.now = 1; // Default selection
+              #endif
+              
+              Draw_Show_G_Select_Highlight(true);
+        
+              char *const name = card.longest_filename();
+              char str[strlen(name) + 1];
+              // Cancel the suffix. For example: filename.gcode and remove .gocde.
+              make_name_without_ext(str, name);
+              Draw_Title(str);
+              uint8_t ret = METADATA_PARSE_ERROR;
+              // Ender-3v3 SE temporarily does not support the image preview function to prevent freezing and displays the default preview image.
+              // ret = gcodePicDataSendToDwin(card.filename, VP_OVERLAY_PIC_PREVIEW_1, PRIWIEW_PIC_FORMAT_NEED, PRIWIEW_PIC_RESOLITION_NEED);
+              ret = read_gcode_model_information(card.filename);
+              // if(ret == PIC_MISS_ERR)
+              DC_Show_defaut_image();              // Since this project does not have image preview data, the default small robot image is displayed.
+              Image_Preview_Information_Show(ret); // Picture preview details display
+      
+          #endif
+      }
+      else
+      {
+        // cancel print
+        
+        my_short_fn[0] = '\0'; // clear my_short_fn to avoid caching issues
+        select_print.reset();  // Reset select_print to avoid issues
+        select_file.reset();  // Reset select_file to avoid issues
+        card.closefile();     // Close the file to avoid SD card issues
+        queue.enqueue_one_now(F("M1003"));  // Make sure SD card browsing doesn't break!
+        Goto_MainMenu();
+
+      }
+    }
+  #endif  
   }
   DWIN_UpdateLCD();
 }
@@ -12504,7 +12584,7 @@ void HMI_Auto_Bed_PID(void)
         switch (checkkey)
         {
         case AUTO_SET_NOZZLE_PID:
-          // sprintf_P(cmd, PSTR("M301 P%s I%s D%s"), dtostrf(auto_pid.Kp, 1, 2, str_1), dtostrf(auto_pid.Ki, 1, 2, str_2), dtostrf(auto_pid.Kd, 1, 2, str_3));
+          sprintf_P(cmd, PSTR("M301 P%s I%s D%s"), dtostrf(auto_pid.p, 1, 2, str_1), dtostrf(auto_pid.i, 1, 2, str_2), dtostrf(auto_pid.d, 1, 2, str_3));
           dtostrf(thermalManager.temp_hotend[0].pid.p(), 1, 2, sP);
           dtostrf(thermalManager.temp_hotend[0].pid.i(), 1, 2, sI);
           dtostrf(thermalManager.temp_hotend[0].pid.d(), 1, 2, sD);
@@ -12513,7 +12593,7 @@ void HMI_Auto_Bed_PID(void)
           gcode.process_subcommands_now(cmd);
           break;
         case AUTO_SET_BED_PID:
-          // sprintf_P(cmd, PSTR("M304 P%s I%s D%s"), dtostrf(auto_pid.Kp, 1, 2, str_1), dtostrf(auto_pid.Ki, 1, 2, str_2), dtostrf(auto_pid.Kd, 1, 2, str_3));
+          sprintf_P(cmd, PSTR("M304 P%s I%s D%s"), dtostrf(auto_pid.p, 1, 2, str_1), dtostrf(auto_pid.i, 1, 2, str_2), dtostrf(auto_pid.d, 1, 2, str_3));
           dtostrf(thermalManager.temp_bed.pid.p(), 1, 2, sP);
           dtostrf(thermalManager.temp_bed.pid.i(), 1, 2, sI);
           dtostrf(thermalManager.temp_bed.pid.d(), 1, 2, sD);
@@ -12544,6 +12624,15 @@ void HMI_Auto_Bed_PID(void)
   }
   // DWIN_UpdateLCD(); //Xiaoliang delete——20230207
 }
+
+#if ENABLED(ONE_CLICK_PRINT)
+  void one_click_print() {
+        checkkey = Print_window;
+        select_print.now = 30;
+        HMI_flag.select_flag = true;
+        Popup_window_PauseOrStop();
+  }
+#endif
 
 // Function to send string to LCD
 void DWIN_Show_M117(char *str)
