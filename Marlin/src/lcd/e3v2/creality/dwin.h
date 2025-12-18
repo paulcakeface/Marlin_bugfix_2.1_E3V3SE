@@ -932,6 +932,8 @@ extern bool DWIN_lcd_sd_status;
 extern bool pause_action_flag ;
 extern CRec CardRecbuf;
 
+
+
 extern uint8_t Cloud_Progress_Bar; // Progress bar data transmitted by cloud printing
 
 extern void Draw_Print_ProgressRemain();

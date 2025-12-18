@@ -170,7 +170,7 @@ static bool temp_remove_card_flag = false, temp_cutting_line_flag = false /*,tem
 
 bool hasThumbnail = false;
 int clear_UpperArea = 0;
-
+    
 typedef struct
 {
   uint8_t now, last;
@@ -527,6 +527,7 @@ void HMI_SetLanguage()
 {
   // rock_901122 Solve the problem of language confusion when powering on for the first time
   // if(HMI_flag.language > Portuguese)
+  reset_flag = true;
   if (HMI_flag.Need_boot_flag || (HMI_flag.language < Chinese) || (HMI_flag.language >= Language_Max))
   {
     // Draw_Mid_Status_Area(true); //rock_20230529
@@ -3698,6 +3699,7 @@ void Goto_MainMenu()
   #endif
 
   #if ENABLED(ONE_CLICK_PRINT)
+    reset_flag = false;
     my_short_fn[0] = '\0'; // clear my_short_fn to avoid caching issues
     select_print.reset();  // Reset select_print to avoid issues
     select_file.reset();  // Reset select_file to avoid issues
@@ -4795,7 +4797,7 @@ void HMI_AUTO_PID_Value_Set()
         Draw_auto_bed_PID();
         LIMIT(HMI_ValueStruct.Auto_PID_Temp, 60, BED_MAX_TARGET);
         HMI_ValueStruct.Auto_PID_Value[select_set_pid.now] = HMI_ValueStruct.Auto_PID_Temp;
-        sprintf_P(cmd, PSTR("M303 C8 E-1 S%d"), HMI_ValueStruct.Auto_PID_Temp);
+        sprintf_P(cmd, PSTR("M303 C8 E-1 S%d U1"), HMI_ValueStruct.Auto_PID_Temp);
         gcode.process_subcommands_now(cmd);
         break;
       case 2:
@@ -4804,7 +4806,7 @@ void HMI_AUTO_PID_Value_Set()
         LIMIT(HMI_ValueStruct.Auto_PID_Temp, 100, thermalManager.hotend_max_target(0));
         HMI_ValueStruct.Auto_PID_Value[select_set_pid.now] = HMI_ValueStruct.Auto_PID_Temp;
         // Hmi flag.pid autotune start=true;
-        sprintf_P(cmd, PSTR("M303 C8 S%d"), HMI_ValueStruct.Auto_PID_Temp);
+        sprintf_P(cmd, PSTR("M303 C8 S%d U1"), HMI_ValueStruct.Auto_PID_Temp);
         gcode.process_subcommands_now(cmd);
         break;
       default:
@@ -11869,6 +11871,9 @@ void Draw_Poweron_Select_language()
 
 void HMI_Poweron_Select_language()
 {
+
+  reset_flag=true;
+
   ENCODER_DiffState encoder_diffState = get_encoder_state();
   if (encoder_diffState == ENCODER_DIFF_NO)
     return;
@@ -12627,10 +12632,16 @@ void HMI_Auto_Bed_PID(void)
 
 #if ENABLED(ONE_CLICK_PRINT)
   void one_click_print() {
+
+      if(reset_flag){
+        // we came from a reset, dont start printing
+        SERIAL_ECHOLNPGM("One click print: reset detected, not starting a print.");  
+      }else {  
         checkkey = Print_window;
         select_print.now = 30;
         HMI_flag.select_flag = true;
         Popup_window_PauseOrStop();
+      }
   }
 #endif
 

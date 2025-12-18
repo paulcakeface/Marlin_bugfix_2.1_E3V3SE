@@ -1020,6 +1020,9 @@ void Temperature::factory_reset() {
         auto_pid.i = tune_pid.i;
         auto_pid.d = tune_pid.d;
 
+        // SERIAL_ECHOLNPGM("Raw PID settings:");
+        // SERIAL_ECHOLNPGM("P", auto_pid.p, " I", auto_pid.i, " D", auto_pid.d);
+
         #if ANY(PIDTEMPBED, PIDTEMPCHAMBER)
           FSTR_P const estring = GHV(F("chamber"), F("bed"), FPSTR(NUL_STR));
           say_default_(); SERIAL_ECHOLN(estring, F("Kp "), tune_pid.p);
@@ -1056,9 +1059,10 @@ void Temperature::factory_reset() {
         #endif
 
         // Use the result? (As with "M303 U1")
-        if (set_result)
+        if (set_result){
+          SERIAL_ECHOLNPGM("Applying new PID settings.");
           GHV(_set_chamber_pid(tune_pid), _set_bed_pid(tune_pid), _set_hotend_pid(heater_id, tune_pid));
-
+        }    
         goto EXIT_M303;
       }
 

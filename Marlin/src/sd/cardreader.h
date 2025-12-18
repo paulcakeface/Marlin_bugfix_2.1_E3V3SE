@@ -64,6 +64,7 @@ extern const char M23_STR[], M24_STR[];
   #define MEDIA_SUPPORT_BIN_FILES 1
 #endif
 
+extern bool reset_flag; // reset flag to avoid OCP overlaping
 typedef struct {
   bool saving:1,                // Receiving a G-code file or logging commands during a print
        logging:1,               // Log enqueued commands to the open file. See GCodeQueue::advance()
