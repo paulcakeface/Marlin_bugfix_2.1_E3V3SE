@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./media/shore.png" alt="Marlin 2.1.x for Ender-3 V3 SE" width="50%">
+  <img src="./media/shore.png" alt="Marlin 2.1.x for Ender-3 V3 SE" width="65%">
 </p>
 
 <p align="center">
@@ -19,6 +19,7 @@ I have ported many of the features and fixes from the community stock version in
 - [Installation](#installation)
 - [Features](#features)
   - [Thumbnail](#-thumbnail)
+  - [ONE CLICK PRINT](#-one-click-print)
   - [Enhanced Z Offset Calculation](#-enhanced-z-offset-calculation)
     - [X Routine](#x-routine)
     - [Delta Routine](#delta-routine)
@@ -80,7 +81,7 @@ It is recommended to create your own Binary with your desired features, using ei
 
 > [!IMPORTANT]
 > 
-> For this version is importnat that you check the e-Steps pf your extruder before start a print job.
+> For this version is important that you check the e-Steps of your extruder before start a print job.
 > in my case old firmware had **424.9** as value for a normal extrusion but for Marlin 2.1 needed to adjust to **715.12**
 >
 > So please calibrate it after the Z offset calculation finished.

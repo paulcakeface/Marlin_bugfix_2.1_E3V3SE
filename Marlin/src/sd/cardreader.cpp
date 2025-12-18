@@ -69,7 +69,7 @@
 #include "../libs/hex_print.h"
 
 // extern
-
+bool reset_flag = false; //  reset flag to avoid OCP overlaping
 PGMSTR(M21_STR, "M21");
 PGMSTR(M23_STR, "M23 %s");
 PGMSTR(M24_STR, "M24");
@@ -1026,9 +1026,10 @@ void CardReader::write_command(char * const buf) {
     const bool found = selectNewestFile();    // Changes the current workDir if found
     if (found) {
       SERIAL_ECHO_MSG(" OCP File: ", longest_filename(), "\n");
-      SERIAL_ECHOLNPGM("One-Click Print: Found newest file. TODO-> print");
+      SERIAL_ECHOLNPGM("Flag satus:", reset_flag);
       //ui.init();
-      one_click_print();                      // Restores workkDir to root (eventually)
+      if(!reset_flag)
+        one_click_print();                      // Restores workkDir to root (eventually)
     }
     return found;
   }
