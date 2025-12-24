@@ -2,7 +2,7 @@
  * Config.h - Marlin Firmware distilled configuration
  * Usage: Place this file in the 'Marlin' folder with the name 'Config.h'.
  *
- * Exported by Marlin build on 2025-12-18 at 22:08:51.
+ * Exported by Marlin build on 2025-12-24 at 20:37:08.
  */
 
 //
@@ -135,12 +135,37 @@
 //
 // Motion Control
 //
-#define SHAPING_ZETA_X                           0.15
-#define SHAPING_ZETA_Y                           0.15
-#define INPUT_SHAPING_X
-#define INPUT_SHAPING_Y
-#define SHAPING_FREQ_X                           42.0
-#define SHAPING_FREQ_Y                           40.0
+#define FTM_TRAJECTORY_TYPE                      TRAPEZOIDAL
+#define FTM_SHAPING_DEFAULT_FREQ_E               21.0f
+#define FT_MOTION
+#define FTM_DEFAULT_DYNFREQ_MODE                 dynFreqMode_DISABLED
+#define FTM_SHAPING_DEFAULT_FREQ_Y               42.0f
+#define FTM_BUFFER_SIZE                          128
+#define FTM_SHAPING_V_TOL_E                      0.05f
+#define FTM_SHAPING_V_TOL_X                      0.05f
+#define FTM_SHAPING_V_TOL_Y                      0.05f
+#define FTM_SHAPING_V_TOL_Z                      0.05f
+#define FTM_STEPPER_FS                           2'000'000
+#define FTM_POLY6_ACCELERATION_OVERSHOOT         1.875f
+#define FTM_DEFAULT_SHAPER_E                     ftMotionShaper_NONE
+#define FTM_DEFAULT_SHAPER_X                     ftMotionShaper_3HEI
+#define FTM_DEFAULT_SHAPER_Y                     ftMotionShaper_3HEI
+#define FTM_DEFAULT_SHAPER_Z                     ftMotionShaper_NONE
+#define FTM_MAX_SMOOTHING_TIME                   0.10f
+#define FTM_SMOOTHING_TIME_E                     0.02f
+#define FTM_SMOOTHING_TIME_X                     0.00f
+#define FTM_SMOOTHING_TIME_Y                     0.00f
+#define FTM_SMOOTHING_TIME_Z                     0.00f
+#define FTM_SMOOTHING
+#define FTM_MIN_SHAPE_FREQ                       20
+#define FTM_SHAPING_ZETA_E                       0.03f
+#define FTM_SHAPING_ZETA_X                       0.1f
+#define FTM_SHAPING_ZETA_Y                       0.1f
+#define FTM_SHAPING_ZETA_Z                       0.03f
+#define FTM_IS_DEFAULT_MOTION
+#define FTM_SHAPING_DEFAULT_FREQ_X               40.0f
+#define FTM_SHAPING_DEFAULT_FREQ_Z               21.0f
+#define FTM_FS                                   1000
 
 //
 // Endstops
@@ -417,6 +442,7 @@
 //
 #define BLOCK_BUFFER_SIZE                        16
 #define FASTER_GCODE_PARSER
+#define MEATPACK_ON_SERIAL_PORT_1
 #define DEBUG_FLAGS_GCODE
 
 //
@@ -495,7 +521,7 @@
 //
 // TMC_Smart
 //
-#define X_CURRENT                                550
+#define X_CURRENT                                600
 #define INTERPOLATE                              false
 #define Y_MICROSTEPS                             16
 #define EDGE_STEPPING
@@ -505,7 +531,7 @@
 #define E0_HYBRID_THRESHOLD                      30
 #define W_HYBRID_THRESHOLD                       3
 #define X2_HYBRID_THRESHOLD                      100
-#define Y_CURRENT                                550
+#define Y_CURRENT                                600
 #define X_HOLD_MULTIPLIER                        0.5
 #define Z3_HYBRID_THRESHOLD                      3
 #define Z_CHAIN_POS                              -1
@@ -519,6 +545,7 @@
 #define E3_HYBRID_THRESHOLD                      30
 #define Z_MICROSTEPS                             16
 #define Z_HYBRID_THRESHOLD                       3
+#define Y_INTERPOLATE                            false
 #define X_SLAVE_ADDRESS                          0x03
 #define STEALTHCHOP_Z
 #define Z_RSENSE                                 0.15
