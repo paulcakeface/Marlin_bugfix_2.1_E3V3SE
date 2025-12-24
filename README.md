@@ -58,18 +58,20 @@ The Binary provided will contain just the following features:
 * [D ROUTINE AUTO Z OFFSET](#delta-routine).
 * [DWIN RENDER THUMBNAIL](#-thumbnail).
 * [ONE CLICK PRINT](#-one-click-print)
-* [INPUT SHAPING](#-input-shaping).
+* [FT_MOTION](#-ft_motion).
+* [MeatPack Enabled](https://plugins.octoprint.org/plugins/meatpack/).
 * [LINEAR ADVANCE](#-linear-advance).
 * [Mcodes for LCD Dimm & Brightness](#-lcd-dimm-&-brightness-menu).
 * [Mute or Unmute Buzzer](#-mute-buzzer).
 * [CRTouch test functions](#-crtouch-test-functions).
+* Baud rate of 115200.
 
 With a Memory cost of:
 
 ``` c++
 Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
-RAM:   [===       ]  31.3% (used 20540 bytes from 65536 bytes)
-Flash: [====      ]  42.8% (used 220244 bytes from 514288 bytes)
+RAM:   [===       ]  31.4% (used 20604 bytes from 65536 bytes)
+Flash: [=====     ]  45.6% (used 234484 bytes from 514288 bytes)
 ``` 
 
 > [!TIP]
@@ -352,7 +354,10 @@ Enable by default in Configuration_adv.h
 
 You can explore the new features on the Marlin 2.1 like:
 
-### * **FT_MOTION** Which enables different filters of Shapers for the machine, like Klipper does. 
+### * **FT_MOTION** 
+
+Which enables different filters of Shapers for the machine, like Klipper does. 
+
 ```c++
 #define FT_MOTION
 #if ENABLED(FT_MOTION)
