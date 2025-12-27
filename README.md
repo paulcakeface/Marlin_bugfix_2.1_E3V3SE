@@ -54,6 +54,7 @@ From now on the Firmware will be modular, meaning that you must choose which com
 
 
 ## Which branch to choose
+The below Table gives you the branches for specific use, only SD card support or Hosts Support along the hardware C13 or C14.
 
 <table border="1" cellspacing="0" cellpadding="10" width="100%">
   <thead>
@@ -68,8 +69,9 @@ From now on the Firmware will be modular, meaning that you must choose which com
       <td valign="top">
 
 #### ONLY SD CARD
+This branch is focused to work only printing from SD Card the host support is limited.
 
-- [**for_E3V3SE**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_E3V3SE)
+- Branch: [**for_E3V3SE**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_E3V3SE)
   - Release tag: [krasnaya_3](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/krasnaya_3)
 
 - The Binary provided will contain just the following features:
@@ -95,8 +97,9 @@ Flash: [====      ]  44.8% (used 221924 bytes from 495616 bytes)
   <td valign="top">
 
 #### ONLY SD CARD
+This branch is focused to work only printing from SD Card the host support is limited.
 
-- [**for_STM32F401**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_STM32F401)
+- Branch: [**for_STM32F401**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_STM32F401)
   - Release tag: [krasnaya_3_F401](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Krasnaya_3_F401)
 
 - The Binary provided will contain just the following features:
@@ -123,8 +126,9 @@ Flash: [====      ]  42.8% (used 220244 bytes from 514288 bytes)
   <td valign="top">
 
 #### OctoPrint (or Serial Host)
+This branch is focused to work with host support like Octoprint and has features to support serial commands.
 
-- [**for_Octoprint**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_Octoprint)
+- Branch: **for_Octoprint**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_Octoprint)
   - Release tag: [Belaya_2](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_2)
 
 - The Binary provided will contain just the following features:
@@ -153,8 +157,9 @@ Flash: [=====     ]  47.9% (used 237512 bytes from 495616 bytes)
   <td valign="top">
 
 #### OctoPrint (or Serial Host)
+This branch is focused to work with host support like Octoprint and has features to support serial commands.
 
-- [**for_Octoprint_F401**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_Octoprint_F401)
+- Branch: [**for_Octoprint_F401**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_Octoprint_F401)
   - Release tag: [Belaya_2_F401](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_2_F401)
 
 - The Binary provided will contain just the following features:
