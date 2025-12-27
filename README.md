@@ -125,7 +125,7 @@ Flash: [====      ]  42.8% (used 220244 bytes from 514288 bytes)
 #### OctoPrint (or Serial Host)
 
 - [**for_Octoprint**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_Octoprint)
-  - Release tag: [Belaya_1](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_1)
+  - Release tag: [Belaya_2](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_2)
 
 - The Binary provided will contain just the following features:
 
@@ -155,7 +155,7 @@ Flash: [=====     ]  47.9% (used 237512 bytes from 495616 bytes)
 #### OctoPrint (or Serial Host)
 
 - [**for_Octoprint_F401**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_Octoprint_F401)
-  - Release tag: [Belaya_1_F401](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_1_F401)
+  - Release tag: [Belaya_2_F401](ttps://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_2_F401)
 
 - The Binary provided will contain just the following features:
 
