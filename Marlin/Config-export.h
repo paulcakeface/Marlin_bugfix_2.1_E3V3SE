@@ -2,7 +2,7 @@
  * Config.h - Marlin Firmware distilled configuration
  * Usage: Place this file in the 'Marlin' folder with the name 'Config.h'.
  *
- * Exported by Marlin build on 2025-12-24 at 20:56:24.
+ * Exported by Marlin build on 2025-12-26 at 22:29:27.
  */
 
 //
@@ -124,7 +124,6 @@
 #define SLOWDOWN_DIVISOR                         2
 #define MAX_FEEDRATE_EDIT_VALUES                 { 1000, 1000, 40, 60 }
 #define MAX_ACCEL_EDIT_VALUES                    { 8000, 8000, 8000, 8000 }
-#define S_CURVE_ACCELERATION
 #define EDITABLE_STEPS_PER_UNIT
 #define LIMITED_MAX_FR_EDITING
 #define LIMITED_MAX_ACCEL_EDITING

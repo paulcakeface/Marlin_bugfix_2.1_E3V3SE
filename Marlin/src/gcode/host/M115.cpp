@@ -65,6 +65,8 @@
  */
 void GcodeSuite::M115() {
 
+  serial_connection_active = true;
+  SERIAL_ECHOLNPGM("=====++++>> OCTO Value: ", serial_connection_active);
   // Hosts should match one of these
   #define MACHINE_KINEMATICS "" \
     TERN_(COREXY, "COREXY") TERN_(COREYX, "COREYX") \

@@ -82,6 +82,8 @@
 #define DEBUG_OUT ENABLED(DEBUG_PAUSE_RESUME)
 #include "../core/debug_out.h"
 
+#include "../core/serial.h"
+
 // private:
 
 static xyze_pos_t resume_position;
@@ -194,6 +196,7 @@ bool load_filament(const float slow_load_length/*=0*/, const float fast_load_len
   DEBUG_SECTION(lf, "load_filament", true);
   DEBUG_ECHOLNPGM("... slowlen:", slow_load_length, " fastlen:", fast_load_length, " purgelen:", purge_length, " maxbeep:", max_beep_count, " showlcd:", show_lcd, " pauseforuser:", pause_for_user, " pausemode:", mode DXC_SAY);
 
+  // SERIAL_ECHOLNPGM("=====Load Filament Flag: ", serial_connection_active);
   if (!ensure_safe_temperature(false, mode)) {
     if (show_lcd) ui.pause_show_message(PAUSE_MESSAGE_STATUS, mode);
     return false;
@@ -208,13 +211,20 @@ bool load_filament(const float slow_load_length/*=0*/, const float fast_load_len
     KEEPALIVE_STATE(PAUSED_FOR_USER);
     wait_for_user = true;    // LCD click or M108 will clear this
 
+    #if ENABLED(HOST_PROMPT_SUPPORT)
+      if(serial_connection_active){
+        const char tool = '0' + TERN0(MULTI_FILAMENT_SENSOR, active_extruder);
+        // host_prompt_do(PROMPT_USER_CONTINUE, PSTR("Load Filament T"), tool, CONTINUE_STR);
+        // hostui.prompt_do(PROMPT_USER_CONTINUE, PSTR("Load Filament T"), tool, CONTINUE_STR);
+        // SERIAL_ECHOLNPGM("=====++++>> OCTO Value in Load Filament: ", serial_connection_active);    
+        hostui.prompt_do(PROMPT_USER_CONTINUE, GET_TEXT_F(MSG_FILAMENTLOAD), tool,  GET_TEXT_F(MSG_BUTTON_CONTINUE));
+      
+    }
+    #endif
+    
     TERN_(EXTENSIBLE_UI, ExtUI::onUserConfirmRequired(GET_TEXT_F(MSG_FILAMENTLOAD)));
 
-    #if ENABLED(HOST_PROMPT_SUPPORT)
-      const char tool = '0' + TERN0(MULTI_FILAMENT_SENSOR, active_extruder);
-      hostui.prompt_do(PROMPT_USER_CONTINUE, F("Load Filament T"), tool, FPSTR(CONTINUE_STR));
-    #endif
-
+    
     while (wait_for_user) {
       impatient_beep(max_beep_count);
       #if ALL(HAS_FILAMENT_SENSOR, FILAMENT_CHANGE_RESUME_ON_INSERT)
@@ -311,13 +321,14 @@ bool load_filament(const float slow_load_length/*=0*/, const float fast_load_len
     //   // Keep looping if "Purge More" was selected
     // } while (TERN0(M600_PURGE_MORE_RESUMABLE, pause_menu_response == PAUSE_RESPONSE_EXTRUDE_MORE));
 
-    bool serial_connection_active = false;
     if(serial_connection_active){
       do {
         if (purge_length > 0) {
           // "Wait for filament purge"
-          if (show_lcd) ui.pause_show_message(PAUSE_MESSAGE_PURGE);
-
+          if (show_lcd){
+             ui.pause_show_message(PAUSE_MESSAGE_PURGE);
+             
+          }
           // Extrude filament to get into hotend
           unscaled_e_move(40, ADVANCED_PAUSE_PURGE_FEEDRATE);
           
@@ -347,8 +358,8 @@ bool load_filament(const float slow_load_length/*=0*/, const float fast_load_len
         #endif
 
         // Keep looping if "Purge More" was selected
-      } while (TERN0(M600_PURGE_MORE_RESUMABLE, show_lcd && pause_menu_response == PAUSE_RESPONSE_EXTRUDE_MORE));
-      //} while (TERN0(serial_connection_active, show_lcd && pause_menu_response == PAUSE_RESPONSE_EXTRUDE_MORE));
+      } while (TERN0(M600_PURGE_MORE_RESUMABLE,  pause_menu_response == PAUSE_RESPONSE_EXTRUDE_MORE));
+      
     }else{
        if (purge_length > 0) {
           // "Wait for filament purge"
@@ -362,8 +373,13 @@ bool load_filament(const float slow_load_length/*=0*/, const float fast_load_len
   #endif
 
   TERN_(MPCTEMP, MPC::e_paused = false);
-
-  TERN_(HOST_PROMPT_SUPPORT, hostui.prompt_end());
+  #if ENABLED(HOST_PROMPT_SUPPORT)
+    if (serial_connection_active) {
+  //TERN_(HOST_PROMPT_SUPPORT, host_action_prompt_end());
+      hostui.prompt_end();
+    }
+  #endif  
+  // TERN_(HOST_PROMPT_SUPPORT, hostui.prompt_end());
 
   return true;
 }
@@ -468,17 +484,25 @@ bool pause_print(const float retract, const xyz_pos_t &park_point, const bool sh
   DEBUG_SECTION(pp, "pause_print", true);
   DEBUG_ECHOLNPGM("... park.x:", park_point.x, " y:", park_point.y, " z:", park_point.z, " unloadlen:", unload_length, " showlcd:", show_lcd DXC_SAY);
 
+  // SERIAL_ECHOLNPGM("=====++++>> Pause Print Flag Value: ", serial_connection_active);
   if (did_pause_print) return false; // already paused
 
   #if ENABLED(HOST_ACTION_COMMANDS)
     #ifdef ACTION_ON_PAUSED
-      hostui.paused();
+      if(serial_connection_active){
+        hostui.paused();
+      }
     #elif defined(ACTION_ON_PAUSE)
       hostui.pause();
     #endif
   #endif
 
-  TERN_(HOST_PROMPT_SUPPORT, hostui.prompt_open(PROMPT_INFO, F("Pause"), FPSTR(DISMISS_STR)));
+  #if ENABLED(HOST_PROMPT_SUPPORT)
+    if (serial_connection_active) {
+      hostui.prompt_open(PROMPT_INFO, F("Pause"), FPSTR(DISMISS_STR));
+    }  
+  #endif
+  // TERN_(HOST_PROMPT_SUPPORT, hostui.prompt_open(PROMPT_INFO, F("Pause"), FPSTR(DISMISS_STR)));
 
   // Indicate that the printer is paused
   ++did_pause_print;
@@ -563,6 +587,7 @@ bool pause_print(const float retract, const xyz_pos_t &park_point, const bool sh
  */
 
 void show_continue_prompt(const bool is_reload) {
+  // SERIAL_ECHOLNPGM("=====++++>> Continue Flag Value: ", serial_connection_active);
   DEBUG_SECTION(scp, "pause_print", true);
   DEBUG_ECHOLNPGM("... is_reload:", is_reload);
 
@@ -577,6 +602,7 @@ void show_continue_prompt(const bool is_reload) {
 }
 
 void wait_for_confirmation(const bool is_reload/*=false*/, const int8_t max_beep_count/*=0*/ DXC_ARGS) {
+  // SERIAL_ECHOLNPGM("=====++++>> WaitConfirm Flag Value: ", serial_connection_active);
   DEBUG_SECTION(wfc, "wait_for_confirmation", true);
   DEBUG_ECHOLNPGM("... is_reload:", is_reload, " maxbeep:", max_beep_count DXC_SAY);
 
@@ -599,7 +625,15 @@ void wait_for_confirmation(const bool is_reload/*=false*/, const int8_t max_beep
 
   // Wait for filament insert by user and press button
   KEEPALIVE_STATE(PAUSED_FOR_USER);
-  TERN_(HOST_PROMPT_SUPPORT, hostui.continue_prompt(GET_TEXT_F(MSG_NOZZLE_PARKED)));
+  #if ENABLED(HOST_PROMPT_SUPPORT)
+    if (serial_connection_active) {
+  //TERN_(HOST_PROMPT_SUPPORT, host_prompt_do(PROMPT_USER_CONTINUE, GET_TEXT(MSG_NOZZLE_PARKED), CONTINUE_STR));
+      // host_prompt_do(PROMPT_USER_CONTINUE, GET_TEXT(MSG_NOZZLE_PARKED), CONTINUE_STR);
+      hostui.continue_prompt(GET_TEXT_F(MSG_NOZZLE_PARKED));
+    }  
+  #endif
+  // TERN_(HOST_PROMPT_SUPPORT, hostui.continue_prompt(GET_TEXT_F(MSG_NOZZLE_PARKED)));
+  
   TERN_(EXTENSIBLE_UI, ExtUI::onUserConfirmRequired(GET_TEXT_F(MSG_NOZZLE_PARKED)));
   wait_for_user = true;    // LCD click or M108 will clear this
   while (wait_for_user) {
@@ -619,7 +653,16 @@ void wait_for_confirmation(const bool is_reload/*=false*/, const int8_t max_beep
       #endif
       SERIAL_ECHO_MSG(_PMSG(STR_FILAMENT_CHANGE_HEAT));
 
-      TERN_(HOST_PROMPT_SUPPORT, hostui.prompt_do(PROMPT_USER_CONTINUE, GET_TEXT_F(MSG_HEATER_TIMEOUT), GET_TEXT_F(MSG_REHEAT)));
+      #if ENABLED(HOST_PROMPT_SUPPORT)
+      //  SERIAL_ECHOLNPGM("=====++++>> Noozle timeout: ");
+        if (serial_connection_active) {
+      //TERN_(HOST_PROMPT_SUPPORT, host_prompt_do(PROMPT_USER_CONTINUE, GET_TEXT(MSG_HEATER_TIMEOUT), GET_TEXT(MSG_REHEAT)));
+          // host_prompt_do(PROMPT_USER_CONTINUE, GET_TEXT(MSG_HEATER_TIMEOUT), GET_TEXT(MSG_REHEAT));
+          hostui.prompt_do(PROMPT_USER_CONTINUE, GET_TEXT_F(MSG_HEATER_TIMEOUT), GET_TEXT_F(MSG_REHEAT));
+        }
+      #endif    
+
+      // TERN_(HOST_PROMPT_SUPPORT, hostui.prompt_do(PROMPT_USER_CONTINUE, GET_TEXT_F(MSG_HEATER_TIMEOUT), GET_TEXT_F(MSG_REHEAT)));
 
       #if ENABLED(TOUCH_UI_FTDI_EVE)
         ExtUI::onUserConfirmRequired(GET_TEXT_F(MSG_FTDI_HEATER_TIMEOUT));
@@ -629,7 +672,16 @@ void wait_for_confirmation(const bool is_reload/*=false*/, const int8_t max_beep
 
       TERN_(HAS_RESUME_CONTINUE, wait_for_user_response(0, true)); // Wait for LCD click or M108
 
-      TERN_(HOST_PROMPT_SUPPORT, hostui.prompt_do(PROMPT_INFO, GET_TEXT_F(MSG_REHEATING)));
+      #if ENABLED(HOST_PROMPT_SUPPORT)
+        if (serial_connection_active) {
+          // SERIAL_ECHOLNPGM("=====++++>> Nozzle Reheat: ");
+      //TERN_(HOST_PROMPT_SUPPORT, host_prompt_do(PROMPT_INFO, GET_TEXT(MSG_REHEATING)));
+          // host_prompt_do(PROMPT_INFO, GET_TEXT(MSG_REHEATING));
+          hostui.prompt_do(PROMPT_INFO, GET_TEXT_F(MSG_REHEATING));
+        }
+      #endif  
+
+      // TERN_(HOST_PROMPT_SUPPORT, hostui.prompt_do(PROMPT_INFO, GET_TEXT_F(MSG_REHEATING)));
 
       LCD_MESSAGE(MSG_REHEATING);
 
@@ -647,7 +699,17 @@ void wait_for_confirmation(const bool is_reload/*=false*/, const int8_t max_beep
 
       HOTEND_LOOP() thermalManager.heater_idle[e].start(nozzle_timeout);
 
-      TERN_(HOST_PROMPT_SUPPORT, hostui.continue_prompt(GET_TEXT_F(MSG_REHEATDONE)));
+      // TERN_(HOST_PROMPT_SUPPORT, hostui.continue_prompt(GET_TEXT_F(MSG_REHEATDONE)));
+      #if ENABLED(HOST_PROMPT_SUPPORT)
+        if (serial_connection_active) {
+          // SERIAL_ECHOLNPGM("=====++++>> Nozzle Reheat Done: ");
+          
+      //TERN_(HOST_PROMPT_SUPPORT, host_prompt_do(PROMPT_USER_CONTINUE, PSTR("Reheat Done"), CONTINUE_STR));
+          //  host_prompt_do(PROMPT_USER_CONTINUE, PSTR("Reheat Done"), CONTINUE_STR);
+           hostui.continue_prompt(GET_TEXT_F(MSG_REHEATDONE));
+        }
+      #endif  
+
       #if ENABLED(EXTENSIBLE_UI)
         ExtUI::onUserConfirmRequired(GET_TEXT_F(MSG_REHEATDONE));
       #else
@@ -707,7 +769,7 @@ void resume_print(
   );
 
   /*
-  SERIAL_ECHOLNPGM(
+  SERIAL_ECHOLNPGMPGM(
     "start of resume_print()\ndual_x_carriage_mode:", dual_x_carriage_mode,
     "\nextruder_duplication_enabled:", extruder_duplication_enabled,
     "\nactive_extruder:", active_extruder,
@@ -797,7 +859,15 @@ void resume_print(
 
   --did_pause_print;
 
-  TERN_(HOST_PROMPT_SUPPORT, hostui.prompt_open(PROMPT_INFO, F("Resuming"), FPSTR(DISMISS_STR)));
+  #if ENABLED(HOST_PROMPT_SUPPORT)
+    if (serial_connection_active) {
+  //TERN_(HOST_PROMPT_SUPPORT, host_prompt_open(PROMPT_INFO, PSTR("Resuming"), DISMISS_STR));
+      // host_prompt_open(PROMPT_INFO, PSTR("Resuming"), DISMISS_STR);
+      hostui.prompt_open(PROMPT_INFO, F("Resuming"), FPSTR(DISMISS_STR));
+    }
+  #endif
+
+  // TERN_(HOST_PROMPT_SUPPORT, hostui.prompt_open(PROMPT_INFO, F("Resuming"), FPSTR(DISMISS_STR)));
 
   // Resume the print job timer if it was running
   if (print_job_timer.isPaused()) print_job_timer.start();
