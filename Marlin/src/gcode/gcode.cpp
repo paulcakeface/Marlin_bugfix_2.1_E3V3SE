@@ -606,7 +606,9 @@ void GcodeSuite::process_parsed_command(bool no_ok/*=false*/) {
         #endif
       #else
         case 108: case 112: case 410:
-        TERN_(HOST_PROMPT_SUPPORT, case 876:)
+        // TERN_(HOST_PROMPT_SUPPORT, case 876:)
+        case 876:
+          M876();
         break;
       #endif
 

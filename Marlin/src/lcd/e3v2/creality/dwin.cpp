@@ -3717,8 +3717,14 @@ void Goto_MainMenu()
                                        //  DWIN_ICON_Show(ICON, ICON_LOGO, LOGO_LITTLE_X, LOGO_LITTLE_Y);
   if (HMI_flag.language < Language_Max)
   {
-
-    DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Main, TITLE_X, TITLE_Y); // Rock j
+    if(serial_connection_active)
+    {
+      DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_White, Color_Bg_Blue, 0, 4, F(" ~(o.O)~ OctoPrint Connected"));
+    }
+    else
+    {
+      DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Main, TITLE_X, TITLE_Y); // Rock j
+    }
 
     // DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Main, TITLE_X, TITLE_Y); //rock_j
   }
