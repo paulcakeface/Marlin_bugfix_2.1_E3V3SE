@@ -6119,16 +6119,13 @@ static void Image_Preview_Information_Show(uint8_t ret)
     Draw_Mid_Status_Area(true);
 
     if (HMI_flag.language < Language_Max)
-      {
-        DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Confirm, BUTTON_X, BUTTON_Y);
-        DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Cancel, BUTTON_X + BUTTON_OFFSET_X, BUTTON_Y);
-      }
+    {
+      DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Confirm, BUTTON_X, BUTTON_Y);
+      DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Cancel, BUTTON_X + BUTTON_OFFSET_X, BUTTON_Y);
+    }
 
-    #if ENABLED(USER_LEVEL_CHECK)
-            select_show_pic.now = 0; // Default selection
-    #else
-            select_show_pic.now = 1; // Default selection
-    #endif
+    // 0 - bed level toggle, 1 - cancel, 2 - confirm
+    select_show_pic.now = 2; // Default to Confirm
 
     Draw_Show_G_Select_Highlight(true);
     
