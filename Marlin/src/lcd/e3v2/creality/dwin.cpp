@@ -5925,10 +5925,10 @@ void HMI_Level_Menu(){
         HMI_flag.Pressure_Height_end = true; // Enable Leveling Flag
         break;
       case 3: // Edit Level Data
+        checkkey = Leveling;
         HMI_flag.G29_finish_flag = true;
         HMI_flag.Edit_Only_flag = true;
         Popup_Window_Leveling();
-        checkkey = Leveling;
         Refresh_Leveling_Value(); // Flush leveling values ​​and colors to the screen
         break;    
     }
