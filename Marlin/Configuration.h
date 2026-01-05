@@ -159,6 +159,9 @@
 #define D_ROUTINE_AUTO_OFFSET  // Enable this to calculate the Z offset automatically using the 4 points of the bed, (Delta) pattern
 
 
+#define BED_SCALE 1 // Enable Bed Scale Feature
+
+
 #define USE_SWITCH_POWER_200W  0 //Default 1: Using a 200W power supply, the nozzle and heating bed cannot be heated at the same time. 0: The >200w power supply used has sufficient power and can be heated at the same time.
 // #define CREALITY_LEVEL_COMPENSATION_ALGORITHM   1 //1 Use algorithm 0 Algorithm not applicable
 // #if ENABLED(CREALITY_LEVEL_COMPENSATION_ALGORITHM)

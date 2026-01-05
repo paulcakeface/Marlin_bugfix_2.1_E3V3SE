@@ -2,7 +2,7 @@
  * Config.h - Marlin Firmware distilled configuration
  * Usage: Place this file in the 'Marlin' folder with the name 'Config.h'.
  *
- * Exported by Marlin build on 2026-01-04 at 01:16:16.
+ * Exported by Marlin build on 2026-01-05 at 21:52:05.
  */
 
 //
@@ -183,9 +183,9 @@
 //
 // BLTouch
 //
-#define BLTOUCH_HS_EXTRA_CLEARANCE               7
 #define BLTOUCH_HS_MODE                          true
 #define BLTOUCH_DELAY                            350
+#define BLTOUCH_HS_EXTRA_CLEARANCE               7
 
 //
 // Leveling
@@ -433,6 +433,7 @@
 #define USER_LEVEL_CHECK                         1
 #define WUHAN_CHENGE_PLATFORM                    1
 #define PLATFORM_OFFSET                          1
+#define BED_SCALE                                1
 #define COMPACT_GRID_VALUES                      1
 #define HIGH_SPEED_1                             1
 #define DWIN_RENDER_THUMBNAIL

@@ -1019,6 +1019,12 @@ void GcodeSuite::process_parsed_command(bool no_ok/*=false*/) {
         case 709: M709(); break;                                  // M709: MMU power & reset
       #endif
 
+      #if ENABLED(BED_SCALE)
+        case 770: M770(); break;                                  // M770: Bed scale read
+        case 771: M771(); break;                                  // M771: Bed scale tare
+        case 772: M772(); break;                                  // M772: Bed scale calibrate
+      #endif
+
       #if ENABLED(CONTROLLER_FAN_EDITABLE)
         case 710: M710(); break;                                  // M710: Set Controller Fan settings
       #endif

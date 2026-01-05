@@ -289,6 +289,11 @@
  * M708 - Write to MMU register
  * M709 - MMU power & reset
  *
+ *** Bed Scale Feature ***
+ * M770 - Read the Raw value and Gram from the HX711 gauge
+ * M771 - Tare the HX711 gauge
+ * M772 - Set the HX711 calibration factor
+ * 
  * M808 - Set or Goto a Repeat Marker (Requires GCODE_REPEAT_MARKERS)
  * M810-M819 - Define/Execute a G-code macro (Requires GCODE_MACROS)
  * M820 - Report all defined M810-M819 G-code macros (Requires GCODE_MACROS)
@@ -1227,6 +1232,12 @@ private:
     static void M709();
     static void MMU3_report(const bool forReplay=true);
   #endif
+
+  #if ENABLED(BED_SCALE)
+    static void M770(); // bed sacle read
+    static void M771(); // bed scale tare
+    static void M772(); // bed scale calibrate
+  #endif  
 
   #if ENABLED(GCODE_REPEAT_MARKERS)
     static void M808();
