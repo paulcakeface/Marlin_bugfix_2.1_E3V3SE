@@ -5001,22 +5001,8 @@ void update_variable()
     ; // DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 3, 176 + 2 *STAT_CHR_W, 247, _fanspeed);
   }
 #endif
-
-  static float _offset = 0;
-  if (BABY_Z_VAR != _offset)
-  {
-    _offset = BABY_Z_VAR;
-    if (BABY_Z_VAR < 0)
-    {
-      DWIN_Draw_FloatValue(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 2, 2, 191, 271, -_offset * 100);
-      DWIN_Draw_String(false, true, font8x16, Color_White, Color_Bg_Black, 191, 269, F("-"));
-    }
-    else
-    {
-      DWIN_Draw_FloatValue(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 2, 2, 191, 271, _offset * 100);
-      DWIN_Draw_String(false, true, font8x16, Color_White, Color_Bg_Black, 191, 269, F(" "));
-    }
-  }
+  DWIN_ICON_Show(ICON, ICON_Zoffset, ICON_ZOFFSET_X, ICON_ZOFFSET_Y);
+  _update_axis_value(Z_AXIS, NUM_ZOFFSET_X, NUM_ZOFFSET_Y, false, true);
 #endif
   _draw_xyz_position(false);
 }
@@ -5129,23 +5115,8 @@ void update_middle_variable()
     DWIN_Draw_IntValue_N0SPACE(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 3, 175 + 2 * STAT_CHR_W, NUM_FAN_Y, _fanspeed);
   }
 #endif
-
-  static float _offset = 0;
-  if (BABY_Z_VAR != _offset)
-  {
-    _offset = BABY_Z_VAR;
-    if (BABY_Z_VAR < 0)
-    {
-      DWIN_Draw_FloatValue(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 2, 2, 191, NUM_ZOFFSET_Y, -_offset * 100);
-      DWIN_Draw_String(false, true, font8x16, Color_White, Color_Bg_Black, 191, NUM_ZOFFSET_Y - 1, F("-"));
-    }
-    else
-    {
-      DWIN_Draw_FloatValue(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 2, 2, 191, NUM_ZOFFSET_Y, _offset * 100);
-      DWIN_Draw_String(false, true, font8x16, Color_White, Color_Bg_Black, 191, NUM_ZOFFSET_Y - 1, F(" "));
-    }
-  }
-
+  DWIN_ICON_Show(ICON, ICON_Zoffset, ICON_ZOFFSET_X, ICON_ZOFFSET_Y);
+  _update_axis_value(Z_AXIS, NUM_ZOFFSET_X, NUM_ZOFFSET_Y, false, true);
 #endif
 }
 /**
@@ -5450,19 +5421,9 @@ void Draw_Status_Area(bool with_update)
 #endif
 
 #if HAS_ZOFFSET_ITEM
-  DWIN_ICON_Show(ICON, ICON_Zoffset, 187, 416);
-#endif
-
-  if (BABY_Z_VAR < 0)
-  {
-    DWIN_Draw_FloatValue(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 2, 2, 191, 271, -BABY_Z_VAR * 100);
-    DWIN_Draw_String(false, true, font8x16, Color_White, Color_Bg_Black, 191, 269, F("-"));
-  }
-  else
-  {
-    DWIN_Draw_FloatValue(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 2, 2, 207, 271, BABY_Z_VAR * 100);
-    DWIN_Draw_String(false, true, font8x16, Color_White, Color_Bg_Black, 207, 269, F(" "));
-  }
+  DWIN_ICON_Show(ICON, ICON_Zoffset, ICON_ZOFFSET_X, ICON_ZOFFSET_Y);
+  _update_axis_value(Z_AXIS, NUM_ZOFFSET_X, NUM_ZOFFSET_Y, false, true);
+#endif // HAS_ZOFFSET_ITEM
   DWIN_Draw_Rectangle(1, Line_Color, 0, 449, DWIN_WIDTH, 451);
   DWIN_ICON_Show(ICON, ICON_MaxSpeedX, 10, 456);
   DWIN_ICON_Show(ICON, ICON_MaxSpeedY, 95, 456);
@@ -5496,19 +5457,10 @@ void Draw_Status_Area(bool with_update)
 #endif
 
 #if HAS_ZOFFSET_ITEM
-  DWIN_ICON_Show(ICON, ICON_Zoffset, 171, 268);
-#endif
+  DWIN_ICON_Show(ICON, ICON_Zoffset, ICON_ZOFFSET_X, ICON_ZOFFSET_Y);
+  _update_axis_value(Z_AXIS, NUM_ZOFFSET_X, NUM_ZOFFSET_Y, false, true);
+#endif // HAS_ZOFFSET_ITEM
 
-  if (BABY_Z_VAR < 0)
-  {
-    DWIN_Draw_FloatValue(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 2, 2, 191, 271, -BABY_Z_VAR * 100);
-    DWIN_Draw_String(false, true, font8x16, Color_White, Color_Bg_Black, 191, 269, F("-"));
-  }
-  else
-  {
-    DWIN_Draw_FloatValue(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 2, 2, 191, 271, BABY_Z_VAR * 100);
-    DWIN_Draw_String(false, true, font8x16, Color_White, Color_Bg_Black, 191, 269, F(" "));
-  }
   DWIN_Draw_Rectangle(1, Line_Color, 0, 291, DWIN_WIDTH, 292);
   DWIN_ICON_Show(ICON, ICON_MaxSpeedX, 6, 296);
   DWIN_ICON_Show(ICON, ICON_MaxSpeedY, 99, 296);
@@ -5570,20 +5522,9 @@ void Draw_Mid_Status_Area(bool with_update)
 
 #if HAS_ZOFFSET_ITEM
   DWIN_ICON_Show(ICON, ICON_Zoffset, ICON_ZOFFSET_X, ICON_ZOFFSET_Y);
-#endif
+  _update_axis_value(Z_AXIS, NUM_ZOFFSET_X, NUM_ZOFFSET_Y, false, true);
+#endif // HAS_ZOFFSET_ITEM
 
-  if (BABY_Z_VAR < 0)
-  {
-    DWIN_Draw_FloatValue(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 2, 2, 191, NUM_ZOFFSET_Y, -BABY_Z_VAR * 100);
-    DWIN_Draw_String(false, true, font8x16, Color_White, Color_Bg_Black, 191, NUM_ZOFFSET_Y - 1, F("-"));
-  }
-  else
-  {
-    DWIN_Draw_FloatValue(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 2, 2, 191, NUM_ZOFFSET_Y, BABY_Z_VAR * 100);
-    DWIN_Draw_String(false, true, font8x16, Color_White, Color_Bg_Black, 191, NUM_ZOFFSET_Y - 1, F(" "));
-  }
-  // DWIN_Draw_Rectangle(1, Line_Color, LINE3_X_START, LINE3_Y_START, LINE3_X_END, LINE3_Y_END); //划线3
-  // DWIN_Draw_Rectangle(1, Line_Color, LINE3_X_START, LINE3_Y_START+LINE3_SPACE, LINE3_X_END, LINE3_Y_END+LINE3_SPACE); //划线4
 #endif
 
   if (with_update)
