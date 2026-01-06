@@ -731,6 +731,8 @@ bool find_thumb_raw16_header(uint16_t &w, uint16_t &h) {
 
 static constexpr uint16_t THUMB_X_START = 12;
 static constexpr uint16_t THUMB_Y_START = 25;
+#define DRAW_BATCH_SIZE 15
+#define DRAW_BATCH_DELAY 25
 
  bool DWIN_RenderThumb(const char *filename) {
   // SERIAL_ECHOLNPGM("DWIN_RenderThumb using: ", filename);
@@ -756,6 +758,8 @@ static constexpr uint16_t THUMB_Y_START = 25;
   char line[4 * 96 + 8]; // 384 hex + '; ' + '\0'
 
   uint16_t y = 0;
+  uint16_t pixel_count = 0; // Track drawn pixels for batched delay
+
   while (y < h && gcode_readline(line, sizeof(line))) {
 
     // Skip lines other than image data
@@ -794,12 +798,25 @@ static constexpr uint16_t THUMB_Y_START = 25;
       //   SERIAL_ECHOLNPGM(") color=", color);
       // }
 
+      if (color == 0) {
+        continue;
+      }
       DWIN_Draw_Rectangle(1, color,THUMB_X_START + x, THUMB_Y_START + y, THUMB_X_START + x, THUMB_Y_START + y);
-      delay(4); // give some time to DWIN to process the data
 
+      // Add screen processing delay after sending DRAW commands in batches
+      pixel_count++;
+      if (pixel_count >= DRAW_BATCH_SIZE) {
+        delay(DRAW_BATCH_DELAY);
+        pixel_count = 0;
+      }
     }
 
     y++;
+  }
+
+  // Final delay if there are remaining pixels in the last batch
+  if (pixel_count > 0) {
+    delay(10);
   }
 
   card.closefile();
