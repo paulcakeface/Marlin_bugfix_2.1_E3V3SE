@@ -16,6 +16,7 @@ I have ported many of the features and fixes from the community stock version in
 
 ## Table of Contents
 - [Modular](#modular)
+- [Which Branch to choose](#which-branch-to-choose)
 - [Installation](#installation)
 - [Features](#features)
   - [Thumbnail](#-thumbnail)
@@ -36,6 +37,8 @@ I have ported many of the features and fixes from the community stock version in
   - [Linear Advance](#-linear-advance)
   - [Increased Temperature for BED and Noozle](#-increased-temperature-for-bed-and-noozle)
 - [Explore New Features](#explore-new-features)
+  - [FT_Motion](#-ft_motion-which-enables-different-filters-of-shapers-for-the-machine-like-klipper-does)
+  - [Axis Twist Compensation](#-axis-twist-compensation)
 
 
 ## Modular
@@ -51,20 +54,97 @@ I have ported many of the features and fixes from the community stock version in
 From now on the Firmware will be modular, meaning that you must choose which components want to have considering the limit of the memory which must be RAM less than 40% and Flash less than 46%.
 
 
-## Installation
 
-The Binary provided will contain just the following features:
+## Which branch to choose
+The below Table gives you the branches for specific use, only SD card support or Hosts Support along the hardware C13 or C14.
 
-* [D ROUTINE AUTO Z OFFSET](#delta-routine).
-* [DWIN RENDER THUMBNAIL](#-thumbnail).
-* [ONE CLICK PRINT](#-one-click-print)
-* [FT_MOTION](#-ft_motion).
-* [MeatPack Enabled](https://plugins.octoprint.org/plugins/meatpack/).
-* [LINEAR ADVANCE](#-linear-advance).
-* [Mcodes for LCD Dimm & Brightness](#-lcd-dimm-&-brightness-menu).
-* [Mute or Unmute Buzzer](#-mute-buzzer).
-* [CRTouch test functions](#-crtouch-test-functions).
-* Baud rate of 115200.
+<table border="1" cellspacing="0" cellpadding="10" width="100%">
+  <thead>
+    <tr>
+      <th align="center" width="50%">Board CR4NS200320C13 (HW C13)</th>
+      <th align="center" width="50%">Board CR4NS200320C14 (HW C14)</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr>
+      <td valign="top">
+
+#### ONLY SD CARD
+This branch is focused to work only printing from SD Card the host support is limited.
+
+- Branch: [**for_E3V3SE**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_E3V3SE)
+  - Release tag: [krasnaya_4](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Krasnaya_4)
+
+- The Binary provided will contain just the following features:
+
+  * [D ROUTINE AUTO Z OFFSET](#delta-routine).
+  * [DWIN RENDER THUMBNAIL](#-thumbnail).
+  * [ONE CLICK PRINT](#-one-click-print)
+  * [INPUT SHAPING](#-input-shaping).
+  * [LINEAR ADVANCE](#-linear-advance).
+  * [Mcodes for LCD Dimm & Brightness](#-lcd-dimm-&-brightness-menu).
+  * [Mute or Unmute Buzzer](#-mute-buzzer).
+  * [CRTouch test functions](#-crtouch-test-functions).
+
+  With a Memory cost of:
+
+``` c++
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [===       ]  31.7% (used 20788 bytes from 65536 bytes)
+Flash: [====      ]  44.8% (used 221924 bytes from 495616 bytes)
+``` 
+
+  </td>
+  <td valign="top">
+
+#### ONLY SD CARD
+This branch is focused to work only printing from SD Card the host support is limited.
+
+- Branch: [**for_STM32F401**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_STM32F401)
+  - Release tag: [krasnaya_4_F401](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Krasnaya_4_F401)
+
+- The Binary provided will contain just the following features:
+
+  * [D ROUTINE AUTO Z OFFSET](#delta-routine).
+  * [DWIN RENDER THUMBNAIL](#-thumbnail).
+  * [ONE CLICK PRINT](#-one-click-print)
+  * [INPUT SHAPING](#-input-shaping).
+  * [LINEAR ADVANCE](#-linear-advance).
+  * [Mcodes for LCD Dimm & Brightness](#-lcd-dimm-&-brightness-menu).
+  * [Mute or Unmute Buzzer](#-mute-buzzer).
+  * [CRTouch test functions](#-crtouch-test-functions).
+
+  With a Memory cost of:
+
+``` c++
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [===       ]  31.3% (used 20540 bytes from 65536 bytes)
+Flash: [====      ]  42.8% (used 220244 bytes from 514288 bytes)
+``` 
+
+
+  <tr>
+  <td valign="top">
+
+#### OctoPrint (or Serial Host)
+This branch is focused to work with host support like Octoprint and has features to support serial commands.
+
+- Branch: [**for_Octoprint**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_Octoprint)
+  - Release tag: [Belaya_2](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_2)
+
+- The Binary provided will contain just the following features:
+
+  * [D ROUTINE AUTO Z OFFSET](#delta-routine).
+  * [DWIN RENDER THUMBNAIL](#-thumbnail).
+  * [ONE CLICK PRINT](#-one-click-print)
+  * [FT_MOTION](#-ft_motion).
+  * [MeatPack Enabled](https://plugins.octoprint.org/plugins/meatpack/).
+  * [LINEAR ADVANCE](#-linear-advance).
+  * [Mcodes for LCD Dimm & Brightness](#-lcd-dimm-&-brightness-menu).
+  * [Mute or Unmute Buzzer](#-mute-buzzer).
+  * [CRTouch test functions](#-crtouch-test-functions).
+  * Baud rate of 115200.
 
 With a Memory cost of:
 
@@ -73,6 +153,48 @@ Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
 RAM:   [===       ]  31.8% (used 20856 bytes from 65536 bytes)
 Flash: [=====     ]  47.9% (used 237512 bytes from 495616 bytes)
 ``` 
+
+
+  </td>
+  <td valign="top">
+
+#### OctoPrint (or Serial Host)
+This branch is focused to work with host support like Octoprint and has features to support serial commands.
+
+- Branch: [**for_Octoprint_F401**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_Octoprint_F401)
+  - Release tag: [Belaya_2_F401](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_2_F401)
+
+- The Binary provided will contain just the following features:
+
+  * [D ROUTINE AUTO Z OFFSET](#delta-routine).
+  * [DWIN RENDER THUMBNAIL](#-thumbnail).
+  * [ONE CLICK PRINT](#-one-click-print)
+  * [FT_MOTION](#-ft_motion).
+  * [MeatPack Enabled](https://plugins.octoprint.org/plugins/meatpack/).
+  * [LINEAR ADVANCE](#-linear-advance).
+  * [Mcodes for LCD Dimm & Brightness](#-lcd-dimm-&-brightness-menu).
+  * [Mute or Unmute Buzzer](#-mute-buzzer).
+  * [CRTouch test functions](#-crtouch-test-functions).
+  * Baud rate of 115200.
+
+With a Memory cost of:
+
+``` c++
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [===       ]  31.4% (used 20604 bytes from 65536 bytes)
+Flash: [=====     ]  45.6% (used 234484 bytes from 514288 bytes)
+``` 
+
+
+
+  </td>
+  </tr>
+  </tbody>
+</table>
+
+
+
+## Installation
 
 > [!TIP]
 > 
@@ -83,10 +205,14 @@ It is recommended to create your own Binary with your desired features, using ei
 
 > [!IMPORTANT]
 > 
-> For this version is important that you check the e-Steps of your extruder before start a print job.
-> in my case old firmware had **424.9** as value for a normal extrusion but for Marlin 2.1 needed to adjust to **715.12**
+> 1) For this version is important that you check the e-Steps of your extruder before start a print job.
+> in my case old firmware had **424.9** as value for a normal extrusion but for Marlin 2.1 needed to adjust to **715.12** So please calibrate it after the Z offset calculation finished.
 >
-> So please calibrate it after the Z offset calculation finished.
+>
+> 2) Also calibrate the PID for both Nozzle and Bed, go to Control->Temperature->Auto PID.
+> Select the usual temperature of your jobs and start from the LCD menu the test. Auto PID is important to avoid the temperature fluctuation/bouncing.
+>
+>
 
 
 
@@ -354,10 +480,7 @@ Enable by default in Configuration_adv.h
 
 You can explore the new features on the Marlin 2.1 like:
 
-### * **FT_MOTION** 
-
-Which enables different filters of Shapers for the machine, like Klipper does. 
-
+### * **FT_MOTION** Which enables different filters of Shapers for the machine, like Klipper does. 
 ```c++
 #define FT_MOTION
 #if ENABLED(FT_MOTION)
