@@ -74,7 +74,7 @@ The below Table gives you the branches for specific use, only SD card support or
 This branch is focused to work only printing from SD Card the host support is limited.
 
 - Branch: [**for_E3V3SE**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_E3V3SE)
-  - Release tag: [krasnaya_4](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/krasnaya_4)
+  - Release tag: [krasnaya_4](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Krasnaya_4)
 
 - The Binary provided will contain just the following features:
 
