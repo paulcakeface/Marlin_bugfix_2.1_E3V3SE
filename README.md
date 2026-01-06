@@ -37,6 +37,8 @@ I have ported many of the features and fixes from the community stock version in
   - [Linear Advance](#-linear-advance)
   - [Increased Temperature for BED and Noozle](#-increased-temperature-for-bed-and-noozle)
 - [Explore New Features](#explore-new-features)
+  - [FT_Motion](#-ft_motion-which-enables-different-filters-of-shapers-for-the-machine-like-klipper-does)
+  - [Axis Twist Compensation](#-axis-twist-compensation)
 
 
 ## Modular
@@ -72,7 +74,7 @@ The below Table gives you the branches for specific use, only SD card support or
 This branch is focused to work only printing from SD Card the host support is limited.
 
 - Branch: [**for_E3V3SE**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_E3V3SE)
-  - Release tag: [krasnaya_3](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/krasnaya_3)
+  - Release tag: [krasnaya_4](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/krasnaya_4)
 
 - The Binary provided will contain just the following features:
 
@@ -100,7 +102,7 @@ Flash: [====      ]  44.8% (used 221924 bytes from 495616 bytes)
 This branch is focused to work only printing from SD Card the host support is limited.
 
 - Branch: [**for_STM32F401**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_STM32F401)
-  - Release tag: [krasnaya_3_F401](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Krasnaya_3_F401)
+  - Release tag: [krasnaya_4_F401](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Krasnaya_4_F401)
 
 - The Binary provided will contain just the following features:
 
@@ -128,7 +130,7 @@ Flash: [====      ]  42.8% (used 220244 bytes from 514288 bytes)
 #### OctoPrint (or Serial Host)
 This branch is focused to work with host support like Octoprint and has features to support serial commands.
 
-- Branch: **for_Octoprint**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_Octoprint)
+- Branch: [**for_Octoprint**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_Octoprint)
   - Release tag: [Belaya_2](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_2)
 
 - The Binary provided will contain just the following features:
@@ -203,10 +205,14 @@ It is recommended to create your own Binary with your desired features, using ei
 
 > [!IMPORTANT]
 > 
-> For this version is important that you check the e-Steps of your extruder before start a print job.
-> in my case old firmware had **424.9** as value for a normal extrusion but for Marlin 2.1 needed to adjust to **715.12**
+> 1) For this version is important that you check the e-Steps of your extruder before start a print job.
+> in my case old firmware had **424.9** as value for a normal extrusion but for Marlin 2.1 needed to adjust to **715.12** So please calibrate it after the Z offset calculation finished.
 >
-> So please calibrate it after the Z offset calculation finished.
+>
+> 2) Also calibrate the PID for both Nozzle and Bed, go to Control->Temperature->Auto PID.
+> Select the usual temperature of your jobs and start from the LCD menu the test. Auto PID is important to avoid the temperature fluctuation/bouncing.
+>
+>
 
 
 
