@@ -152,9 +152,27 @@ void MeatPack::handle_output_char(const uint8_t c) {
 void MeatPack::handle_command(const MeatPack_Command c) {
   switch (c) {
     case MPCommand_QueryConfig:     break;
-    case MPCommand_EnablePacking:   SBI(state, MPConfig_Bit_Active);   DEBUG_ECHOLNPGM("[MPDBG] ENA REC");   break;
-    case MPCommand_DisablePacking:  CBI(state, MPConfig_Bit_Active);   DEBUG_ECHOLNPGM("[MPDBG] DIS REC");   break;
-    case MPCommand_ResetAll:        reset_state();                     DEBUG_ECHOLNPGM("[MPDBG] RESET REC"); break;
+    case MPCommand_EnablePacking:   
+      SBI(state, MPConfig_Bit_Active);   
+      DEBUG_ECHOLNPGM("[MPDBG] ENA REC");
+      #if ENABLED(EMERGENCY_PARSER)
+        if (ep_state_ptr) *ep_state_ptr = EmergencyParser::EP_RESET; // Reset EP state
+      #endif
+    break;
+    case MPCommand_DisablePacking:  
+      CBI(state, MPConfig_Bit_Active);   
+      DEBUG_ECHOLNPGM("[MPDBG] DIS REC");   
+      #if ENABLED(EMERGENCY_PARSER)
+        if (ep_state_ptr) *ep_state_ptr = EmergencyParser::EP_RESET;  // Reset EP state
+      #endif
+    break;
+    case MPCommand_ResetAll:        
+      reset_state();                     
+      DEBUG_ECHOLNPGM("[MPDBG] RESET REC"); 
+      #if ENABLED(EMERGENCY_PARSER)
+        if (ep_state_ptr) *ep_state_ptr = EmergencyParser::EP_RESET; // Reset EP state 
+      #endif
+    break;
     case MPCommand_EnableNoSpaces:
       SBI(state, MPConfig_Bit_NoSpaces);
       meatPackLookupTable[kSpaceCharIdx] = kSpaceCharReplace;          DEBUG_ECHOLNPGM("[MPDBG] ENA NSP");   break;
