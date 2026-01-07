@@ -131,7 +131,7 @@ Flash: [====      ]  42.8% (used 220244 bytes from 514288 bytes)
 This branch is focused to work with host support like Octoprint and has features to support serial commands.
 
 - Branch: [**for_Octoprint**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_Octoprint)
-  - Release tag: [Belaya_2](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_2)
+  - Release tag: [Belaya_4](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_4)
 
 - The Binary provided will contain just the following features:
 
@@ -162,7 +162,7 @@ Flash: [=====     ]  47.9% (used 237512 bytes from 495616 bytes)
 This branch is focused to work with host support like Octoprint and has features to support serial commands.
 
 - Branch: [**for_Octoprint_F401**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_Octoprint_F401)
-  - Release tag: [Belaya_2_F401](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_2_F401)
+  - Release tag: [Belaya_4_F401](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_4_F401)
 
 - The Binary provided will contain just the following features:
 
@@ -211,6 +211,8 @@ It is recommended to create your own Binary with your desired features, using ei
 >
 > 2) Also calibrate the PID for both Nozzle and Bed, go to Control->Temperature->Auto PID.
 > Select the usual temperature of your jobs and start from the LCD menu the test. Auto PID is important to avoid the temperature fluctuation/bouncing.
+>
+> 3) Take a look on the Wiki and the Issues pages, most probably your question has been answered.
 >
 >
 

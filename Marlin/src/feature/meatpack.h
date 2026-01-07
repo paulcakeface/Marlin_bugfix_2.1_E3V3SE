@@ -51,6 +51,10 @@
 #include <stdint.h>
 #include "../core/serial_hook.h"
 
+#if ENABLED(EMERGENCY_PARSER)
+  #include "e_parser.h"
+#endif
+
 /**
  * Commands sent to MeatPack to control its behavior.
  * They are sent by first sending 2x MeatPack_CommandByte (0xFF) in sequence,
@@ -98,11 +102,21 @@ class MeatPack {
           char_out_count;  // Stores number of characters to be read out.
   uint8_t char_out_buf[2]; // Output buffer for caching up to 2 characters
 
+  #if ENABLED(EMERGENCY_PARSER)
+    // Pointer to an EmergencyParser state used for the *decoded* character stream.
+    // Raw UART bytes may be MeatPack-encoded and are not usitable for parsing.
+    EmergencyParser::State *ep_state_ptr = nullptr;
+  #endif
+
 public:
   // Pass in a character rx'd by SD card or serial. Automatically parses command/ctrl sequences,
   // and will control state internally.
   void handle_rx_char(const uint8_t c, const serial_index_t serial_ind);
 
+  #if ENABLED(EMERGENCY_PARSER)
+    // Provide a state instance for decoded-stream emergency parsing.
+    void set_emergency_state(EmergencyParser::State *state_ptr) { ep_state_ptr = state_ptr; } // Provide EP state pointer to MeatPack
+  #endif
   /**
    * After passing in rx'd char using above method, call this to get characters out.
    * Can return from 0 to 2 characters at once.
@@ -129,13 +143,22 @@ struct MeatpackSerial : public SerialBase <MeatpackSerial < SerialT >> {
   SerialT & out;
   MeatPack meatpack;
 
+  #if ENABLED(EMERGENCY_PARSER)
+   EmergencyParser::State ep_state = EmergencyParser::EP_RESET; // Emergency Parser state
+  #endif
+
   char serialBuffer[2];
   uint8_t charCount;
   uint8_t readIndex;
 
   NO_INLINE void write(uint8_t c)     { out.write(c); }
   void flush()                        { out.flush();  }
-  void begin(long br)                 { out.begin(br); readIndex = 0; }
+  void begin(long br)                 { out.begin(br); readIndex = 0;
+    #if ENABLED(EMERGENCY_PARSER)
+      ep_state = EmergencyParser::EP_RESET;     // Initialize EP state
+      meatpack.set_emergency_state(&ep_state);  // Provide EP state pointer to MeatPack
+    #endif
+  }
   void end()                          { out.end(); }
 
   void msgDone()                      { out.msgDone(); }
@@ -154,6 +177,13 @@ struct MeatpackSerial : public SerialBase <MeatpackSerial < SerialT >> {
     meatpack.handle_rx_char((uint8_t)r, index);
     charCount = meatpack.get_result_char(serialBuffer);
     readIndex = 0;
+
+    #if ENABLED(EMERGENCY_PARSER)
+      // Feed decoded (unpacked) characters to the Emergency Parser.
+      // The raw UART bytes are MeatPack-encoded and are not suitable for parsing.
+      for (uint8_t i = 0; i < charCount; ++i)
+        emergency_parser.update(ep_state, (uint8_t)serialBuffer[i]);
+    #endif
 
     return charCount;
   }
