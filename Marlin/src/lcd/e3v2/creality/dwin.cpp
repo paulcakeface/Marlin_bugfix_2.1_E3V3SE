@@ -155,6 +155,8 @@ static uint8_t left_move_index = 0;
   uint8_t material_index = 0;
 #endif
 
+
+
 /* Value Init */
 HMI_value_t HMI_ValueStruct;
 HMI_Flag_t HMI_flag{0};
@@ -170,6 +172,7 @@ static bool temp_remove_card_flag = false, temp_cutting_line_flag = false /*,tem
 
 bool hasThumbnail = false;
 int clear_UpperArea = 0;
+bool OctoRefresh = false;
     
 typedef struct
 {
@@ -435,6 +438,91 @@ static void Auto_in_out_feedstock(bool dir) // 0 returns material, 1 feeds
       checkkey = M117Info;
     }
 #endif    
+
+
+
+#if ENABLED(OCTOPRINT_PLUGIN)
+  uint16_t OctoImageLine[OctoIMAGE_WIDTH];
+  //vars to scroll title when octoprinting
+  int scrollOffset = 0;
+  unsigned long lastScrollTime = 0;
+  const int scrollDelay2 = 250; // this to move chars
+  int maxOffset;
+  char visibleText[35] = {0};
+
+  //clear the image map to black
+  void initializeImageMap() {
+    memset(OctoImageLine, 0, sizeof(OctoImageLine));
+    //SERIAL_ECHOLN("OctoImageLine initialized to 0:");
+  }
+
+  // Function to create a shortened filename without extension
+  void octo_make_name_without_ext(char *dst, char *src, size_t maxlen = MENU_CHAR_LIMIT)
+  {    
+    size_t pos = strlen(src); // index of ending nul
+    // For files, remove the extension
+    // which may be .gcode, .gco, or .g
+      while (pos && src[pos] != '.')
+        pos--; // find last '.' (stop at 0)
+
+    size_t len = pos; // nul or '.'
+    if (len > maxlen)
+    {                     // Keep the name short
+      pos = len = maxlen; // move nul down
+      dst[--pos] = '.';   // insert dots
+      dst[--pos] = '.';
+      dst[--pos] = '.';
+    }
+
+    dst[len] = '\0'; // end it
+
+    // Copy down to 0
+    while (pos--)
+      dst[pos] = src[pos];
+  }
+
+  // Draw the octoprint title
+  void Draw_OctoTitle(const char *const title)
+  {
+    char* nTitle = const_cast<char*>(title);
+    octo_make_name_without_ext(shift_name, nTitle, 100); // Copy to new string Long Name
+    maxOffset = strlen(shift_name); 
+    
+    if (maxOffset > 30)
+    {
+      //move flag
+      scrollOffset = 0;
+      DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_Red, Color_Bg_Blue, 0, 4, shift_name);
+    }
+    else
+    {
+    DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_Red, Color_Bg_Blue, 0, 4, shift_name);
+    }
+
+  }
+
+  //scroll title name
+  void octoUpdateScroll() {
+      if (strlen(shift_name) <= 30) return; // No need to update if filename is less than 30chars
+
+      unsigned long currentTime = millis(); // check interval
+      if (currentTime - lastScrollTime >= scrollDelay2) {
+          lastScrollTime = currentTime;
+          
+          Clear_Title_Bar(); //clear title bar to avoid ghosting text
+          strncpy(visibleText, shift_name + scrollOffset, 30); // copy the text to shift left
+          // Draw the string
+          DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_Red, Color_Bg_Blue, 0, 4, visibleText);
+          
+          // Inc and reset
+          scrollOffset++;
+          if (scrollOffset > maxOffset) {
+              scrollOffset = 0;  // Restart
+          }
+      }
+  }
+
+#endif
 
 /*Get the specified g file information *short_file_name: short file name *file: file information pointer Return value*/
 void get_file_info(char *short_file_name, PrintFile_InfoTypeDef *file)
@@ -2341,7 +2429,8 @@ void Draw_Tune_Menu()
 
 
     void Draw_ThumbTune_Menu() {
-      // Draw_ThumbTitle(vvfilename);  
+      // Draw_ThumbTitle(vvfilename); 
+      OctoRefresh = false; 
       Clear_Below_Area();
       HMI_flag.Refresh_bottom_flag = true;
       const int16_t Oscroll = ThumbMROWS - thumb_index_tune; // Scrolled-up lines
@@ -2370,9 +2459,7 @@ void Draw_Tune_Menu()
       #if HAS_HEATED_BED
         if (OTVISI(TUNE_CASE_BED))
           Thumb_Item_Tune_Bed(OTSCROL(TUNE_CASE_BED));  // Bed Temp
-      #endif
 
-      #if HAS_FAN 
         if (OTVISI(TUNE_CASE_FAN))
           Thumb_Item_Tune_Fan(OTSCROL(TUNE_CASE_FAN));  // Fan Speed
       #endif
@@ -3124,6 +3211,7 @@ void Clear_Thumb_Area()
 
 void Popup_window_PauseOrStop()
 {
+  OctoRefresh = false;
   Clear_Main_Window();
   Draw_Popup_Bkgd_60();
   HMI_flag.Refresh_bottom_flag = true; // Flag does not refresh bottom parameters
@@ -3324,9 +3412,11 @@ void Draw_Print_ProgressElapsed()
     #if ENABLED(DWIN_RENDER_THUMBNAIL)
       if(hasThumbnail)
       {
-        DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, 126, 123, elapsed.value / 3600);
-        DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, 150, 123, (elapsed.value % 3600) / 60);
-        DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, 149, 121, F(":"));
+        
+          DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, 126, 123, elapsed.value / 3600);
+          DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, 150, 123, (elapsed.value % 3600) / 60);
+          DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, 149, 121, F(":"));
+        
       }else{
         DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, NUM_PRINT_TIME_X, NUM_PRINT_TIME_Y, elapsed.value / 3600);
         DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, NUM_PRINT_TIME_X + 24, NUM_PRINT_TIME_Y, (elapsed.value % 3600) / 60);
@@ -3392,7 +3482,19 @@ void Draw_Print_ProgressElapsed()
       DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, (DWIN_WIDTH + 80 - strlen(buffer_layer) * MENU_CHR_W) / 2, 165, buffer_layer); 
     }
 
+
+    #if ENABLED(OCTOPRINT_PLUGIN)
+      void Draw_Print_Time(){
+        
+          DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, 126, 123, ui.get_print_time() / 3600);
+          DWIN_Draw_IntValue(true, true, 1, font8x16, Color_White, Color_Bg_Black, 2, 150, 123, (ui.get_print_time() % 3600) / 60);
+          DWIN_Draw_String(false, false, font8x16, Color_White, Color_Bg_Black, 149, 121, F(":"));
+        
+      }
+    #endif  
+
 #endif
+
 
 
 void Draw_Print_ProgressRemain()
@@ -3587,7 +3689,13 @@ static void G29_small(void) //
   // Function to render the print job details with Thumbnail in the LCD.
   void Goto_ThumbPrint()
   {
+    #if ENABLED(OCTOPRINT_PLUGIN)
+      OctoRefresh = true;
+      hasThumbnail = true; 
+    #endif
+    
     checkkey = ThumbPrint;
+    
     Clear_Below_Area();
     Draw_Mid_Status_Area(true);
     // clear_UpperArea++;
@@ -3596,9 +3704,13 @@ static void G29_small(void) //
     ui.get_current_layer();
     Draw_Print_ProgressBar();
     
-    
-    DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 123, F("Elapsed Time:")); // Label Print Time
-    Draw_Print_ProgressElapsed();
+    #if ENABLED(OCTOPRINT_PLUGIN)
+      DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 123, F("Print Time:")); // Label Print Time
+      Draw_Print_Time();
+    #else
+      DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 123, F("Elapsed Time:")); // Label Print Time
+      Draw_Print_ProgressElapsed();
+    #endif
     // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 123, F(vprint_time));   // value Print Time
     DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 144, F("Time Left:"));  // Label Time Left
     Draw_Print_ProgressRemain();
@@ -3622,7 +3734,14 @@ static void G29_small(void) //
     }
     // Stop button --Stop
     ICON_Stop();
+    
+
+    #if ENABLED(OCTOPRINT_PLUGIN)
+      SERIAL_ECHOLN("M9000 lcd-rendered");
+    #endif
+
   }
+
 #endif
 
 void Goto_PrintProcess()
@@ -3692,10 +3811,15 @@ void Goto_PrintProcess()
 void Goto_MainMenu()
 {
   #if ENABLED(DWIN_RENDER_THUMBNAIL)
-    ui.set_current_layer(0);
-    ui.set_progress(0);
-    ui.set_remaining_time(0);
-    ui.set_total_layers(0);
+    ui.set_current_layer(0);    // Reset current layer
+    ui.set_progress(0);         // Reset progress
+    ui.set_remaining_time(0);   // Reset remaining time
+    ui.set_total_layers(0);     // Reset total layers
+    #if ENABLED(OCTOPRINT_PLUGIN)
+      ui.set_print_time(0);     // Reset print time
+      OctoRefresh = false;
+    #endif
+    
   #endif
 
   #if ENABLED(ONE_CLICK_PRINT)
@@ -5165,31 +5289,6 @@ void make_name_without_ext(char *dst, char *src, size_t maxlen = MENU_CHAR_LIMIT
     dst[pos] = src[pos];
 }
 
-void octo_make_name_without_ext(char *dst, char *src, size_t maxlen = MENU_CHAR_LIMIT)
-{
-
-  size_t pos = strlen(src); // index of ending nul
-
-  // For files, remove the extension
-  // which may be .gcode, .gco, or .g
-  while (pos && src[pos] != '.')
-    pos--; // find last '.' (stop at 0)
-
-  size_t len = pos; // nul or '.'
-  if (len > maxlen)
-  {                     // Keep the name short
-    pos = len = maxlen; // move nul down
-    dst[--pos] = '.';   // insert dots
-    dst[--pos] = '.';
-    dst[--pos] = '.';
-  }
-
-  dst[len] = '\0'; // end it
-
-  // Copy down to 0
-  while (pos--)
-    dst[pos] = src[pos];
-}
 
 void HMI_SDCardInit() { card.cdroot(); }
 
@@ -6368,6 +6467,7 @@ void HMI_Printing()
     switch (select_print.now)
     {
     case 0: // Tune
+      OctoRefresh = false;
       checkkey = Tune;
       HMI_ValueStruct.show_mode = 0;
       select_tune.reset();
@@ -6376,6 +6476,8 @@ void HMI_Printing()
       Draw_Tune_Menu();
       break;
     case 1: // Pause
+      OctoRefresh = false;
+
       if (HMI_flag.pause_flag)
       { // Sure
         Show_JPN_print_title();
@@ -6409,6 +6511,7 @@ void HMI_Printing()
       }
       break;
     case 2: // Stop
+      OctoRefresh = false;
       HMI_flag.select_flag = true;
       checkkey = Print_window;
       Popup_window_PauseOrStop();
@@ -11194,6 +11297,11 @@ void EachMomentUpdate()
   {
     next_var_update_ms = ms + DWIN_VAR_UPDATE_INTERVAL;
 
+    //Update LCD when using Octoprint
+    if(serial_connection_active && OctoRefresh){
+      DWIN_OctoUpdate();
+    }
+
     if (!HMI_flag.Refresh_bottom_flag)
     {
       update_middle_variable();
@@ -11314,68 +11422,70 @@ void EachMomentUpdate()
     if (checkkey == PrintProcess)
   #endif
   {
-    // if print done
-    if (HMI_flag.print_finish && !HMI_flag.done_confirm_flag)
-    {
-      HMI_flag.print_finish = false;
-      HMI_flag.done_confirm_flag = true;
-     
-      // New display needs to be placed at the bottom and needs to be cleared
-      DWIN_Draw_Rectangle(1, Color_Bg_Black, CLEAR_50_X, CLEAR_50_Y, DWIN_WIDTH - 1, STATUS_Y - 1);
-      Clear_Title_Bar();                   // clear title
-      HMI_flag.Refresh_bottom_flag = true; // Flag does not refresh bottom parameters
-      TERN_(POWER_LOSS_RECOVERY, recovery.cancel());
-
-      planner.finish_and_disable();
-
-      // show percent bar and value
-      // rock_20211122
-
-      ui.set_progress_done();
-      ui.reset_remaining_time();
-      ui.total_time_reset();
+    if(!OctoRefresh){ 
+      // if print done
+      if (HMI_flag.print_finish && !HMI_flag.done_confirm_flag)
+      {
+        HMI_flag.print_finish = false;
+        HMI_flag.done_confirm_flag = true;
       
-      // Show remaining time
-      Draw_Print_ProgressRemain();
-      Draw_Print_ProgressBar();
+        // New display needs to be placed at the bottom and needs to be cleared
+        DWIN_Draw_Rectangle(1, Color_Bg_Black, CLEAR_50_X, CLEAR_50_Y, DWIN_WIDTH - 1, STATUS_Y - 1);
+        Clear_Title_Bar();                   // clear title
+        HMI_flag.Refresh_bottom_flag = true; // Flag does not refresh bottom parameters
+        TERN_(POWER_LOSS_RECOVERY, recovery.cancel());
 
-      #if ENABLED(DWIN_RENDER_THUMBNAIL)
-        Draw_Layer_Number();
-      #endif
-#if ENABLED(DWIN_CREALITY_480_LCD)
-      // show print done confirm
-      if (HMI_flag.language < Language_Max) // Rock 20211120
-      {
-        DWIN_ICON_Show(HMI_flag.language, LANGUAGE_LEVEL_FINISH, TITLE_X, TITLE_Y);
-        DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Confirm, 72, 302 - 19);
-      }
+        planner.finish_and_disable();
 
-#elif ENABLED(DWIN_CREALITY_320_LCD)
-      // show print done confirm
-      if (HMI_flag.language < Language_Max) // Rock 20211120
-      {
-        DWIN_ICON_Show(HMI_flag.language, LANGUAGE_LEVEL_FINISH, TITLE_X, TITLE_Y);
-        DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Confirm, OK_BUTTON_X, OK_BUTTON_Y);
-      }
-#endif
-    }
-    else if (HMI_flag.pause_flag != printingIsPaused())
-    {
-      // print status update
-      HMI_flag.pause_flag = printingIsPaused();
-      if (!HMI_flag.filement_resume_flag)
-      {
-        if (HMI_flag.pause_flag)
+        // show percent bar and value
+        // rock_20211122
+
+        ui.set_progress_done();
+        ui.reset_remaining_time();
+        ui.total_time_reset();
+        
+        // Show remaining time
+        Draw_Print_ProgressRemain();
+        Draw_Print_ProgressBar();
+
+        #if ENABLED(DWIN_RENDER_THUMBNAIL)
+          Draw_Layer_Number();
+        #endif
+  #if ENABLED(DWIN_CREALITY_480_LCD)
+        // show print done confirm
+        if (HMI_flag.language < Language_Max) // Rock 20211120
         {
-          // DWIN_ICON_Show(HMI_flag.language ,LANGUAGE_Pausing, TITLE_X, TITLE_Y);
-          Show_JPN_pause_title(); // Rock 20211118
-          ICON_Continue();
+          DWIN_ICON_Show(HMI_flag.language, LANGUAGE_LEVEL_FINISH, TITLE_X, TITLE_Y);
+          DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Confirm, 72, 302 - 19);
         }
-        else
+
+  #elif ENABLED(DWIN_CREALITY_320_LCD)
+        // show print done confirm
+        if (HMI_flag.language < Language_Max) // Rock 20211120
         {
-          // DWIN_ICON_Show(HMI_flag.language ,LANGUAGE_Printing, TITLE_X, TITLE_Y);
-          Show_JPN_print_title();
-          ICON_Pause();
+          DWIN_ICON_Show(HMI_flag.language, LANGUAGE_LEVEL_FINISH, TITLE_X, TITLE_Y);
+          DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Confirm, OK_BUTTON_X, OK_BUTTON_Y);
+        }
+  #endif
+      }
+      else if (HMI_flag.pause_flag != printingIsPaused())
+      {
+        // print status update
+        HMI_flag.pause_flag = printingIsPaused();
+        if (!HMI_flag.filement_resume_flag)
+        {
+          if (HMI_flag.pause_flag)
+          {
+            // DWIN_ICON_Show(HMI_flag.language ,LANGUAGE_Pausing, TITLE_X, TITLE_Y);
+            Show_JPN_pause_title(); // Rock 20211118
+            ICON_Continue();
+          }
+          else
+          {
+            // DWIN_ICON_Show(HMI_flag.language ,LANGUAGE_Printing, TITLE_X, TITLE_Y);
+            Show_JPN_print_title();
+            ICON_Pause();
+          }
         }
       }
     }
@@ -11459,34 +11569,36 @@ void EachMomentUpdate()
     if (HMI_flag.cloud_printing_flag && (checkkey == PrintProcess) && !HMI_flag.filement_resume_flag)
   #endif  
   {
-    static uint16_t last_Printtime = 0;
-    static uint16_t last_card_percent = 0;
-    static bool flag = 0;
-    duration_t elapsed = print_job_timer.duration(); // print timer
-    const uint16_t min = (elapsed.value % 3600) / 60;
-    // Update progress bar
-    ui.set_progress(Cloud_Progress_Bar * PROGRESS_SCALE);
+    if(!OctoRefresh){
+      static uint16_t last_Printtime = 0;
+      static uint16_t last_card_percent = 0;
+      static bool flag = 0;
+      duration_t elapsed = print_job_timer.duration(); // print timer
+      const uint16_t min = (elapsed.value % 3600) / 60;
+      // Update progress bar
+      ui.set_progress(Cloud_Progress_Bar * PROGRESS_SCALE);
 
-    const uint16_t progress = ui.get_progress_permyriad();
-    if (last_card_percent != progress) // Update app progress bar
-    {
-      last_card_percent = progress;
-      Draw_Print_ProgressBar();
-      Draw_Print_ProgressRemain();
-      #if ENABLED(DWIN_RENDER_THUMBNAIL)
-        Draw_Layer_Number();
-      #endif
-    }
-    // Update printing time
-    if (last_Printtime != min)
-    { // 1 minute update
-      // SERIAL_ECHOLNPGM(" elapsed.value=: ", elapsed.value);
-      last_Printtime = min;
-      Draw_Print_ProgressElapsed();
-    }
-    if (progress <= 1 && !flag)
-    {
-      flag = true;
+      const uint16_t progress = ui.get_progress_permyriad();
+      if (last_card_percent != progress) // Update app progress bar
+      {
+        last_card_percent = progress;
+        Draw_Print_ProgressBar();
+        Draw_Print_ProgressRemain();
+        #if ENABLED(DWIN_RENDER_THUMBNAIL)
+          Draw_Layer_Number();
+        #endif
+      }
+      // Update printing time
+      if (last_Printtime != min)
+      { // 1 minute update
+        // SERIAL_ECHOLNPGM(" elapsed.value=: ", elapsed.value);
+        last_Printtime = min;
+        Draw_Print_ProgressElapsed();
+      }
+      if (progress <= 1 && !flag)
+      {
+        flag = true;
+      }
     }
   }
 
@@ -11496,42 +11608,44 @@ void EachMomentUpdate()
     if (card.isPrinting() && (checkkey == PrintProcess))
   #endif
   {
-    // print process
-    const uint16_t progress = ui.get_progress_permyriad();
-    // const uint16_t card_pct = card.permyriadDone();
-    // Card percent=card.percent done();
-    static uint16_t last_cardpercentValue = (100 * PROGRESS_SCALE) + 1;
-    if (last_cardpercentValue != progress)
-    {
-      // print percent
-      last_cardpercentValue = progress;
-      if (progress)
+    if(!OctoRefresh){
+      // print process
+      const uint16_t progress = ui.get_progress_permyriad();
+      // const uint16_t card_pct = card.permyriadDone();
+      // Card percent=card.percent done();
+      static uint16_t last_cardpercentValue = (100 * PROGRESS_SCALE) + 1;
+      if (last_cardpercentValue != progress)
       {
-        // _card_percent = card_pct;
-        Draw_Print_ProgressBar();
-        #if ENABLED(DWIN_RENDER_THUMBNAIL)
-          Draw_Layer_Number();
-        #endif
+        // print percent
+        last_cardpercentValue = progress;
+        if (progress)
+        {
+          // _card_percent = card_pct;
+          Draw_Print_ProgressBar();
+          #if ENABLED(DWIN_RENDER_THUMBNAIL)
+            Draw_Layer_Number();
+          #endif
+        }
       }
-    }
 
-    duration_t elapsed = print_job_timer.duration(); // print timer
+      duration_t elapsed = print_job_timer.duration(); // print timer
 
-    // Print time so far
-    static uint16_t last_Printtime = 0;
-    const uint16_t min = (elapsed.value % 3600) / 60;
-    if (last_Printtime != min)
-    { // 1 minute update
-      last_Printtime = min;
-      Draw_Print_ProgressElapsed();
-    }
+      // Print time so far
+      static uint16_t last_Printtime = 0;
+      const uint16_t min = (elapsed.value % 3600) / 60;
+      if (last_Printtime != min)
+      { // 1 minute update
+        last_Printtime = min;
+        Draw_Print_ProgressElapsed();
+      }
 
-    // Estimate remaining time every 20 seconds
-    static millis_t next_remain_time_update = 0;
-    if (ELAPSED(ms, next_remain_time_update))
-    {
-      next_remain_time_update += DWIN_REMAIN_TIME_UPDATE_INTERVAL;
-      Draw_Print_ProgressRemain();
+      // Estimate remaining time every 20 seconds
+      static millis_t next_remain_time_update = 0;
+      if (ELAPSED(ms, next_remain_time_update))
+      {
+        next_remain_time_update += DWIN_REMAIN_TIME_UPDATE_INTERVAL;
+        Draw_Print_ProgressRemain();
+      }
     }
   }
   else if (dwin_abort_flag && !HMI_flag.home_flag)
@@ -12589,6 +12703,113 @@ void HMI_Auto_Bed_PID(void)
       }
   }
 #endif
+
+
+
+#if ENABLED(OCTOPRINT_PLUGIN)
+    // finishc job, clear controls and allow go back main window
+  void Goto_ThumbFinish()
+  {
+    checkkey = M117Info;
+    Clear_Below_Area();
+    Draw_Mid_Status_Area(true);
+    Clear_Title_Bar();
+    
+    ui.set_progress(10000); // set progress to 100%
+    ui.set_current_layer(ui.get_total_layer_count()); // set current layer to total layers
+    ui.set_remaining_time(0); // set remaining time to 0
+
+    Draw_Print_ProgressBar(); // draw progress bar at 100%
+    
+    #if ENABLED(OCTOPRINT_PLUGIN)
+      DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 123, F("Print Time:")); // Label Print Time
+      Draw_Print_Time();
+    #else
+      DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 123, F("Elapsed Time:")); // Label Print Time
+      Draw_Print_ProgressElapsed();
+    #endif
+    // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 123, F(vprint_time));   // value Print Time
+    DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 144, F("Time Left:"));  // Label Time Left
+    Draw_Print_ProgressRemain();
+    // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 126, 144, F(vptime_left));   // value Time Left
+    DWIN_Draw_String(false, false, font6x12, Color_Yellow, Color_Bg_Black, 12, 165, F("Layer:"));      // Label Print Time
+    // DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, 80, 165, F(show_layers));    // Label Print Time
+    Draw_Layer_Number(true);
+
+    // show print done confirm
+    if (HMI_flag.language < Language_Max) // Rock 20211120
+    {
+      DWIN_ICON_Show(HMI_flag.language, LANGUAGE_LEVEL_FINISH, TITLE_X, TITLE_Y);
+      DWIN_ICON_Not_Filter_Show(HMI_flag.language, LANGUAGE_Confirm, OK_BUTTON_X, 225);
+    }
+
+    
+  }
+
+
+  void DWIN_OctoUpdate() {
+    
+      //We use a static variable to keep the "step" account.
+      static uint8_t updateStep = 0;
+      
+      switch (updateStep) {
+        case 0:
+         
+          //Step 1: Update Layer in the LCD
+          Draw_Layer_Number(true);
+          break;
+
+        case 1:{
+          //Step 2: Update the progress in the LCD
+          Draw_Print_ProgressBar();
+          break;
+        }
+
+        case 2:  
+          //Step 2: Update ETA in the LCD
+          Draw_Print_ProgressRemain();
+          break;
+
+        case 3:
+          //Step 3: Update the scroll
+          octoUpdateScroll();
+          break;
+
+      }
+      
+      //Increase the counter and restart it upon reaching 3 (0 to 3)
+      updateStep = (updateStep + 1) % 4;
+    
+  }
+
+  void DWIN_RenderOctoLine(uint16_t y) {
+    if (y >= 96) return;
+
+    const uint16_t x_start = 12;
+    const uint16_t y_start = 25;
+
+
+    //SERIAL_ECHOLNPAIR("O9002: Rendering Line ", y);
+
+    for (uint16_t x = 0; x < 96; x++) {
+        uint16_t color = OctoImageLine[x];
+
+        // Debug output
+        // SERIAL_ECHOPAIR("Pixel at (", x);
+        // SERIAL_ECHOPAIR(", ", y);
+        // SERIAL_ECHOLNPAIR(") Color: ", color);
+
+        // Draw the pixel
+        if (color == 0) {
+        continue;
+        }
+        DWIN_Draw_Rectangle(1, color, x_start + x, y_start + y, x_start + x, y_start + y);
+    }
+
+    SERIAL_ECHOLNPGM("M9001 ACK LINE ", y);
+  }
+
+#endif // OCTOPRINT_PLUGIN
 
 // Function to send string to LCD
 void DWIN_Show_M117(char *str)

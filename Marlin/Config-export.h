@@ -2,7 +2,7 @@
  * Config.h - Marlin Firmware distilled configuration
  * Usage: Place this file in the 'Marlin' folder with the name 'Config.h'.
  *
- * Exported by Marlin build on 2026-01-07 at 16:18:45.
+ * Exported by Marlin build on 2026-01-10 at 17:52:51.
  */
 
 //
@@ -455,6 +455,7 @@
 #define SERIAL_OVERRUN_PROTECTION
 #define TX_BUFFER_SIZE                           64
 #define D_ROUTINE_AUTO_OFFSET
+#define OCTOPRINT_PLUGIN
 #define USER_LEVEL_CHECK                         1
 #define WUHAN_CHENGE_PLATFORM                    1
 #define PLATFORM_OFFSET                          1
