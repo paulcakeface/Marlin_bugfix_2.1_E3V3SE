@@ -16,109 +16,133 @@
 // M9000 L<layers> T<sec> P<0..100>
 // M9000 F1               -> Print Finished
 // ---------------------------------------------------------------------------
-void GcodeSuite::M9000() {
+void GcodeSuite::M9000()
+{
   // A1 -> Connected
-  if (parser.seen('A')) {
+  if (parser.seen('A'))
+  {
     serial_connection_active = parser.value_bool();
-    if (serial_connection_active) Goto_MainMenu(); // Go to main menu on connect
+    if (serial_connection_active)
+      Goto_MainMenu(); // Go to main menu on connect
   }
 
   // L/T/P -> Set Layers/Time/Progress
-  if (parser.seen('L')) { ui.set_total_layers(parser.value_int()); }
-  if (parser.seen('T')) { ui.set_print_time(60 * parser.value_ulong()); }
-  if (parser.seen('P')) { 
+  if (parser.seen('L'))
+  {
+    ui.set_total_layers(parser.value_int());
+  }
+  if (parser.seen('T'))
+  {
+    ui.set_print_time(60 * parser.value_ulong());
+  }
+  if (parser.seen('P'))
+  {
     ui.set_progress((PROGRESS_SCALE) > 1
-        ? parser.value_float() * (PROGRESS_SCALE)
-        : parser.value_byte()
-      );  
+                        ? parser.value_float() * (PROGRESS_SCALE)
+                        : parser.value_byte());
   }
 
   // S1 -> clear LCD + render print window
-  if (parser.boolval('S')) {    
+  if (parser.boolval('S'))
+  {
     Clear_Thumb_UpperArea();
     Goto_ThumbPrint();
-  }else if (parser.boolval('F'))
+  }
+  else if (parser.boolval('F'))
   {
     Goto_ThumbFinish();
   }
-  
-}// End M9000
 
+} // End M9000
+
+
+// Function to convert a single hex character to its integer value
+inline uint8_t hex2val(char c) {
+  if (c >= '0' && c <= '9') return c - '0';
+  if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+  if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+  return 0;
+}
+// Helper function to skip spaces
+static inline void skip_spaces(char *&p) { while (*p && isspace(*p)) p++; }
+// Helper function to parse an unsigned 16-bit integer from a string
+static inline uint16_t parse_u16(char *&p) {
+  uint16_t v = 0;
+  while (*p && isdigit(*p)) { v = v * 10 + (*p - '0'); p++; }
+  return v;
+}
 
 // ---------------------------------------------------------------------------
 // M9002: Receive Octoprint Thumbnail Image Data
 // M9002 START            -> Initialize image reception
 // M9002 END              -> Finalize image transmission
-// M9002 CHUNK<line>,<pixel_offset>|<color1>,<color2>,...,<colorN>
+// M9002 C <line>,<pixel_offset>|<color1>,<color2>,...,<colorN>
 //    -> Send a chunk of pixel data for the specified line starting at pixel_offset
 // ---------------------------------------------------------------------------
-static uint16_t current_line = 0;  // Track the current line
-static uint16_t received_pixels = 0; // Track received pixels for the line
-
 void GcodeSuite::M9001() {
-    
-    if (parser.string_arg && parser.string_arg[0] != '\0') {
-        // START: Initialize the image reception
-        if (strncmp(parser.string_arg, "START", 5) == 0) {
-            initializeImageMap();
-            Clear_Title_Bar();
-            Draw_OctoTitle("Receiving Thumbnail, wait...");
-            current_line = 0;
-            received_pixels = 0;
-            SERIAL_ECHOLN("M9001 START: Ready to receive lines.");
-            return;
-        }
+  uint16_t pixel_count = 0; // Track drawn pixels for batched delay
+  char *p = parser.command_ptr;
+  if (!p) return;
 
-        // END: Finalize the image transmission
-        if (strcmp(parser.string_arg, "END") == 0) {
-            SERIAL_ECHOLN("M9001 thumbnail-rendered");
-            Clear_Title_Bar();
-            return;
-        }
+  // Move p to after "M9001"
+  while (*p && !isspace(*p)) p++;   // skip "M9001"
+  skip_spaces(p);                  // now points to 'C' / 'START' / 'END'
 
-        // CHUNK: Receive a portion of a line
-        if (strncmp(parser.string_arg, "CHUNK", 5) == 0) {
-            char *arg = parser.string_arg + 5;
-            while (*arg && isspace(*arg)) arg++;
+  if (!*p) return;
 
-            // Tokenize the string for chunk parsing
-            char *token = strtok(arg, ",");
-            if (token != nullptr) {
-                uint16_t line_number = atoi(token);
+  // START
+  if (strncmp(p, "START", 5) == 0) {
+    initializeImageMap();
+    SERIAL_ECHOLNPGM("M9001 START");
+    return;
+  }
 
-                // Tokenize for pixel offset
-                token = strtok(nullptr, "|");
-                if (token != nullptr) {
-                    uint16_t pixel_offset = atoi(token);
+  // END
+  if (strncmp(p, "END", 3) == 0) {
+    SERIAL_ECHOLNPGM("M9001 END");
+    SERIAL_ECHOLN("M9001 thumbnail-rendered");
+    Clear_Title_Bar();
+    return;
+  }
 
-                    // Start parsing the pixel data
-                    token = strtok(nullptr, ",");
-                    while (token != nullptr && pixel_offset < OctoIMAGE_WIDTH) {
-                        // Ensure proper color value assignment
-                        OctoImageLine[pixel_offset] = static_cast<uint16_t>(atoi(token));
-                        received_pixels++;
-                        pixel_offset++;
+  // C <line> <offset> <hex>
+  if (*p == 'C') {
+    p++; skip_spaces(p);
 
-                        token = strtok(nullptr, ",");
-                    }
+    const uint16_t line_number = parse_u16(p);
+    skip_spaces(p);
 
-                    // Debugging output for checking chunk data
-                    // SERIAL_ECHOLNPAIR("O9002 CHUNK: Received line ", line_number);
-                    // SERIAL_ECHOLNPAIR("Current received_pixels: ", received_pixels);
+    uint16_t pixel_offset = parse_u16(p);
+    skip_spaces(p);
 
-                    // Check if entire line has been received
-                    if (received_pixels >= OctoIMAGE_WIDTH) {
-                        // Call render function for the line
-                        DWIN_RenderOctoLine(line_number);
-                        received_pixels = 0; // Reset for next line
-                    }
-                }
-            }
-            return;
-        }
+    const uint16_t start_offset = pixel_offset;
+    uint16_t decoded = 0;
+
+    while (pixel_offset < 96) {
+      if (!p[0] || !p[1] || !p[2] || !p[3]) break;
+
+      const uint16_t color =
+        (uint16_t(hex2val(p[0])) << 12) |
+        (uint16_t(hex2val(p[1])) <<  8) |
+        (uint16_t(hex2val(p[2])) <<  4) |
+        (uint16_t(hex2val(p[3])));
+
+      OctoImageLine[pixel_offset] = color;
+
+      pixel_offset++;
+      decoded++;
+      p += 4;
     }
-}// end M9001
 
+    // Render only if line is complete
+    if (start_offset + decoded >= 96) {
+      DWIN_RenderOctoLine(line_number);
+      delay(3); // Allow DWIN to process commands
+    }
+    
+    return;
+  }
+}
 
 
 
