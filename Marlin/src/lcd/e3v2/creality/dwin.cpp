@@ -6526,6 +6526,7 @@ void HMI_Printing()
 /* Pause and Stop window */
 void HMI_PauseOrStop()
 {
+  OctoRefresh = false;
   ENCODER_DiffState encoder_diffState = get_encoder_state();
   if (encoder_diffState == ENCODER_DIFF_NO)
     return;
