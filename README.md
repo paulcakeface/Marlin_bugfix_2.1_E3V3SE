@@ -352,7 +352,7 @@ Fixed the M600 routine to work with Host or Knob.
 If working from Host you the Knob will not work.
 
 ### * Host Commands Support
-Enabled Host command support along the Fix of #39 enabling M876 even while meatpack is enabled.
+Enabled Host command support along the Fix of [#39](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/issues/39) usage of `M876` even while Meatpack is enabled.
 
 
 ### * Compact 6x6 GRID
