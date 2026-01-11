@@ -12711,6 +12711,7 @@ void HMI_Auto_Bed_PID(void)
     // finishc job, clear controls and allow go back main window
   void Goto_ThumbFinish()
   {
+    OctoRefresh = false; // stop octoprint updates
     checkkey = M117Info;
     Clear_Below_Area();
     Draw_Mid_Status_Area(true);
@@ -12785,7 +12786,7 @@ void HMI_Auto_Bed_PID(void)
 
   void DWIN_RenderOctoLine(uint16_t y) {
     if (y >= 96) return;
-
+    uint16_t pixel_count = 0; // Track drawn pixels for batched delay
     const uint16_t x_start = 12;
     const uint16_t y_start = 25;
 
@@ -12805,6 +12806,12 @@ void HMI_Auto_Bed_PID(void)
         continue;
         }
         DWIN_Draw_Rectangle(1, color, x_start + x, y_start + y, x_start + x, y_start + y);
+        // Add screen processing delay after sending DRAW commands in batches
+        pixel_count++;
+        if (pixel_count >= 15) {
+          delay(25);
+          pixel_count = 0;
+        }
     }
 
     SERIAL_ECHOLNPGM("M9001 ACK LINE ", y);
@@ -12815,6 +12822,10 @@ void HMI_Auto_Bed_PID(void)
 // Function to send string to LCD
 void DWIN_Show_M117(char *str)
 {
+  #if ENABLED(OCTOPRINT_PLUGIN)
+    OctoRefresh = false; // stop octoprint updates
+  #endif
+  
   checkkey = M117Info; // Implement Human Interface Control for M117
   Clear_Main_Window();
   Draw_Mid_Status_Area(true);                                         // Draw Status Area, the one with Nozzle and bed temp.

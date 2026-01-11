@@ -13,7 +13,7 @@
 // M9000: Set Octoprint Connection and Print Details
 // M9000 A1               -> Connected
 // M9000 S1               -> Clear LCD + render print window
-// M9000 L<layers> T<sec> P<0..100>
+// M9000 L<layers> T<min> P<0..100>
 // M9000 F1               -> Print Finished
 // ---------------------------------------------------------------------------
 void GcodeSuite::M9000()
@@ -137,7 +137,6 @@ void GcodeSuite::M9001() {
     // Render only if line is complete
     if (start_offset + decoded >= 96) {
       DWIN_RenderOctoLine(line_number);
-      delay(3); // Allow DWIN to process commands
     }
     
     return;
