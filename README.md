@@ -27,6 +27,10 @@ I have ported many of the features and fixes from the community stock version in
   - [Leveling Menu](#-leveling-menu)
   - [Skew Correction Menu](#-skew-correction-menu)
 - [Ported Features](#ported-features)
+  - [Filament Runout Sensor](#-filament-runout-sensor)
+  - [Fixed M600 for Hosts Commands](#-fixed-m600-for-host-commands)
+  - [Host Commands Support](#-host-commands-support)
+  - [Eduard's Compact Grid](#-compact-6x6-grid)
   - [Input Shaping](#-input-shaping)
   - [LCD Dimm & Brightness Menu](#-lcd-dimm--brightness-menu)
   - [Mute Buzzer](#-mute-buzzer)
@@ -86,6 +90,9 @@ This branch is focused to work only printing from SD Card the host support is li
   * [Mcodes for LCD Dimm & Brightness](#-lcd-dimm-&-brightness-menu).
   * [Mute or Unmute Buzzer](#-mute-buzzer).
   * [CRTouch test functions](#-crtouch-test-functions).
+  * [Eduard's Compact Grid](#-compact-6x6-grid)
+  * [Filament Runout Sensor](#-filament-runout-sensor)
+  * [Fixed M600](#-fixed-m600-for-hosts-commands)
 
   With a Memory cost of:
 
@@ -114,6 +121,9 @@ This branch is focused to work only printing from SD Card the host support is li
   * [Mcodes for LCD Dimm & Brightness](#-lcd-dimm-&-brightness-menu).
   * [Mute or Unmute Buzzer](#-mute-buzzer).
   * [CRTouch test functions](#-crtouch-test-functions).
+  * [Eduard's Compact Grid](#-compact-6x6-grid)
+  * [Filament Runout Sensor](#-filament-runout-sensor)
+  * [Fixed M600](#-fixed-m600-for-hosts-commands)
 
   With a Memory cost of:
 
@@ -144,6 +154,10 @@ This branch is focused to work with host support like Octoprint and has features
   * [Mcodes for LCD Dimm & Brightness](#-lcd-dimm-&-brightness-menu).
   * [Mute or Unmute Buzzer](#-mute-buzzer).
   * [CRTouch test functions](#-crtouch-test-functions).
+  * [Eduard's Compact Grid](#-compact-6x6-grid)
+  * [Filament Runout Sensor](#-filament-runout-sensor)
+  * [Fixed M600](#-fixed-m600-for-hosts-commands)
+  * [Host Command support](#-host-commands-support)
   * Baud rate of 115200.
 
 With a Memory cost of:
@@ -175,6 +189,10 @@ This branch is focused to work with host support like Octoprint and has features
   * [Mcodes for LCD Dimm & Brightness](#-lcd-dimm-&-brightness-menu).
   * [Mute or Unmute Buzzer](#-mute-buzzer).
   * [CRTouch test functions](#-crtouch-test-functions).
+  * [Eduard's Compact Grid](#-compact-6x6-grid)
+  * [Filament Runout Sensor](#-filament-runout-sensor)
+  * [Fixed M600](#-fixed-m600-for-hosts-commands)
+  * [Host Command support](#-host-commands-support)
   * Baud rate of 115200.
 
 With a Memory cost of:
@@ -325,6 +343,16 @@ We have created a Menu to set and calculate the bed Skew of your printer.
 
 
 ## Ported Features.
+
+### * Filament Runout Sensor
+Activated the support for the sensor.
+  
+### * Fixed M600 for Hosts Commands
+Fixed the M600 routine to work with Host or Knob.
+If working from Host you the Knob will not work.
+
+### * Host Commands Support
+Enabled Host command support along the Fix of [#39](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/issues/39) usage of `M876` even while Meatpack is enabled.
 
 
 ### * Compact 6x6 GRID
