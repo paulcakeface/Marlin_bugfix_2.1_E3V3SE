@@ -2,7 +2,7 @@
  * Config.h - Marlin Firmware distilled configuration
  * Usage: Place this file in the 'Marlin' folder with the name 'Config.h'.
  *
- * Exported by Marlin build on 2026-01-07 at 16:18:45.
+ * Exported by Marlin build on 2026-01-13 at 16:58:15.
  */
 
 //
@@ -402,7 +402,6 @@
 #define AUTOZ_BRUSH_Z                            0
 #define TOOL_BRUSH_X                             -5
 #define TOOL_BRUSH_Y                             50
-#define ONE_CLICK_PRINT
 #define SD_FINISHED_STEPPERRELEASE               true
 #define AUTOZ_TOOL_X                             25
 #define AUTOZ_TOOL_Y                             28
@@ -413,7 +412,6 @@
 #define USE_AUTOZ_TOOL_2
 #define SHOW_PROGRESS_PERCENT
 #define EVENT_GCODE_SD_ABORT                     "G28XY\nG1 X0 Y215\nM84"
-#define NO_SD_AUTOSTART
 #define SDCARD_RATHERRECENTFIRST
 #define AUTOTOOL_RESULT
 #define POWER_LOSS_MIN_Z_CHANGE                  0.05
@@ -455,6 +453,7 @@
 #define SERIAL_OVERRUN_PROTECTION
 #define TX_BUFFER_SIZE                           64
 #define D_ROUTINE_AUTO_OFFSET
+#define OCTOPRINT_PLUGIN
 #define USER_LEVEL_CHECK                         1
 #define WUHAN_CHENGE_PLATFORM                    1
 #define PLATFORM_OFFSET                          1
