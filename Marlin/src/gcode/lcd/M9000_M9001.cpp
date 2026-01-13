@@ -9,6 +9,44 @@
 #include <string.h>
 
 #if ENABLED(OCTOPRINT_PLUGIN)
+
+char title[50] = {0}; 
+
+static inline void safe_copy(char *dst, size_t dstlen, const char *src) {
+  if (!dst || !dstlen) return;
+  dst[0] = '\0';
+  if (!src) return;
+
+  const char *p = src;
+
+  // Skip leading spaces
+  while (*p == ' ' || *p == '\t') ++p;
+
+  // If it starts with 'N' (e.g., "NOcto..." or "N=Octo...")
+  if (*p == 'N' || *p == 'n') {
+    ++p;
+    if (*p == '=' || *p == ':') ++p;
+  }
+
+  // Optional quotes
+  bool quoted = false;
+  if (*p == '"') { quoted = true; ++p; }
+
+  size_t i = 0;
+  for (; *p && i < dstlen - 1; ++p) {
+    if (quoted) {
+      // Ends at the unescaped quote
+      if (*p == '"' ) break;
+      if (*p == '\\' && p[1] == '"') { dst[i++] = '"'; ++p; continue; }
+      dst[i++] = *p;
+    } else {
+      // Without quotes: end at typical G-code separators
+      if (*p == ' ' || *p == '\t' || *p == ';' || *p == '*') break;
+      dst[i++] = *p;
+    }
+  }
+  dst[i] = '\0';
+}
 // ---------------------------------------------------------------------------
 // M9000: Set Octoprint Connection and Print Details
 // M9000 A1               -> Connected
@@ -42,16 +80,29 @@ void GcodeSuite::M9000()
                         : parser.value_byte());
   }
 
+
+  // N -> Title
+  if (parser.seen('N')) {
+    const char *s = parser.string_arg;  
+    if (s && *s) {
+      safe_copy(title, sizeof(title), s);
+      // Draw_OctoTitle(title);
+    }
+  }
+
   // S1 -> clear LCD + render print window
   if (parser.boolval('S'))
   {
     Clear_Thumb_UpperArea();
+    Clear_Title_Bar();
     Goto_ThumbPrint();
+    if (title[0]) Draw_OctoTitle(title);
   }
   else if (parser.boolval('F'))
   {
     Goto_ThumbFinish();
   }
+
 
 } // End M9000
 
@@ -80,7 +131,6 @@ static inline uint16_t parse_u16(char *&p) {
 //    -> Send a chunk of pixel data for the specified line starting at pixel_offset
 // ---------------------------------------------------------------------------
 void GcodeSuite::M9001() {
-  uint16_t pixel_count = 0; // Track drawn pixels for batched delay
   char *p = parser.command_ptr;
   if (!p) return;
 
@@ -94,6 +144,8 @@ void GcodeSuite::M9001() {
   if (strncmp(p, "START", 5) == 0) {
     initializeImageMap();
     SERIAL_ECHOLNPGM("M9001 START");
+    Clear_Title_Bar();
+    Draw_OctoTitle(" Receiving thumbnail, wait...");
     return;
   }
 
@@ -102,6 +154,7 @@ void GcodeSuite::M9001() {
     SERIAL_ECHOLNPGM("M9001 END");
     SERIAL_ECHOLN("M9001 thumbnail-rendered");
     Clear_Title_Bar();
+    Draw_OctoTitle(title);
     return;
   }
 

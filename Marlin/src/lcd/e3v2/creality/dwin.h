@@ -821,6 +821,7 @@ void Goto_ThumbPrint();
   #define OctoIMAGE_WIDTH 96
   // Buffer to hold one line of the image
   extern uint16_t OctoImageLine[OctoIMAGE_WIDTH];
+  extern char title[50];
   void Draw_OctoTitle(const char *const title);
   void DWIN_RenderOctoTitle();
   void initializeImageMap();

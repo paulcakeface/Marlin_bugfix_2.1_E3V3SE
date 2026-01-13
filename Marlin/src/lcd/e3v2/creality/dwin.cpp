@@ -149,6 +149,8 @@ int8_t shift_amt;  // = 0
 millis_t shift_ms; // = 0
 static uint8_t left_move_index = 0;
 
+bool isPaused = false;
+
 // bool qrShown = false;
 #if ENABLED(PREHEAT_ALERT)
   bool preheat_flag = false;
@@ -485,20 +487,8 @@ static void Auto_in_out_feedstock(bool dir) // 0 returns material, 1 feeds
   void Draw_OctoTitle(const char *const title)
   {
     char* nTitle = const_cast<char*>(title);
-    octo_make_name_without_ext(shift_name, nTitle, 100); // Copy to new string Long Name
-    maxOffset = strlen(shift_name); 
-    
-    if (maxOffset > 30)
-    {
-      //move flag
-      scrollOffset = 0;
-      DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_Red, Color_Bg_Blue, 0, 4, shift_name);
-    }
-    else
-    {
-    DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_Red, Color_Bg_Blue, 0, 4, shift_name);
-    }
-
+    octo_make_name_without_ext(shift_name, nTitle, 100); // Copy to new string Long Name 
+    DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_Yellow, Color_Bg_Black, 4, 4, shift_name);
   }
 
   //scroll title name
@@ -512,7 +502,7 @@ static void Auto_in_out_feedstock(bool dir) // 0 returns material, 1 feeds
           Clear_Title_Bar(); //clear title bar to avoid ghosting text
           strncpy(visibleText, shift_name + scrollOffset, 30); // copy the text to shift left
           // Draw the string
-          DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_Red, Color_Bg_Blue, 0, 4, visibleText);
+          DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_Yellow, Color_Bg_Black, 4, 4, visibleText);
           
           // Inc and reset
           scrollOffset++;
@@ -3692,6 +3682,8 @@ static void G29_small(void) //
     #if ENABLED(OCTOPRINT_PLUGIN)
       OctoRefresh = true;
       hasThumbnail = true; 
+      Clear_Title_Bar();
+      Draw_OctoTitle(title);
     #endif
     
     checkkey = ThumbPrint;
@@ -3721,21 +3713,17 @@ static void G29_small(void) //
 
     ICON_Tune();
     // Pause --Pause
-    if (HMI_flag.pause_flag)
+    if (isPaused)
     {
-      // Show_JPN_pause_title(); //Show title -Show Title
       ICON_Continue();
     }
     else
     {
-      // Printing --Printing
-      // Show_JPN_print_title();
       ICON_Pause();
     }
     // Stop button --Stop
     ICON_Stop();
     
-
     #if ENABLED(OCTOPRINT_PLUGIN)
       SERIAL_ECHOLN("M9000 lcd-rendered");
     #endif
@@ -6477,38 +6465,43 @@ void HMI_Printing()
       break;
     case 1: // Pause
       OctoRefresh = false;
+      #if ENABLED(OCTOPRINT_PLUGIN)
+        if (isPaused){
+          isPaused = false;
+          SERIAL_ECHOLNPGM("M9000 resume-job");
+          Goto_ThumbPrint();
+          
+        }else{
 
-      if (HMI_flag.pause_flag)
-      { // Sure
-        Show_JPN_print_title();
-        ICON_Pause();
-        // char cmd[40];
-        // cmd[0] = '\0';
-#if ENABLED(HAS_HEATED_BED) && ENABLED(PAUSE_HEAT)
-        // if (resume_bed_temp) sprintf_P(cmd, PSTR("M190 S%i\n"), resume_bed_temp); //rock_20210901
-#endif
-#if ENABLED(HAS_HOTEND) && ENABLED(PAUSE_HEAT)
-        // if (resume_hotend_temp) sprintf_P(&cmd[strlen(cmd)], PSTR("M109 S%i\n"), resume_hotend_temp);
-#endif
-        if (HMI_flag.cloud_printing_flag && !HMI_flag.filement_resume_flag)
-        {
-          SERIAL_ECHOLN("M79 S3");
+          HMI_flag.select_flag = true;
+          checkkey = Print_window;
+          Popup_window_PauseOrStop();
         }
-        pause_resume_feedstock(FEEDING_DEF_DISTANCE, FEEDING_DEF_SPEED);
-        // strcat_P(cmd, M24_STR);
-        queue.inject("M24");
-        // RUN_AND_WAIT_GCODE_CMD("M24", true);
-        // queue.enqueue_now_P(PSTR("M24"));
-        // gcode.process_subcommands_now(PSTR("M24"));
-        Goto_PrintProcess();
-      }
-      else
-      {
-        // Cancel
-        HMI_flag.select_flag = true;
-        checkkey = Print_window;
-        Popup_window_PauseOrStop();
-      }
+      #else
+        if (HMI_flag.pause_flag)
+        { // Sure
+          Show_JPN_print_title();
+          ICON_Pause();
+          if (HMI_flag.cloud_printing_flag && !HMI_flag.filement_resume_flag)
+          {
+            SERIAL_ECHOLN("M79 S3");
+          }
+          pause_resume_feedstock(FEEDING_DEF_DISTANCE, FEEDING_DEF_SPEED);
+          // strcat_P(cmd, M24_STR);
+          queue.inject("M24");
+          // RUN_AND_WAIT_GCODE_CMD("M24", true);
+          // queue.enqueue_now_P(PSTR("M24"));
+          // gcode.process_subcommands_now(PSTR("M24"));
+          Goto_PrintProcess();
+        }
+        else
+        {
+          // Cancel
+          HMI_flag.select_flag = true;
+          checkkey = Print_window;
+          Popup_window_PauseOrStop();
+        }
+      #endif 
       break;
     case 2: // Stop
       OctoRefresh = false;
@@ -6539,89 +6532,116 @@ void HMI_PauseOrStop()
   {
     if (select_print.now == 1)
     { // pause window
-
-      if (HMI_flag.select_flag)
-      {
-        HMI_flag.pause_action = true;
-        if (HMI_flag.cloud_printing_flag && !HMI_flag.filement_resume_flag)
-        {
-          SERIAL_ECHOLN("M79 S2"); // 3:cloud print pause
+      #if ENABLED(OCTOPRINT_PLUGIN)
+        if (HMI_flag.select_flag)
+        {  
+          isPaused = true;
+          SERIAL_ECHOLNPGM("M9000 pause-job");
+          Goto_ThumbPrint();
         }
+        else
+        {
+          Goto_ThumbPrint();
+        }  
+      #else
+        if (HMI_flag.select_flag)
+        {
+          HMI_flag.pause_action = true;
+          if (HMI_flag.cloud_printing_flag && !HMI_flag.filement_resume_flag)
+          {
+            SERIAL_ECHOLN("M79 S2"); // 3:cloud print pause
+          }
 
-        #if ENABLED(DWIN_RENDER_THUMBNAIL)
-        if(hasThumbnail){
-          Goto_ThumbPrint();
-        } else {
-          Goto_PrintProcess();
-        }  
-        #else
-          Goto_PrintProcess();
-        #endif
-        // Queue.inject p(pstr("m25"));
-        RUN_AND_WAIT_GCODE_CMD("M25", true);
-        ICON_Continue();
-        // Queue.enqueue now p(pstr("m25"));
-      }
-      else
-      {
-        #if ENABLED(DWIN_RENDER_THUMBNAIL)
-        if(hasThumbnail){
-          Goto_ThumbPrint();
-        } else {
-          Goto_PrintProcess();
-        }  
-        #else
-          Goto_PrintProcess();
-        #endif
-      }
+          #if ENABLED(DWIN_RENDER_THUMBNAIL)
+          if(hasThumbnail){
+            Goto_ThumbPrint();
+          } else {
+            Goto_PrintProcess();
+          }  
+          #else
+            Goto_PrintProcess();
+          #endif
+          
+          // Queue.inject p(pstr("m25"));
+          RUN_AND_WAIT_GCODE_CMD("M25", true);
+          ICON_Continue();
+          // Queue.enqueue now p(pstr("m25"));
+        }
+        else
+        {
+          #if ENABLED(DWIN_RENDER_THUMBNAIL)
+          if(hasThumbnail){
+            Goto_ThumbPrint();
+          } else {
+            Goto_PrintProcess();
+          }  
+          #else
+            Goto_PrintProcess();
+          #endif
+        }
+       #endif 
     }
     else if (select_print.now == 2)
     { // stop window
+      #if ENABLED(OCTOPRINT_PLUGIN)
+        if (HMI_flag.select_flag)
+        {  
+          isPaused = false;
+          SERIAL_ECHOLNPGM("M9000 cancel-job");
+          hostui.cancel();
 
-      if (HMI_flag.select_flag)
-      {
-        if (HMI_flag.home_flag)
-          planner.synchronize();                 // Wait for planner moves to finish!
-        wait_for_heatup = wait_for_user = false; // Stop waiting for heating/user
-
-        HMI_flag.disallow_recovery_flag = true; // Data recovery is not allowed
-        print_job_timer.stop();
-        thermalManager.disable_all_heaters();
-        print_job_timer.reset();
-        thermalManager.setTargetHotend(0, 0);
-        thermalManager.setTargetBed(0);
-        thermalManager.zero_fan_speeds();
-
-        recovery.info.sd_printing_flag = false; // rock_20210820
-// rock_20210830 The following sentence is absolutely not required. It will perform two main interface operations.
-// dwin_abort_flag = true; //Reset feedrate, return to Home
-#ifdef ACTION_ON_CANCEL
-        hostui.cancel();
-#endif
-        // BL24CXX::EEPROM_Reset(PLR_ADDR, (uint8_t*)&recovery.info, sizeof(recovery.info));//rock_20210812  清空 EEPROM
-        // checkkey = Popup_Window;
-        Popup_Window_Home(true); // Rock 20221018
-
-        card.abortFilePrintSoon(); // Let the main loop handle SD abort  //rock_20211020
-        checkkey = Back_Main;
-        if (HMI_flag.cloud_printing_flag)
-        {
-          HMI_flag.cloud_printing_flag = false;
-          SERIAL_ECHOLN("M79 S4");
         }
-      }
-      else
-      {
-        #if ENABLED(DWIN_RENDER_THUMBNAIL)
-        if(hasThumbnail){
+        else
+        {
           Goto_ThumbPrint();
-        } else {
-          Goto_PrintProcess();
-        }  
-        #else
-          Goto_PrintProcess();
-        #endif
-      }
+        }
+
+      #else
+        if (HMI_flag.select_flag)
+        {
+          if (HMI_flag.home_flag)
+            planner.synchronize();                 // Wait for planner moves to finish!
+          wait_for_heatup = wait_for_user = false; // Stop waiting for heating/user
+
+          HMI_flag.disallow_recovery_flag = true; // Data recovery is not allowed
+          print_job_timer.stop();
+          thermalManager.disable_all_heaters();
+          print_job_timer.reset();
+          thermalManager.setTargetHotend(0, 0);
+          thermalManager.setTargetBed(0);
+          thermalManager.zero_fan_speeds();
+
+          recovery.info.sd_printing_flag = false; // rock_20210820
+          // rock_20210830 The following sentence is absolutely not required. It will perform two main interface operations.
+          // dwin_abort_flag = true; //Reset feedrate, return to Home
+          #ifdef ACTION_ON_CANCEL
+            hostui.cancel();
+          #endif
+                  // BL24CXX::EEPROM_Reset(PLR_ADDR, (uint8_t*)&recovery.info, sizeof(recovery.info));//rock_20210812  清空 EEPROM
+          // checkkey = Popup_Window;
+          Popup_Window_Home(true); // Rock 20221018
+
+          card.abortFilePrintSoon(); // Let the main loop handle SD abort  //rock_20211020
+          checkkey = Back_Main;
+          if (HMI_flag.cloud_printing_flag)
+          {
+            HMI_flag.cloud_printing_flag = false;
+            SERIAL_ECHOLN("M79 S4");
+          }
+        }
+        else
+        {
+          #if ENABLED(DWIN_RENDER_THUMBNAIL)
+          if(hasThumbnail){
+            Goto_ThumbPrint();
+          } else {
+            Goto_PrintProcess();
+          }  
+          #else
+            Goto_PrintProcess();
+          #endif
+        }
+      #endif  
     }
     else if (select_print.now == 20)
     {
@@ -10229,10 +10249,9 @@ void HMI_ThumbPrint()
       Draw_ThumbTune_Menu();
       break;
     case 1: // Press Pause
-        if(HMI_flag.pause_flag){ //If already paused
-          SERIAL_ECHOLN("Thumb resume-job");
-          ICON_Pause();
-          HMI_flag.pause_flag = false;
+        if(isPaused){ //If already paused
+          SERIAL_ECHOLNPGM("M9000 resume-job");
+          isPaused = false;
           Goto_ThumbPrint();
 
         }else{
