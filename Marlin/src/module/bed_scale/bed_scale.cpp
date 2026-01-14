@@ -1,10 +1,10 @@
 #include "../../inc/MarlinConfig.h"
 #include "bed_scale.h"
-#include "../AutoOffset.h"  
+#include "../AutoOffset.h"
 
 #if ENABLED(BED_SCALE)
-ProbeAcq cell;
 
+ProbeAcq cell;
 
 BedScaleState bed_scale = {
   /*offset_raw*/ 0,
@@ -30,10 +30,8 @@ BedScaleState bed_scale = {
   /*p*/ { {0,0,false}, {0,0,false}, {0,0,false} }
 };
 
-// ----HX711 safety: if it is NOT ready, do not return garbage ----
-static int32_t hx711_read_once() {
-  const int32_t v = (int32_t)cell.hx711.getVal(false);
-  return v;
+static inline int32_t hx711_read_once() {
+  return (int32_t)cell.hx711.getVal(false);
 }
 
 void bed_scale_init() {
@@ -42,113 +40,152 @@ void bed_scale_init() {
   bed_scale.inited = true;
 }
 
+void bed_scale_enable(bool on) {
+  bed_scale_init();
+  bed_scale.enabled = on;
+}
+
+// Simple in-place sort for small N
+static void sort_i32(int32_t *a, uint8_t n) {
+  for (uint8_t i = 0; i < n; i++) {
+    for (uint8_t j = i + 1; j < n; j++) {
+      if (a[i] > a[j]) {
+        const int32_t t = a[i];
+        a[i] = a[j];
+        a[j] = t;
+      }
+    }
+  }
+}
+
+// Robust average: trimmed mean
+// - Collect N samples
+// - Sort
+// - Drop extremes (25% each side for N>=16, else 1 each side for N>=6)
+// - Average the middle
 int32_t bed_scale_read_raw_avg(uint8_t samples) {
   bed_scale_init();
 
-  int64_t acc = 0;
-  uint8_t got = 0;
+  if (samples < 1) samples = 1;
+  if (samples > 64) samples = 64;        // safety cap (RAM + time)
 
-  for (uint8_t i = 0; i < samples; i++) {
-    const int32_t v = hx711_read_once();
-    // HX711 read failed
-    acc += v;
-    got++;
+  int32_t buf[64];
+
+  for (uint8_t i = 0; i < samples; i++)
+    buf[i] = hx711_read_once();
+
+  sort_i32(buf, samples);
+
+  uint8_t trim = 0;
+  if (samples >= 16) trim = samples / 4;      // 25% each side
+  else if (samples >= 6) trim = 1;            // drop 1 low + 1 high
+
+  const uint8_t start = trim;
+  const uint8_t end   = samples - trim;       // exclusive
+  if (end <= start) {
+    // fallback to median
+    return buf[samples / 2];
   }
 
-  return got ? (int32_t)(acc / got) : INT32_MIN;
+  int64_t acc = 0;
+  uint8_t cnt = 0;
+  for (uint8_t i = start; i < end; i++) {
+    acc += buf[i];
+    cnt++;
+  }
+
+  return cnt ? (int32_t)(acc / cnt) : buf[samples / 2];
 }
 
- // raw - offset
 int32_t bed_scale_read_delta_avg(uint8_t samples) {
   const int32_t raw = bed_scale_read_raw_avg(samples);
-  if (raw == INT32_MIN) return INT32_MIN;
   return raw - bed_scale.offset_raw;
 }
 
-// TARE
 void bed_scale_tare(uint8_t samples) {
   bed_scale_init();
-  const int32_t raw = bed_scale_read_raw_avg(samples);
-  if (raw != INT32_MIN) {
-    bed_scale.offset_raw = raw;
-    bed_scale.have_last_g = false;
-  }
+
+  bed_scale.offset_raw = bed_scale_read_raw_avg(samples);
+
+  // reset history
+  bed_scale.have_last_g = false;
+  bed_scale.last_g_est = 0;
+  bed_scale.last_delta = 0;
+  bed_scale.drop_hits = 0;
+  bed_scale.cooldown = 0;
+  bed_scale.drop_tripped = false;
 }
 
-// Utility function to swap two calibration points
-static void swap_points(CalPoint &a, CalPoint &b) { CalPoint t = a; a = b; b = t; }
-
-// Sort calibration points by delta
-void bed_scale_sort_points() {
-  // sort by ascending delta
-  for (uint8_t i = 0; i < 3; i++)
-    for (uint8_t j = i + 1; j < 3; j++)
-      if (bed_scale.p[i].set && bed_scale.p[j].set && bed_scale.p[i].delta > bed_scale.p[j].delta)
-        swap_points(bed_scale.p[i], bed_scale.p[j]);
-}
-
-// Save point (idx = 1..3)
+// Save calibration point
 bool bed_scale_set_point(uint8_t idx, float grams, uint8_t samples) {
   if (idx < 1 || idx > 3) return false;
   if (grams <= 0) return false;
 
-  // Read delta
   const int32_t delta = bed_scale_read_delta_avg(samples);
-  if (delta == INT32_MIN) return false;
 
   CalPoint &cp = bed_scale.p[idx - 1];
   cp.delta = delta;
   cp.grams = grams;
   cp.set = true;
 
-  bed_scale_sort_points();
   return true;
 }
 
-static bool have_2_points(CalPoint &a, CalPoint &b) {
-  return a.set && b.set && a.delta != b.delta && a.grams > 0 && b.grams > 0;
-}
+// -------- Estimator (DESCENDING by delta) --------
+static inline bool bs_ok(const CalPoint &p) { return p.set && p.grams > 0; }
+static inline void bs_swap(CalPoint &a, CalPoint &b) { CalPoint t = a; a = b; b = t; }
 
-
-// Linear interpolation helper
-static float lerp(float x, float x0, float y0, float x1, float y1) {
+static inline float bs_lerp(const float x, const float x0, const float y0, const float x1, const float y1) {
+  if (x1 == x0) return y0;
   return y0 + (x - x0) * (y1 - y0) / (x1 - x0);
 }
 
-// Estimate grams using piecewise curve (requires at least 2 points)
-float bed_scale_estimate_grams_from_delta(int32_t delta) {
-  // We need at least 2 points
-  CalPoint &p0 = bed_scale.p[0];
-  CalPoint &p1 = bed_scale.p[1];
-  CalPoint &p2 = bed_scale.p[2];
+float bed_scale_estimate_grams_from_delta(const int32_t delta) {
 
-  // Case: only 2 points (p0 and p1)
-  if (have_2_points(p0, p1) && !p2.set) {
-    // clamp
-    if ((delta <= p0.delta && p0.delta <= p1.delta) || (delta >= p0.delta && p0.delta >= p1.delta))
-      return p0.grams;
-    if ((delta >= p1.delta && p0.delta <= p1.delta) || (delta <= p1.delta && p0.delta >= p1.delta))
-      return p1.grams;
-    return lerp((float)delta, (float)p0.delta, p0.grams, (float)p1.delta, p1.grams);
+  // Build compact list: anchor + valid points
+  CalPoint v[4];
+  v[0] = { 0, 0.0f, true };
+
+  uint8_t k = 1;
+  for (uint8_t i = 0; i < 3; i++)
+    if (bs_ok(bed_scale.p[i]))
+      v[k++] = bed_scale.p[i];
+
+  if (k < 2) return 0.0f;
+
+  // Sort by delta DESC: 0, -9k, -16k, -25k
+  for (uint8_t i = 0; i < k; i++)
+    for (uint8_t j = i + 1; j < k; j++)
+      if (v[i].delta < v[j].delta)
+        bs_swap(v[i], v[j]);
+
+  // Outlier guard (optional but safe): if delta magnitude is crazy, keep last
+  const int32_t most_negative = v[k - 1].delta;
+  if (most_negative != 0) {
+    const int32_t abs_heavy = ABS(most_negative);
+    const int32_t abs_d     = ABS(delta);
+    if (abs_d > abs_heavy * 8L) {
+      return bed_scale.last_g_est;
+    }
   }
 
-  // Case: 3 points (better)
-  if (have_2_points(p0, p1) && have_2_points(p1, p2)) {
+  // Light clamp
+  if (delta >= 0) return 0.0f;
 
-    // clamp at extremes
-    if (delta <= p0.delta) return p0.grams;
-    if (delta >= p2.delta) return p2.grams;
+  // Heavy clamp
+  if (delta <= v[k - 1].delta) return v[k - 1].grams;
 
-    // slice 1
-    if (delta <= p1.delta)
-      return lerp((float)delta, (float)p0.delta, p0.grams, (float)p1.delta, p1.grams);
+  // Interpolate between segment where: a.delta >= delta >= b.delta
+  for (uint8_t i = 0; i < k - 1; i++) {
+    const CalPoint &a = v[i];
+    const CalPoint &b = v[i + 1];
 
-    // slice 2
-    return lerp((float)delta, (float)p1.delta, p1.grams, (float)p2.delta, p2.grams);
+    if (delta <= a.delta && delta >= b.delta) {
+      return bs_lerp((float)delta, (float)a.delta, a.grams, (float)b.delta, b.grams);
+    }
   }
 
-  // If there are not enough valid points
-  return 0;
+  return 0.0f;
 }
 
-#endif
+#endif // ENABLED(BED_SCALE)

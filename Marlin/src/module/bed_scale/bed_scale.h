@@ -37,6 +37,7 @@ extern BedScaleState bed_scale;
 
 void bed_scale_init();
 int32_t bed_scale_read_raw_avg(uint8_t samples = 8);
+int32_t bed_scale_read_delta_avg(uint8_t samples);
 void bed_scale_tare(uint8_t samples = 16);
 
 bool bed_scale_set_point(uint8_t idx, float grams, uint8_t samples = 16);
