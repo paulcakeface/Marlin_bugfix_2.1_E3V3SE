@@ -181,6 +181,8 @@ void HostUI::action(FSTR_P const fstr, const bool eol) {
   void HostUI::handle_response(const uint8_t response) {
     const PromptReason hpr = host_prompt_reason;
     host_prompt_reason = PROMPT_NOT_DEFINED;  // Reset now ahead of logic
+    // SERIAL_ECHOLNPGM("=====++++>> Host Response: ", hpr);
+    // SERIAL_ECHOLNPGM("=====++++>> Host Response val: ", response);
     switch (hpr) {
       case PROMPT_FILAMENT_RUNOUT:
         switch (response) {

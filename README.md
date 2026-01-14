@@ -27,6 +27,10 @@ I have ported many of the features and fixes from the community stock version in
   - [Leveling Menu](#-leveling-menu)
   - [Skew Correction Menu](#-skew-correction-menu)
 - [Ported Features](#ported-features)
+  - [Filament Runout Sensor](#-filament-runout-sensor)
+  - [Fixed M600 for Hosts Commands](#-fixed-m600-for-host-commands)
+  - [Host Commands Support](#-host-commands-support)
+  - [Eduard's Compact Grid](#-compact-6x6-grid)
   - [Input Shaping](#-input-shaping)
   - [LCD Dimm & Brightness Menu](#-lcd-dimm--brightness-menu)
   - [Mute Buzzer](#-mute-buzzer)
@@ -37,6 +41,8 @@ I have ported many of the features and fixes from the community stock version in
   - [Linear Advance](#-linear-advance)
   - [Increased Temperature for BED and Noozle](#-increased-temperature-for-bed-and-noozle)
 - [Explore New Features](#explore-new-features)
+  - [FT_Motion](#-ft_motion-which-enables-different-filters-of-shapers-for-the-machine-like-klipper-does)
+  - [Axis Twist Compensation](#-axis-twist-compensation)
 
 
 ## Modular
@@ -72,7 +78,7 @@ The below Table gives you the branches for specific use, only SD card support or
 This branch is focused to work only printing from SD Card the host support is limited.
 
 - Branch: [**for_E3V3SE**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_E3V3SE)
-  - Release tag: [krasnaya_3](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/krasnaya_3)
+  - Release tag: [krasnaya_4](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Krasnaya_4)
 
 - The Binary provided will contain just the following features:
 
@@ -84,6 +90,9 @@ This branch is focused to work only printing from SD Card the host support is li
   * [Mcodes for LCD Dimm & Brightness](#-lcd-dimm-&-brightness-menu).
   * [Mute or Unmute Buzzer](#-mute-buzzer).
   * [CRTouch test functions](#-crtouch-test-functions).
+  * [Eduard's Compact Grid](#-compact-6x6-grid)
+  * [Filament Runout Sensor](#-filament-runout-sensor)
+  * [Fixed M600](#-fixed-m600-for-hosts-commands)
 
   With a Memory cost of:
 
@@ -100,7 +109,7 @@ Flash: [====      ]  44.8% (used 221924 bytes from 495616 bytes)
 This branch is focused to work only printing from SD Card the host support is limited.
 
 - Branch: [**for_STM32F401**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_STM32F401)
-  - Release tag: [krasnaya_3_F401](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Krasnaya_3_F401)
+  - Release tag: [krasnaya_4_F401](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Krasnaya_4_F401)
 
 - The Binary provided will contain just the following features:
 
@@ -112,6 +121,9 @@ This branch is focused to work only printing from SD Card the host support is li
   * [Mcodes for LCD Dimm & Brightness](#-lcd-dimm-&-brightness-menu).
   * [Mute or Unmute Buzzer](#-mute-buzzer).
   * [CRTouch test functions](#-crtouch-test-functions).
+  * [Eduard's Compact Grid](#-compact-6x6-grid)
+  * [Filament Runout Sensor](#-filament-runout-sensor)
+  * [Fixed M600](#-fixed-m600-for-hosts-commands)
 
   With a Memory cost of:
 
@@ -128,8 +140,8 @@ Flash: [====      ]  42.8% (used 220244 bytes from 514288 bytes)
 #### OctoPrint (or Serial Host)
 This branch is focused to work with host support like Octoprint and has features to support serial commands.
 
-- Branch: **for_Octoprint**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_Octoprint)
-  - Release tag: [Belaya_2](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_2)
+- Branch: [**for_Octoprint**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_Octoprint)
+  - Release tag: [Belaya_4](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_4)
 
 - The Binary provided will contain just the following features:
 
@@ -142,6 +154,10 @@ This branch is focused to work with host support like Octoprint and has features
   * [Mcodes for LCD Dimm & Brightness](#-lcd-dimm-&-brightness-menu).
   * [Mute or Unmute Buzzer](#-mute-buzzer).
   * [CRTouch test functions](#-crtouch-test-functions).
+  * [Eduard's Compact Grid](#-compact-6x6-grid)
+  * [Filament Runout Sensor](#-filament-runout-sensor)
+  * [Fixed M600](#-fixed-m600-for-hosts-commands)
+  * [Host Command support](#-host-commands-support)
   * Baud rate of 115200.
 
 With a Memory cost of:
@@ -160,7 +176,7 @@ Flash: [=====     ]  47.9% (used 237512 bytes from 495616 bytes)
 This branch is focused to work with host support like Octoprint and has features to support serial commands.
 
 - Branch: [**for_Octoprint_F401**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_Octoprint_F401)
-  - Release tag: [Belaya_2_F401](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_2_F401)
+  - Release tag: [Belaya_4_F401](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_4_F401)
 
 - The Binary provided will contain just the following features:
 
@@ -173,6 +189,10 @@ This branch is focused to work with host support like Octoprint and has features
   * [Mcodes for LCD Dimm & Brightness](#-lcd-dimm-&-brightness-menu).
   * [Mute or Unmute Buzzer](#-mute-buzzer).
   * [CRTouch test functions](#-crtouch-test-functions).
+  * [Eduard's Compact Grid](#-compact-6x6-grid)
+  * [Filament Runout Sensor](#-filament-runout-sensor)
+  * [Fixed M600](#-fixed-m600-for-hosts-commands)
+  * [Host Command support](#-host-commands-support)
   * Baud rate of 115200.
 
 With a Memory cost of:
@@ -203,10 +223,16 @@ It is recommended to create your own Binary with your desired features, using ei
 
 > [!IMPORTANT]
 > 
-> For this version is important that you check the e-Steps of your extruder before start a print job.
-> in my case old firmware had **424.9** as value for a normal extrusion but for Marlin 2.1 needed to adjust to **715.12**
+> 1) For this version is important that you check the e-Steps of your extruder before start a print job.
+> in my case old firmware had **424.9** as value for a normal extrusion but for Marlin 2.1 needed to adjust to **715.12** So please calibrate it after the Z offset calculation finished.
 >
-> So please calibrate it after the Z offset calculation finished.
+>
+> 2) Also calibrate the PID for both Nozzle and Bed, go to Control->Temperature->Auto PID.
+> Select the usual temperature of your jobs and start from the LCD menu the test. Auto PID is important to avoid the temperature fluctuation/bouncing.
+>
+> 3) Take a look on the Wiki and the Issues pages, most probably your question has been answered.
+>
+>
 
 
 
@@ -317,6 +343,16 @@ We have created a Menu to set and calculate the bed Skew of your printer.
 
 
 ## Ported Features.
+
+### * Filament Runout Sensor
+Activated the support for the sensor.
+  
+### * Fixed M600 for Hosts Commands
+Fixed the M600 routine to work with Host or Knob.
+If working from Host you the Knob will not work.
+
+### * Host Commands Support
+Enabled Host command support along the Fix of [#39](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/issues/39) usage of `M876` even while Meatpack is enabled.
 
 
 ### * Compact 6x6 GRID

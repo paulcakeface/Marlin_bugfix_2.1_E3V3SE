@@ -793,6 +793,9 @@ private:
       static void M876();
     #endif
   #endif
+  #if ENABLED(HOST_PROMPT_SUPPORT)
+      static void M876();
+  #endif
 
   static void M110();
   static void M111();
@@ -1388,6 +1391,13 @@ private:
   // #if ENABLED(USE_AUTOZ_TOOL_2)
     static void M8015();
   // #endif
+  
+  #if ENABLED(OCTOPRINT_PLUGIN)
+    static void M9000();
+    static void M9001();
+  #endif  
+
+
 
   static void T(const int8_t tool_index) IF_DISABLED(HAS_TOOLCHANGE, { UNUSED(tool_index); });
 

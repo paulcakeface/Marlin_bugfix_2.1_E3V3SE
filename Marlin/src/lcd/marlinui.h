@@ -331,11 +331,15 @@ public:
 
   #if HAS_PRINT_PROGRESS
     #if ENABLED(DWIN_RENDER_THUMBNAIL)
-      static uint16_t current_layer, total_layers;
+      static uint16_t current_layer, total_layers, print_time;
       FORCE_INLINE static void set_total_layers(const uint16_t layer) { total_layers = layer; }
       FORCE_INLINE static uint16_t get_total_layer_count() { return total_layers; }
       FORCE_INLINE static void set_current_layer(const uint16_t layer) { current_layer = layer; }
       FORCE_INLINE static uint16_t get_current_layer() { return current_layer; }
+      #if ENABLED(OCTOPRINT_PLUGIN)
+        FORCE_INLINE static void set_print_time(const uint16_t time) { print_time = time; }
+        FORCE_INLINE static uint16_t get_print_time() { return print_time; }
+      #endif  
     #endif
     
     #if ENABLED(SET_PROGRESS_PERCENT)

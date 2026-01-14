@@ -46,6 +46,8 @@ enum MarlinDebugFlags : uint8_t {
 extern uint8_t marlin_debug_flags;
 #define DEBUGGING(F) (marlin_debug_flags & (MARLIN_DEBUG_## F))
 
+extern bool serial_connection_active; // Octoprint flag connection status
+
 //
 // Serial redirection
 //
