@@ -3,9 +3,32 @@
 #include "../AutoOffset.h"  
 
 #if ENABLED(BED_SCALE)
-
 ProbeAcq cell;
-BedScaleState bed_scale;
+
+
+BedScaleState bed_scale = {
+  /*offset_raw*/ 0,
+  /*enabled*/ false,
+  /*inited*/ false,
+
+  // drop defaults (ajustables)
+  /*drop_threshold_g*/ 25.0f,
+  /*drop_confirm_n*/ 2,
+  /*drop_ignore_layers*/ 3,
+  /*drop_cooldown_layers*/ 20,
+
+  /*last_layer*/ 0,
+  /*last_g_est*/ 0,
+  /*have_last_g*/ false,
+  /*last_delta*/ 0,
+
+  /*drop_hits*/ 0,
+  /*cooldown*/ 0,
+  /*drop_tripped*/ false,
+
+  // (delta, grams, set)
+  /*p*/ { {0,0,false}, {0,0,false}, {0,0,false} }
+};
 
 // ----HX711 safety: if it is NOT ready, do not return garbage ----
 static int32_t hx711_read_once() {
@@ -48,7 +71,7 @@ void bed_scale_tare(uint8_t samples) {
   const int32_t raw = bed_scale_read_raw_avg(samples);
   if (raw != INT32_MIN) {
     bed_scale.offset_raw = raw;
-    bed_scale.have_last = false;
+    bed_scale.have_last_g = false;
   }
 }
 

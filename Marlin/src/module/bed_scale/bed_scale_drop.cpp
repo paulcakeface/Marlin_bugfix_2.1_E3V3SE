@@ -6,7 +6,11 @@
 #include "../../gcode/queue.h"
 
 static void bed_scale_request_pause() {
-    
+    #if ENABLED(OCTOPRINT_PLUGIN)
+      SERIAL_ECHOLNPGM("M9000 pause-job-bs"); // Octoprint Plugin pause command
+    #else
+      queue.inject_P(PSTR("M25")); // Pause SD print
+    #endif
 }
 
 bool bed_scale_check_drop_and_pause(const uint16_t layer, const float g_est) {

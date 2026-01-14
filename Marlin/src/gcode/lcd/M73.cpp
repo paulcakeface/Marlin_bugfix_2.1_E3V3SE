@@ -83,10 +83,10 @@ void GcodeSuite::M73() {
           const float g_est = bed_scale_estimate_grams_from_delta(delta);
 
           int32_t ddelta = 0;
-          if (bed_scale.have_last) ddelta = delta - bed_scale.last_delta;
+          if (bed_scale.have_last_g) ddelta = delta - bed_scale.last_delta;
 
           bed_scale.last_delta = delta;
-          bed_scale.have_last = true;
+          bed_scale.have_last_g = true;
 
           SERIAL_ECHOPGM("BS L");
           SERIAL_ECHO(layer);
@@ -97,7 +97,10 @@ void GcodeSuite::M73() {
           SERIAL_ECHOPGM(" g_est=");
           SERIAL_ECHOLN(g_est, 2);
 
-          bed_scale_check_drop_and_pause((uint16_t)layer, g_est);
+          const bool dropped = bed_scale_check_drop_and_pause(layer, g_est);
+          if (dropped) {
+            SERIAL_ECHOLNPGM("BS Object drop detected - Print Paused");
+          }  
         }
       #endif
     }
