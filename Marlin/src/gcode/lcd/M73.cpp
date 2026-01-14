@@ -29,6 +29,7 @@
 #include "../../sd/cardreader.h"
 #include "../../libs/numtostr.h"
 #include "../../lcd/e3v2/creality/dwin.h"
+#include "../../module/bed_scale/bed_scale.h"
 
 /**
  * M73: Set Print Progress
@@ -72,7 +73,34 @@ void GcodeSuite::M73() {
   #endif
 
   #if ENABLED(DWIN_RENDER_THUMBNAIL)
-    if(parser.seen('L')) ui.set_current_layer(parser.value_int()); 
+    if(parser.seen('L') ){
+       const int32_t layer = parser.value_int();
+
+      #if ENABLED(BED_SCALE)
+        const int32_t raw = bed_scale_read_raw_avg(8);
+        if (raw != INT32_MIN) {
+          const int32_t delta = raw - bed_scale.offset_raw;
+          const float g_est = bed_scale_estimate_grams_from_delta(delta);
+
+          int32_t ddelta = 0;
+          if (bed_scale.have_last) ddelta = delta - bed_scale.last_delta;
+
+          bed_scale.last_delta = delta;
+          bed_scale.have_last = true;
+
+          SERIAL_ECHOPGM("BS L");
+          SERIAL_ECHO(layer);
+          SERIAL_ECHOPGM(" delta=");
+          SERIAL_ECHO(delta);
+          SERIAL_ECHOPGM(" ddelta=");
+          SERIAL_ECHO(ddelta);
+          SERIAL_ECHOPGM(" g_est=");
+          SERIAL_ECHOLN(g_est, 2);
+
+          bed_scale_check_drop_and_pause((uint16_t)layer, g_est);
+        }
+      #endif
+    }
   #endif
 
   #if ENABLED(M73_REPORT)
