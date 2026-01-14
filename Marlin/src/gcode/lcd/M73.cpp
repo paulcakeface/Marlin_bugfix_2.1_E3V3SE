@@ -75,6 +75,7 @@ void GcodeSuite::M73() {
   #if ENABLED(DWIN_RENDER_THUMBNAIL)
     if(parser.seen('L') ){
        const int32_t layer = parser.value_int();
+       ui.set_current_layer(layer);
 
       #if ENABLED(BED_SCALE)
         const int32_t raw = bed_scale_read_raw_avg(8);
