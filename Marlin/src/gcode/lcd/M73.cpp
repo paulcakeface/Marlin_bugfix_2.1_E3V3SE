@@ -89,7 +89,7 @@ void GcodeSuite::M73() {
           bed_scale.last_delta = delta;
           bed_scale.have_last_g = true;
 
-          SERIAL_ECHOPGM("BS L");
+          SERIAL_ECHOPGM("BedScale L");
           SERIAL_ECHO(layer);
           SERIAL_ECHOPGM(" delta=");
           SERIAL_ECHO(delta);
@@ -100,7 +100,7 @@ void GcodeSuite::M73() {
 
           const bool dropped = bed_scale_check_drop_and_pause(layer, g_est);
           if (dropped) {
-            SERIAL_ECHOLNPGM("BS Object drop detected - Print Paused");
+            SERIAL_ECHOLNPGM("BedScale Object drop detected - Print Paused");
           }  
         }
       #endif

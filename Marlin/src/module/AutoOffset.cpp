@@ -63,8 +63,16 @@ int HX711::getVal(bool isShowMsg)
 
   GPIO_SET_VAL(clkPin, 0);
 
-  while (GPIO_GET_VAL(sdoPin) == 1 && (GET_TICK_MS() - ms <= 20)) // The sampling rate is 80 hz (12ms period), and the maximum delay here is 20ms.
+  while (GPIO_GET_VAL(sdoPin) == 1 && (GET_TICK_MS() - ms <= 20)) // 80Hz => ~12ms, damos hasta 20ms
     MARLIN_CORE_IDLE();
+
+  // Does this avoid reading if not ready??
+
+  if (GPIO_GET_VAL(sdoPin) == 1) {
+    // Ensure clock is low??
+    GPIO_SET_VAL(clkPin, 0);
+    return (int)INT32_MIN;
+  }
 
   DISABLE_ALL_ISR();
   for (int i = 0; i < 24; i++)
@@ -76,11 +84,10 @@ int HX711::getVal(bool isShowMsg)
   }
 
   GPIO_SET_VAL(clkPin, 1);
-  count |= ((count & 0x00800000) != 0 ? 0xFF000000 : 0); // 24-bit signed, converted to 32-bit signed
+  count |= ((count & 0x00800000) != 0 ? 0xFF000000 : 0); // 24-bit signed -> 32-bit signed
   GPIO_SET_VAL(clkPin, 0);
   ENABLE_ALL_ISR();
 
-  // CHECK_AND_RUN(isShowMsg, {PRINTF("T=%08d, S=%08d\n", (int)(GET_TICK_MS() -lastTickMs), (int)count);lastTickMs = GET_TICK_MS(); });
   if (isShowMsg)
   {
     lastTickMs = GET_TICK_MS();
@@ -88,6 +95,7 @@ int HX711::getVal(bool isShowMsg)
   }
   return count;
 }
+
 
 /*
 *Function Name: hFilter(double *vals, int count, double cutFrqHz, double acqFrqHz)

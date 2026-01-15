@@ -14,60 +14,77 @@ static void bed_scale_request_pause() {
 }
 
 bool bed_scale_check_drop_and_pause(const uint16_t layer, const float g_est) {
-  // Debe estar calibrado y tener un valor previo
+
+  // We need history
   if (!bed_scale.have_last_g) {
     bed_scale.last_g_est = g_est;
     bed_scale.have_last_g = true;
     bed_scale.last_layer = layer;
+
+    // init window
+    bed_scale.window_g_ref = g_est;
+    bed_scale.window_layer_ref = layer;
     return false;
   }
 
-  // Ignora primeras capas
+  // Ignore first layers
   if (layer <= bed_scale.drop_ignore_layers) {
     bed_scale.last_g_est = g_est;
     bed_scale.last_layer = layer;
     bed_scale.drop_hits = 0;
+
+    bed_scale.window_g_ref = g_est;
+    bed_scale.window_layer_ref = layer;
     return false;
   }
 
-  // Cooldown para evitar spam
+  // Cooldown
   if (bed_scale.cooldown) {
     bed_scale.cooldown--;
     bed_scale.last_g_est = g_est;
     bed_scale.last_layer = layer;
     bed_scale.drop_hits = 0;
+
+    // refresh window also to avoid triggering when exiting cooldown
+    bed_scale.window_g_ref = g_est;
+    bed_scale.window_layer_ref = layer;
     return false;
   }
 
-  // Si ya disparó, no repitas
-  if (bed_scale.drop_tripped) return true;
+  // Instant drop
+  const float drop_inst = bed_scale.last_g_est - g_est;
 
-  // Caída entre capas
-  const float drop_g = bed_scale.last_g_est - g_est;  // positiva = bajó el "peso visto"
-
-  // Heurística: caída fuerte
-  if (drop_g >= bed_scale.drop_threshold_g) {
-    bed_scale.drop_hits++;
+  // Accumulated drop in window
+  // if N layers have passed since the reference, move the window
+  if ((uint16_t)(layer - bed_scale.window_layer_ref) >= bed_scale.drop_window_layers) {
+    bed_scale.window_g_ref = bed_scale.last_g_est;          
+    bed_scale.window_layer_ref = bed_scale.last_layer;      
   }
-  else {
-    // Si no se confirma, resetea hits (o baja 1 si quieres más suave)
-    bed_scale.drop_hits = 0;
-  }
+  const float drop_win = bed_scale.window_g_ref - g_est;
 
-  // Actualiza memoria
+  // Decide if it counts as a hit
+  const bool hit = (drop_inst >= bed_scale.drop_threshold_g) || (drop_win >= bed_scale.drop_threshold_g);
+
+  if (hit) bed_scale.drop_hits++;
+  else     bed_scale.drop_hits = 0;
+
+  // Update memory
   bed_scale.last_g_est = g_est;
   bed_scale.last_layer = layer;
 
-  // Confirmación N veces seguidas
+  // Confirmation
   if (bed_scale.drop_hits >= bed_scale.drop_confirm_n) {
     bed_scale.drop_tripped = true;
     bed_scale.cooldown = bed_scale.drop_cooldown_layers;
 
-    SERIAL_ECHOPGM("BS DROP DETECTED on layer ");
+    SERIAL_ECHOPGM("BedScale DROP DETECTED on layer ");
     SERIAL_ECHO((int)layer);
-    SERIAL_ECHOPGM(" drop_threshold_g=");
-    SERIAL_ECHO(bed_scale.drop_threshold_g, 1);
-    SERIAL_ECHOLNPGM(" -> PAUSE");
+    SERIAL_ECHOPGM(" drop_inst=");
+    SERIAL_ECHO(drop_inst, 2);
+    SERIAL_ECHOPGM(" drop_win=");
+    SERIAL_ECHO(drop_win, 2);
+    SERIAL_ECHOPGM(" thr=");
+    SERIAL_ECHOLN(bed_scale.drop_threshold_g, 2);
 
     bed_scale_request_pause();
     return true;
@@ -75,5 +92,6 @@ bool bed_scale_check_drop_and_pause(const uint16_t layer, const float g_est) {
 
   return false;
 }
+
 
 #endif

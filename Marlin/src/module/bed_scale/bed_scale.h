@@ -29,7 +29,11 @@ struct BedScaleState {
   uint16_t cooldown;
   bool drop_tripped;
 
-  // 3 puntos
+  float window_g_ref;
+  uint16_t window_layer_ref;
+  uint8_t drop_window_layers;
+
+  // 3 points calibration
   CalPoint p[3];
 };
 

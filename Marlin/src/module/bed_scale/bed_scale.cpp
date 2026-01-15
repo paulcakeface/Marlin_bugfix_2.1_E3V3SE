@@ -12,8 +12,8 @@ BedScaleState bed_scale = {
   /*inited*/ false,
 
   // drop defaults (ajustables)
-  /*drop_threshold_g*/ 25.0f,
-  /*drop_confirm_n*/ 2,
+  /*drop_threshold_g*/ 20.0f,
+  /*drop_confirm_n*/ 1,
   /*drop_ignore_layers*/ 3,
   /*drop_cooldown_layers*/ 20,
 
@@ -25,6 +25,10 @@ BedScaleState bed_scale = {
   /*drop_hits*/ 0,
   /*cooldown*/ 0,
   /*drop_tripped*/ false,
+
+  /*window_g_ref*/ 0.0f,
+  /*window_layer_ref*/ 0,
+  /*drop_window_layers*/ 2,
 
   // (delta, grams, set)
   /*p*/ { {0,0,false}, {0,0,false}, {0,0,false} }
@@ -66,48 +70,40 @@ static void sort_i32(int32_t *a, uint8_t n) {
 int32_t bed_scale_read_raw_avg(uint8_t samples) {
   bed_scale_init();
 
-  if (samples < 1) samples = 1;
-  if (samples > 64) samples = 64;        // safety cap (RAM + time)
-
-  int32_t buf[64];
-
-  for (uint8_t i = 0; i < samples; i++)
-    buf[i] = hx711_read_once();
-
-  sort_i32(buf, samples);
-
-  uint8_t trim = 0;
-  if (samples >= 16) trim = samples / 4;      // 25% each side
-  else if (samples >= 6) trim = 1;            // drop 1 low + 1 high
-
-  const uint8_t start = trim;
-  const uint8_t end   = samples - trim;       // exclusive
-  if (end <= start) {
-    // fallback to median
-    return buf[samples / 2];
-  }
-
   int64_t acc = 0;
-  uint8_t cnt = 0;
-  for (uint8_t i = start; i < end; i++) {
-    acc += buf[i];
-    cnt++;
+  uint8_t got = 0;
+
+  for (uint8_t i = 0; i < samples; i++) {
+    const int32_t v = (int32_t)cell.hx711.getVal(false);
+    if (v == INT32_MIN) continue;  // discard invalid
+    acc += v;
+    got++;
   }
 
-  return cnt ? (int32_t)(acc / cnt) : buf[samples / 2];
+  // if no valid readings, report invalid
+  if (!got) return INT32_MIN;
+
+  return (int32_t)(acc / got);
 }
 
 int32_t bed_scale_read_delta_avg(uint8_t samples) {
   const int32_t raw = bed_scale_read_raw_avg(samples);
+  if (raw == INT32_MIN) return INT32_MIN;
   return raw - bed_scale.offset_raw;
 }
+
 
 void bed_scale_tare(uint8_t samples) {
   bed_scale_init();
 
-  bed_scale.offset_raw = bed_scale_read_raw_avg(samples);
+  const int32_t raw = bed_scale_read_raw_avg(samples);
+  if (raw == INT32_MIN) {
+    SERIAL_ECHOLNPGM("BS TARE failed (invalid raw)");
+    return;
+  }
 
-  // reset history
+  bed_scale.offset_raw = raw;
+
   bed_scale.have_last_g = false;
   bed_scale.last_g_est = 0;
   bed_scale.last_delta = 0;
@@ -116,12 +112,14 @@ void bed_scale_tare(uint8_t samples) {
   bed_scale.drop_tripped = false;
 }
 
+
 // Save calibration point
 bool bed_scale_set_point(uint8_t idx, float grams, uint8_t samples) {
   if (idx < 1 || idx > 3) return false;
   if (grams <= 0) return false;
 
   const int32_t delta = bed_scale_read_delta_avg(samples);
+  if (delta == INT32_MIN) return false;
 
   CalPoint &cp = bed_scale.p[idx - 1];
   cp.delta = delta;
@@ -130,6 +128,7 @@ bool bed_scale_set_point(uint8_t idx, float grams, uint8_t samples) {
 
   return true;
 }
+
 
 // -------- Estimator (DESCENDING by delta) --------
 static inline bool bs_ok(const CalPoint &p) { return p.set && p.grams > 0; }
