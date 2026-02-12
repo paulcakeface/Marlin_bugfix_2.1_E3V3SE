@@ -4,49 +4,50 @@
 #if ENABLED(BED_SCALE)
 
 struct CalPoint {
-  int32_t delta;
-  float grams;
-  bool set;
+  int32_t delta;   // raw - offset_raw
+  float   grams;   // grams at that delta
+  bool    set;
 };
 
 struct BedScaleState {
+  // Core
   int32_t offset_raw;
   bool enabled;
   bool inited;
 
-  // --- Drop detection ---
-  float drop_threshold_g;
-  uint8_t drop_confirm_n;
-  uint16_t drop_ignore_layers;
-  uint16_t drop_cooldown_layers;
-
-  uint16_t last_layer;
-  float last_g_est;
-  bool have_last_g;
-  int32_t last_delta;
-
-  uint8_t drop_hits;
-  uint16_t cooldown;
-  bool drop_tripped;
-
-  float window_g_ref;
-  uint16_t window_layer_ref;
-  uint8_t drop_window_layers;
-
-  // 3 points calibration
+  // Calibration points (3)
   CalPoint p[3];
+
+  // Drop detection (minimal)
+  float    drop_threshold_g;   // grams
+  uint8_t  drop_confirm_n;     // consecutive layers needed
+  uint16_t drop_ignore_layers; // ignore first N layers
+
+  // History
+  uint16_t last_layer;
+  float    last_g_est;
+  bool     have_last_g;
+  uint8_t  drop_hits;
 };
 
 extern BedScaleState bed_scale;
 
+// Init / enable
 void bed_scale_init();
-int32_t bed_scale_read_raw_avg(uint8_t samples = 8);
-int32_t bed_scale_read_delta_avg(uint8_t samples);
-void bed_scale_tare(uint8_t samples = 16);
+void bed_scale_enable(bool on);
 
-bool bed_scale_set_point(uint8_t idx, float grams, uint8_t samples = 16);
-float bed_scale_estimate_grams_from_delta(int32_t delta);
+// Read (filtered via AutoOffset pipeline)
+int32_t bed_scale_read_raw_avg(uint8_t samples = 1);
+int32_t bed_scale_read_delta_avg(uint8_t samples = 1);
 
+// Tare / calibration points
+void bed_scale_tare(uint8_t samples = 1);
+bool bed_scale_set_point(uint8_t idx, float grams, uint8_t samples = 1);
+
+// Estimator
+float bed_scale_estimate_grams_from_delta(const int32_t delta);
+
+// Drop logic (calls pause request internally)
 bool bed_scale_check_drop_and_pause(const uint16_t layer, const float g_est);
 
-#endif
+#endif // ENABLED(BED_SCALE)

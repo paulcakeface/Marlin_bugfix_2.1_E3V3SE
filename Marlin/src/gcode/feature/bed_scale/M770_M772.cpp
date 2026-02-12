@@ -24,19 +24,14 @@
 */
 
 // M770: report + curve estimation
-// M770: report + curve estimation
 void GcodeSuite::M770() {
-  const uint8_t samples = (uint8_t)parser.byteval('A', 8);
+  const uint8_t samples = (uint8_t)parser.byteval('A', 1);
 
   const int32_t raw = bed_scale_read_raw_avg(samples);
   if (raw == INT32_MIN) { SERIAL_ECHOLNPGM("BS raw=INVALID"); return; }
 
   const int32_t delta = raw - bed_scale.offset_raw;
   const float g = bed_scale_estimate_grams_from_delta(delta);
-
-  bed_scale.last_g_est = g;
-  bed_scale.have_last_g = true;
-  bed_scale.last_delta = delta;
 
   SERIAL_ECHOPGM("BS raw=");
   SERIAL_ECHO(raw);
