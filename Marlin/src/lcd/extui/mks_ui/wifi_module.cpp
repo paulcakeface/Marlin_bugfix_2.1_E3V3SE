@@ -1069,10 +1069,10 @@ static void wifi_gcode_exec(uint8_t * const cmd_line) {
                 }
                 card.openFileRead(cur_name);
                 if (card.isFileOpen()) {
-                  //saved_feedrate_percentage = feedrate_percentage;
-                  feedrate_percentage = 100;
+                  //saved_feedrate_percentage = motion.feedrate_percentage;
+                  motion.feedrate_percentage = 100;
                   TERN_(HAS_EXTRUDERS, planner.set_flow(0, 100));
-                  TERN_(HAS_MULTI_EXTRUDER, planner.set_flow(1, 100));
+                  E_TERN_(planner.set_flow(1, 100));
                   card.startOrResumeFilePrinting();
                   TERN_(POWER_LOSS_RECOVERY, recovery.prepare());
                   once_flag = false;
@@ -2081,7 +2081,7 @@ void get_wifi_commands() {
         while (*command == ' ') command++; // skip any leading spaces
 
         // Movement commands alert when stopped
-        if (IsStopped()) {
+        if (marlin.isStopped()) {
           char* gpos = strchr(command, 'G');
           if (gpos) {
             switch (strtol(gpos + 1, nullptr, 10)) {
@@ -2097,12 +2097,9 @@ void get_wifi_commands() {
 
         #if DISABLED(EMERGENCY_PARSER)
           // Process critical commands early
-          if (strcmp_P(command, PSTR("M108")) == 0) {
-            wait_for_heatup = false;
-            TERN_(HAS_MARLINUI_MENU, wait_for_user = false);
-          }
-          if (strcmp_P(command, PSTR("M112")) == 0) kill(FPSTR(M112_KILL_STR), nullptr, true);
-          if (strcmp_P(command, PSTR("M410")) == 0) quickstop_stepper();
+          if (strcmp_P(command, PSTR("M108")) == 0) marlin.end_waiting();
+          if (strcmp_P(command, PSTR("M112")) == 0) marlin.kill(FPSTR(M112_KILL_STR), nullptr, true);
+          if (strcmp_P(command, PSTR("M410")) == 0) motion.quickstop_stepper();
         #endif
 
         // Add the command to the queue

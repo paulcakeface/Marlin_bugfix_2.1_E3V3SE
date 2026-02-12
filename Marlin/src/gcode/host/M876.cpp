@@ -24,9 +24,11 @@
 
 #if ENABLED(HOST_PROMPT_SUPPORT)
 
+#if ENABLED(EMERGENCY_PARSER)
+  #include "../../feature/e_parser.h"
+#endif
 #include "../../feature/host_actions.h"
 #include "../gcode.h"
-#include "../../MarlinCore.h"
 
 /**
  * M876: Handle Prompt Response

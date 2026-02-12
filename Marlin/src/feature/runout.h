@@ -31,7 +31,6 @@
 #include "../module/stepper.h" // for block_t
 #include "../gcode/queue.h"
 #include "pause.h" // for did_pause_print
-#include "../MarlinCore.h" // for printingIsActive()
 
 #include "../inc/MarlinConfig.h"
 
@@ -64,7 +63,7 @@ typedef Flags<
         > runout_flags_t;
 
 void event_filament_runout(const uint8_t extruder);
-inline bool should_monitor_runout() { return did_pause_print || printingIsActive(); }
+inline bool should_monitor_runout() { return did_pause_print || marlin.printingIsActive(); }
 
 template<class RESPONSE_T, class SENSOR_T>
 class TFilamentMonitor;
@@ -155,12 +154,12 @@ class TFilamentMonitor : public FilamentMonitorBase {
           uint8_t extruder = 0;
           if (ran_out) while (!runout_flags.test(extruder)) extruder++;
         #else
-          const bool ran_out = runout_flags[active_extruder];  // suppress non active extruders
-          uint8_t extruder = active_extruder;
+          const bool ran_out = runout_flags[motion.extruder];  // suppress non active extruders
+          uint8_t extruder = motion.extruder;
         #endif
       #else
         const bool ran_out = bool(runout_flags);
-        uint8_t extruder = active_extruder;
+        uint8_t extruder = motion.extruder;
       #endif
 
       if (!ran_out) return;
