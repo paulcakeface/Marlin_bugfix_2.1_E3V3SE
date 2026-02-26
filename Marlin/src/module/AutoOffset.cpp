@@ -237,7 +237,7 @@ float ProbeAcq::probeTimes(int max_times, xyz_float_t rdy_pos, float step_mm, fl
 // void ProbeAcq::shakeZAxis(int times)
 // {
 //   // Version compatible with 2.1.x using scheduler (not raw STEP)
-//   const float z0 = current_position[Z_AXIS];
+//   const float z0 = motion.position[Z_AXIS];
 //   const float amp = 0.06f; // 0.06 mm up/down per cycle
 //   FOR_LOOP_TIMES(i, 0, times, {
 //     DO_BLOCKING_MOVE_TO_Z(z0 + amp, 60);
@@ -245,7 +245,7 @@ float ProbeAcq::probeTimes(int max_times, xyz_float_t rdy_pos, float step_mm, fl
 //   });
 // }
 void ProbeAcq::shakeZAxis(int times) {
-  const float z0 = current_position[Z_AXIS];
+  const float z0 = motion.position[Z_AXIS];
 
   //Approximate equivalent to the old version:
   //4 *0.01 mm = 0.04 mm rise and 0.04 mm fall
@@ -256,30 +256,30 @@ void ProbeAcq::shakeZAxis(int times) {
   // Very low speed to be quiet
   constexpr float SHAKE_FEED_MM_S    = 1.0f;  // 1 mm/s
 
-  const float old_feedrate_mm_s = feedrate_mm_s;
+  const float old_feedrate_mm_s = motion.feedrate_mm_s;
 
   // Optional: lower acceleration only for Z while shaking
   const float old_z_accel = planner.settings.max_acceleration_mm_per_s2[Z_AXIS];
   planner.settings.max_acceleration_mm_per_s2[Z_AXIS] = 20.0f; // adjust as needed
 
   planner.synchronize();           // Ensure nothing is pending
-  feedrate_mm_s = SHAKE_FEED_MM_S; // Set smooth feedrate
+  motion.feedrate_mm_s = SHAKE_FEED_MM_S; // Set smooth feedrate
 
   for (uint8_t i = 0; i < times; ++i) {
     // Move up a bit
-    current_position[Z_AXIS] = z0 + AMP_MM;
-    line_to_current_position();
+    motion.position[Z_AXIS] = z0 + AMP_MM;
+    motion.goto_current_position();
 
     // Return to original position
-    current_position[Z_AXIS] = z0;
-    line_to_current_position();
+    motion.position[Z_AXIS] = z0;
+    motion.goto_current_position();
   }
 
   planner.synchronize(); // Execute the entire sequence at once
 
   // Restore parameters
   planner.settings.max_acceleration_mm_per_s2[Z_AXIS] = old_z_accel;
-  feedrate_mm_s = old_feedrate_mm_s;
+  motion.feedrate_mm_s = old_feedrate_mm_s;
 }
 
 
@@ -292,7 +292,6 @@ void ProbeAcq::shakeZAxis(int times) {
 void ProbeAcq::calMinZ()
 {
   double *valP_t = &this->valP[PI_COUNT]; // rock_ does not start with *2, and the array is out of bounds using 20230204
-  double *posZ_t = &this->posZ[PI_COUNT]; //
 
   // 1. Filter rock
   Filters::tFilter(this->valP, PI_COUNT * 2);
@@ -300,6 +299,7 @@ void ProbeAcq::calMinZ()
   Filters::lFilter(this->valP, PI_COUNT * 2, LFILTER_K1_NEW);
 
 #if ENABLED(SHOW_MSG)
+  double *posZ_t = &this->posZ[PI_COUNT];
   PRINTF("%s", "\nx=[");
   FOR_LOOP_TIMES(i, 0, PI_COUNT, PRINTF((i == (PI_COUNT - 1) ? "%s]\n\n" : "%s,"), getStr(posZ_t[i])));
   PRINTF("%s", "y=[");
@@ -386,7 +386,7 @@ ProbeAcq* ProbeAcq::probePointByStep() {
 
   // 1) Small vibration
   // {
-  //   const float z0 = current_position[Z_AXIS];
+  //   const float z0 = motion.position[Z_AXIS];
   //   const float ampZ = 0.20f;
   //   DO_BLOCKING_MOVE_TO_Z(z0 + ampZ, 120);
   //   DO_BLOCKING_MOVE_TO_Z(z0,        120);
@@ -418,8 +418,8 @@ ProbeAcq* ProbeAcq::probePointByStep() {
 
   while (relZ > z_limit) {
     // Step
-    DO_BLOCKING_MOVE_TO_Z(current_position[Z_AXIS] - step_mm, max(2.0f, this->baseSpdZ_mm_s));
-    relZ = current_position[Z_AXIS] - this->basePos_mm.z;
+    DO_BLOCKING_MOVE_TO_Z(motion.position[Z_AXIS] - step_mm, max(2.0f, this->baseSpdZ_mm_s));
+    relZ = motion.position[Z_AXIS] - this->basePos_mm.z;
 
     // Measurement
     const int nowVal = this->hx711.getVal(false);
@@ -746,7 +746,7 @@ bool getZOffset(bool isNozzleClr, bool isRunProByPress, bool isRunProByTouch, fl
 
   // Median valid
   float work[5];
-#else if ENABLED(D_ROUTINE_AUTO_OFFSET)
+#elif ENABLED(D_ROUTINE_AUTO_OFFSET)
   // Points requested
   const xyz_float_t Probes[4] = {
     {  28,  28, 0},   // Left front

@@ -36,7 +36,6 @@ lin 3D Printer Firmware
 #if !HAS_BED_PROBE && ENABLED(BABYSTEPPING)
 #define JUST_BABYSTEP 1
 #endif
-#include <WString.h>
 #include <stdio.h>
 #include <string.h>
 #include "fontutils.h"
@@ -162,7 +161,6 @@ bool isPaused = false;
 /* Value Init */
 HMI_value_t HMI_ValueStruct;
 HMI_Flag_t HMI_flag{0};
-CRec CardRecbuf; // Rock 20211021
 millis_t dwin_heat_time = 0;
 uint8_t G29_level_num = 0; // Record how many points g29 has been leveled to determine whether g29 is leveled normally.
 bool end_flag = false;     // Prevent repeated refresh of curve completion instructions
@@ -173,7 +171,6 @@ static bool temp_remove_card_flag = false, temp_cutting_line_flag = false /*,tem
 
 
 bool hasThumbnail = false;
-int clear_UpperArea = 0;
 bool OctoRefresh = false;
     
 typedef struct
@@ -292,71 +289,67 @@ void Draw_Leveling_Highlight(const bool sel)
 static void pause_resume_feedstock(uint16_t _distance, uint16_t _feedRate)
 {
   char cmd[20], str_1[16];
-  current_position[E_AXIS] += _distance;
-  line_to_current_position(feedRate_t(_feedRate));
-  current_position[E_AXIS] -= _distance;
+  motion.position[E_AXIS] += _distance;
+  motion.goto_current_position(feedRate_t(_feedRate));
+  motion.position[E_AXIS] -= _distance;
   memset(cmd, 0, sizeof(cmd));
-  sprintf_P(cmd, PSTR("G92.9E%s"), dtostrf(current_position[E_AXIS], 1, 3, str_1));
+  sprintf_P(cmd, PSTR("G92.9E%s"), dtostrf(motion.position[E_AXIS], 1, 3, str_1));
   gcode.process_subcommands_now(cmd);
   memset(cmd, 0, sizeof(cmd));
   // Resume the feedrate
-  sprintf_P(cmd, PSTR("G1F%d"), MMS_TO_MMM(feedrate_mm_s));
+  sprintf_P(cmd, PSTR("G1 F%d"), int(MMS_TO_MMM(motion.feedrate_mm_s) + 0.5f));
   gcode.process_subcommands_now(cmd);
 }
 
 void In_out_feedtock_level(uint16_t _distance, uint16_t _feedRate, bool dir)
 {
   char cmd[20]; //str_1[16];
-  float olde = current_position.e, differ_value = 0;
-  if (current_position.e < _distance)
-    differ_value = (_distance - current_position.e);
-  else
-    differ_value = 0;
+  const float olde = motion.position.e;
   if (dir)
   {
-    current_position.e += _distance;
-    line_to_current_position(_feedRate);
+    motion.position.e += _distance;
+    motion.goto_current_position(feedRate_t(_feedRate));
   }
   else // Withdraw
   {
-    current_position.e -= _distance;
-    line_to_current_position(_feedRate);
+    motion.position.e -= _distance;
+    motion.goto_current_position(feedRate_t(_feedRate));
   }
-  current_position.e = olde;
+  motion.position.e = olde;
   planner.set_e_position_mm(olde);
   planner.synchronize();
-  sprintf_P(cmd, PSTR("G1 F%s"), getStr(feedrate_mm_s)); // Set original speed
+  sprintf_P(cmd, PSTR("G1 F%s"), getStr(motion.feedrate_mm_s)); // Set original speed
   gcode.process_subcommands_now(cmd);
 }
 
 void In_out_feedtock(uint16_t _distance, uint16_t _feedRate, bool dir)
 {
   char cmd[20]; //str_1[16];
-  float olde = current_position.e, differ_value = 0;
-  if (current_position.e < _distance)
-    differ_value = (_distance - current_position.e);
+  float olde = motion.position.e, differ_value = 0;
+  if (motion.position.e < _distance)
+    differ_value = (_distance - motion.position.e);
   else
     differ_value = 0;
   if (dir)
   {
-    current_position.e += _distance;
-    line_to_current_position(_feedRate);
+    motion.position.e += _distance;
+    motion.goto_current_position(feedRate_t(_feedRate));
   }
   else // Withdraw
   {
     if (differ_value)
     {
-      current_position.e += differ_value;
-      line_to_current_position(FEEDING_DEF_SPEED); // The speed is too fast and there is noise
+      motion.position.e += differ_value;
+      motion.goto_current_position(feedRate_t(FEEDING_DEF_SPEED)); // The speed is too fast and there is noise
       planner.synchronize();
     }
-    current_position.e -= _distance;
-    line_to_current_position(_feedRate);
+    motion.position.e -= _distance;
+    motion.goto_current_position(feedRate_t(_feedRate));
   }
-  current_position.e = olde;
+  motion.position.e = olde;
   planner.set_e_position_mm(olde);
   planner.synchronize();
-  sprintf_P(cmd, PSTR("G1 F%s"), getStr(feedrate_mm_s)); // Set original speed
+  sprintf_P(cmd, PSTR("G1 F%s"), getStr(motion.feedrate_mm_s)); // Set original speed
   gcode.process_subcommands_now(cmd);
   // RUN_AND_WAIT_GCODE_CMD(cmd, true);                  //Rock_20230821
 }
@@ -446,11 +439,10 @@ static void Auto_in_out_feedstock(bool dir) // 0 returns material, 1 feeds
 #if ENABLED(OCTOPRINT_PLUGIN)
   uint16_t OctoImageLine[OctoIMAGE_WIDTH];
   //vars to scroll title when octoprinting
-  int scrollOffset = 0;
-  unsigned long lastScrollTime = 0;
+  uint8_t scrollOffset = 0;
+  millis_t lastScrollTime = 0;
   const int scrollDelay2 = 250; // this to move chars
-  int maxOffset;
-  char visibleText[35] = {0};
+  char visibleText[31] = {0};
 
   //clear the image map to black
   void initializeImageMap() {
@@ -487,7 +479,7 @@ static void Auto_in_out_feedstock(bool dir) // 0 returns material, 1 feeds
   void Draw_OctoTitle(const char *const title)
   {
     char* nTitle = const_cast<char*>(title);
-    octo_make_name_without_ext(shift_name, nTitle, 100); // Copy to new string Long Name 
+    octo_make_name_without_ext(shift_name, nTitle, sizeof(shift_name) - 1); // Copy to bounded buffer
     DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_Yellow, Color_Bg_Black, 4, 4, shift_name);
   }
 
@@ -495,12 +487,14 @@ static void Auto_in_out_feedstock(bool dir) // 0 returns material, 1 feeds
   void octoUpdateScroll() {
       if (strlen(shift_name) <= 30) return; // No need to update if filename is less than 30chars
 
-      unsigned long currentTime = millis(); // check interval
+      const uint8_t maxOffset = strlen(shift_name) - 30;
+      const millis_t currentTime = millis(); // check interval
       if (currentTime - lastScrollTime >= scrollDelay2) {
           lastScrollTime = currentTime;
           
           Clear_Title_Bar(); //clear title bar to avoid ghosting text
           strncpy(visibleText, shift_name + scrollOffset, 30); // copy the text to shift left
+          visibleText[30] = '\0';
           // Draw the string
           DWIN_Draw_String(false, false, DWIN_FONT_HEAD, Color_Yellow, Color_Bg_Black, 4, 4, visibleText);
           
@@ -549,7 +543,7 @@ void HMI_ResetLanguage()
   BL24CXX::write(DWIN_LANGUAGE_EEPROM_ADDRESS, (uint8_t *)&HMI_flag.language, sizeof(HMI_flag.language));
   HMI_SetLanguageCache();
 }
-static void HMI_ResetDevice()
+static void __attribute__((unused)) HMI_ResetDevice()
 {
   // uint8_t current_device = DEVICE_UNKNOWN; //Add this way temporarily
   // BL24CXX::write(LASER_FDM_ADDR, (uint8_t *)&current_device, 1);
@@ -1291,7 +1285,7 @@ static xy_int8_t Converted_Grid_Point(uint8_t select_num)
   grid_point.y = select_num % GRID_MAX_POINTS_Y;
   return grid_point;
 }
-static void Toggle_Checkbox(xy_int8_t mesh_Curr, xy_int8_t mesh_Last, uint8_t dir)
+static void __attribute__((unused)) Toggle_Checkbox(xy_int8_t mesh_Curr, xy_int8_t mesh_Last, uint8_t dir)
 {
   if (dir == DWIN_SCROLL_DOWN)
   {
@@ -1402,7 +1396,7 @@ void Draw_Back_First(const bool is_sel = true)
 }
 
 // Draw "temp" line at the top
-static void Draw_Nozzle_Temp_Label(const bool is_sel = true)
+static void __attribute__((unused)) Draw_Nozzle_Temp_Label(const bool is_sel = true)
 {
   Draw_Menu_Line(0, ICON_SetEndTemp);
   HMI_ValueStruct.E_Temp = thermalManager.degTargetHotend(0);
@@ -1411,7 +1405,8 @@ static void Draw_Nozzle_Temp_Label(const bool is_sel = true)
   DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Hotend, 42, MBASE(0) + JPN_OFFSET);
 }
 
-inline bool Apply_Encoder(const ENCODER_DiffState &encoder_diffState, auto &valref)
+template <typename T>
+inline bool Apply_Encoder(const ENCODER_DiffState &encoder_diffState, T &valref)
 {
   bool temp_var = false;
   if (encoder_diffState == ENCODER_DIFF_CW)
@@ -2161,7 +2156,7 @@ void Item_Tune_Speed(const uint8_t row)
     DWIN_ICON_Show(HMI_flag.language, LANGUAGE_PrintSpeed, 42, MBASE(row) + JPN_OFFSET);
 #endif
     Draw_Menu_Line(row, ICON_Speed);
-    DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(row) + PRINT_SET_OFFSET, feedrate_percentage);
+    DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, MBASE(row) + PRINT_SET_OFFSET, motion.feedrate_percentage);
   }
 }
 
@@ -2371,7 +2366,7 @@ void Draw_Tune_Menu()
       if (HMI_flag.language < Language_Max) {
         DWIN_ICON_Show(HMI_flag.language, LANGUAGE_PrintSpeed, TUNE_MENU_START_X + 42, THUMB_MBASE(row) + JPN_OFFSET);
         Thumb_Draw_Menu_Line(row, ICON_Speed);
-        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, THUMB_MBASE(row) + PRINT_SET_OFFSET, feedrate_percentage);
+        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, VALUERANGE_X, THUMB_MBASE(row) + PRINT_SET_OFFSET, motion.feedrate_percentage);
       }
     }
 
@@ -3746,10 +3741,10 @@ void Goto_PrintProcess()
   Draw_Printing_Screen();
   // Setting interface
   ICON_Tune();
-  if (printingIsPaused() && !HMI_flag.cloud_printing_flag)
+  if (marlin.printingIsPaused() && !HMI_flag.cloud_printing_flag)
     ICON_Continue();
   // pause
-  if (printingIsPaused())
+  if (marlin.printingIsPaused())
   {
     Show_JPN_pause_title(); // show title
     ICON_Continue();
@@ -3763,7 +3758,7 @@ void Goto_PrintProcess()
   // stop button
   ICON_Stop();
   // Copy into filebuf string before entry
-  char shift_name[LONG_FILENAME_LENGTH + 1];
+  char shift_name[31];
   char *name = card.longest_filename();
 
 #if ENABLED(DWIN_CREALITY_480_LCD)
@@ -3865,7 +3860,7 @@ void HMI_Plan_Move(const feedRate_t fr_mm_s)
   if (!planner.is_full())
   {
     planner.synchronize();
-    planner.buffer_line(current_position, fr_mm_s, active_extruder);
+    planner.buffer_line(motion.position, fr_mm_s, motion.extruder);
     // Dwin update lcd();
   }
 }
@@ -3908,11 +3903,11 @@ void HMI_Move_X()
       return HMI_Move_Done(X_AXIS);
     }
     LIMIT(HMI_ValueStruct.Move_X_scaled, (XY_BED_MIN_ZERO)*MINUNITMULT, (X_BED_SIZE)*MINUNITMULT);
-    current_position.x = HMI_ValueStruct.Move_X_scaled / MINUNITMULT;
+    motion.position.x = HMI_ValueStruct.Move_X_scaled / MINUNITMULT;
     DWIN_Draw_Signed_Float(font8x16, Select_Color, 3, UNITFDIGITS, VALUERANGE_X, MBASE(1), HMI_ValueStruct.Move_X_scaled);
     // delay(10); //Solve the problem that two values ​​​​are selected together during rapid rotation.
     // DWIN_UpdateLCD();
-    HMI_Plan_Move(homing_feedrate(X_AXIS));
+    HMI_Plan_Move(motion.homing_feedrate(X_AXIS));
   }
 }
 
@@ -3927,11 +3922,11 @@ void HMI_Move_Y()
       return HMI_Move_Done(Y_AXIS);
     }
     LIMIT(HMI_ValueStruct.Move_Y_scaled, (XY_BED_MIN_ZERO)*MINUNITMULT, (Y_BED_SIZE)*MINUNITMULT);
-    current_position.y = HMI_ValueStruct.Move_Y_scaled / MINUNITMULT;
+    motion.position.y = HMI_ValueStruct.Move_Y_scaled / MINUNITMULT;
     DWIN_Draw_Signed_Float(font8x16, Select_Color, 3, UNITFDIGITS, VALUERANGE_X, MBASE(2), HMI_ValueStruct.Move_Y_scaled);
     // delay(10); //Solve the problem that two values ​​​​are selected together during rapid rotation.
     // DWIN_UpdateLCD();
-    HMI_Plan_Move(homing_feedrate(Y_AXIS));
+    HMI_Plan_Move(motion.homing_feedrate(Y_AXIS));
   }
 }
 
@@ -3948,12 +3943,12 @@ void HMI_Move_Z()
     }
     // rock_20211025 Modified axis movement interface cannot move to negative values to prevent collisions
     LIMIT(HMI_ValueStruct.Move_Z_scaled, (Z_MIN_POS)*MINUNITMULT, (Z_MAX_POS)*MINUNITMULT);
-    current_position.z = HMI_ValueStruct.Move_Z_scaled / MINUNITMULT;
+    motion.position.z = HMI_ValueStruct.Move_Z_scaled / MINUNITMULT;
 
     DWIN_Draw_Signed_Float(font8x16, Select_Color, 3, UNITFDIGITS, VALUERANGE_X, MBASE(3), HMI_ValueStruct.Move_Z_scaled);
     // delay(10); //Solve the problem that two values ​​​​are selected together during rapid rotation.
     // DWIN_UpdateLCD();
-    HMI_Plan_Move(homing_feedrate(Z_AXIS));
+    HMI_Plan_Move(motion.homing_feedrate(Z_AXIS));
   }
 }
 
@@ -3972,7 +3967,7 @@ void HMI_Move_E()
       return HMI_Move_Done(E_AXIS);
     }
     LIMIT(HMI_ValueStruct.Move_E_scaled, last_E_scaled - (EXTRUDE_MAXLENGTH_e)*MINUNITMULT, last_E_scaled + (EXTRUDE_MAXLENGTH_e)*MINUNITMULT);
-    current_position.e = HMI_ValueStruct.Move_E_scaled / MINUNITMULT;
+    motion.position.e = HMI_ValueStruct.Move_E_scaled / MINUNITMULT;
     DWIN_Draw_Signed_Float(font8x16, Select_Color, 3, UNITFDIGITS, VALUERANGE_X, MBASE(4), HMI_ValueStruct.Move_E_scaled);
     delay(10); // Solve the problem that rapid rotation will select two values ​​​​together.
     // DWIN_UpdateLCD();
@@ -3984,7 +3979,7 @@ void HMI_Move_E()
 
 #if HAS_ZOFFSET_ITEM
 
-// bool printer_busy() { return planner.movesplanned() || printingIsActive(); }
+// bool printer_busy() { return planner.movesplanned() || marlin.printingIsActive(); }
 
 void HMI_Zoffset()
 {
@@ -4590,7 +4585,7 @@ void HMI_PrintSpeed()
     if (Apply_Encoder(encoder_diffState, HMI_ValueStruct.print_speed))
     {
       EncoderRate.enabled = false;
-      feedrate_percentage = HMI_ValueStruct.print_speed;
+      motion.feedrate_percentage = HMI_ValueStruct.print_speed;
 
       #if ENABLED(DWIN_RENDER_THUMBNAIL)
         if(hasThumbnail){
@@ -4902,15 +4897,15 @@ void HMI_AUTO_PID_Value_Set()
       // Clicked the confirm button
       // Clear data subscript
       HMI_ValueStruct.Curve_index = 0;
+      end_flag = false; // Prevent repeated refresh of curve completion command
+      EncoderRate.enabled = false;
+#if ENABLED(DWIN_CREALITY_480_LCD)
+      DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, 210 + PID_VALUE_OFFSET, MBASE(select_set_pid.now), HMI_ValueStruct.Auto_PID_Temp);
+#elif ENABLED(DWIN_CREALITY_320_LCD)
+      DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, 192 + PID_VALUE_OFFSET, MBASE(select_set_pid.now), HMI_ValueStruct.Auto_PID_Temp);
+#endif
       switch (select_set_pid.now)
       {
-        end_flag = false; // Prevent repeated refresh of curve completion command
-        EncoderRate.enabled = false;
-#if ENABLED(DWIN_CREALITY_480_LCD)
-        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, 210 + PID_VALUE_OFFSET, MBASE(select_set_pid.now), HMI_ValueStruct.Auto_PID_Temp);
-#elif ENABLED(DWIN_CREALITY_320_LCD)
-        DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, 192 + PID_VALUE_OFFSET, MBASE(select_set_pid.now), HMI_ValueStruct.Auto_PID_Temp);
-#endif
       case 1:
         checkkey = AUTO_SET_BED_PID;
         Draw_auto_bed_PID();
@@ -4952,12 +4947,12 @@ void HMI_AUTO_PID_Value_Set()
 // Draw X, Y, Z and blink if in an un-homed or un-trusted state
 void _update_axis_value(const AxisEnum axis, const uint16_t x, const uint16_t y, const bool blink, const bool force)
 {
-  const bool draw_qmark = axis_should_home(axis),
-             draw_empty = NONE(HOME_AFTER_DEACTIVATE, DISABLE_REDUCED_ACCURACY_WARNING) && !draw_qmark && !axis_is_trusted(axis);
+  const bool draw_qmark = motion.axis_should_home(axis),
+             draw_empty = NONE(HOME_AFTER_DEACTIVATE, DISABLE_REDUCED_ACCURACY_WARNING) && !draw_qmark && !motion.axis_is_trusted(axis);
 
   // Check for a position change
   static xyz_pos_t oldpos = {-1, -1, -1};
-  const float p = current_position[axis];
+  const float p = motion.position[axis];
   const bool changed = oldpos[axis] != p;
   if (changed)
     oldpos[axis] = p;
@@ -5107,9 +5102,9 @@ void update_variable()
 #endif
 
   static int16_t _feedrate = 100;
-  if (_feedrate != feedrate_percentage)
+  if (_feedrate != motion.feedrate_percentage)
   {
-    _feedrate = feedrate_percentage;
+    _feedrate = motion.feedrate_percentage;
     DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 3, 99 + 2 * STAT_CHR_W, 247, _feedrate);
   }
 
@@ -5221,9 +5216,9 @@ void update_middle_variable()
 #endif
 
   static int16_t _feedrate = 100;
-  if (_feedrate != feedrate_percentage)
+  if (_feedrate != motion.feedrate_percentage)
   {
-    _feedrate = feedrate_percentage;
+    _feedrate = motion.feedrate_percentage;
     DWIN_Draw_IntValue_N0SPACE(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 3, 99 + 2 * STAT_CHR_W + 2, NUM_SPEED_Y, _feedrate);
   }
 
@@ -5307,7 +5302,7 @@ void Init_Shift_Name()
   {
     card.getfilename_sorted(SD_ORDER(filenum, fileCnt));
     char *const name = card.longest_filename();
-    make_name_without_ext(shift_name, name, 100);
+    make_name_without_ext(shift_name, name, sizeof(shift_name) - 1);
   }
 }
 
@@ -5343,7 +5338,7 @@ void Draw_SDItem(const uint16_t item, int16_t row = -1)
   // This is used during scroll drawing
   if (item == select_file.now - 1)
   {
-    make_name_without_ext(shift_name, name, 100);
+    make_name_without_ext(shift_name, name, sizeof(shift_name) - 1);
     Init_SDItem_Shift();
   }
 #endif
@@ -5426,14 +5421,12 @@ void SDCard_Folder(char *const dirname)
 void HMI_SDCardUpdate()
 {
   // The card pulling action is not detected when the interface returns to home, add ||HMI_flag.disallow_recovery_flag
-  static uint8_t stat = false;
   if (HMI_flag.home_flag || HMI_flag.disallow_recovery_flag)
   {
     return;
   }
   if (DWIN_lcd_sd_status != card.isMounted()) // Flag.mounted
   {
-    stat = false;
     DWIN_lcd_sd_status = card.isMounted();
     if (DWIN_lcd_sd_status)
     {
@@ -5451,16 +5444,16 @@ void HMI_SDCardUpdate()
       }
 
       #if ENABLED(DWIN_RENDER_THUMBNAIL)
-        else if (checkkey == PrintProcess || checkkey == Tune || checkkey == ThumbPrint || checkkey == ThumbTune || printingIsActive())
+        else if (checkkey == PrintProcess || checkkey == Tune || checkkey == ThumbPrint || checkkey == ThumbTune || marlin.printingIsActive())
       #else
-        else if (checkkey == PrintProcess || checkkey == Tune || printingIsActive())
+        else if (checkkey == PrintProcess || checkkey == Tune || marlin.printingIsActive())
       #endif
       {
         // TODO: Move card removed abort handling
         //       to CardReader::manage_media.
         card.abortFilePrintSoon();
         // wait_for_heatup = wait_for_user = false;
-         dwin_abort_flag = true; //Reset feedrate, return to Home
+        dwin_abort_flag = true; //Reset feedrate, return to Home
       }
     }
     DWIN_UpdateLCD();
@@ -5506,7 +5499,7 @@ void Draw_Status_Area(bool with_update)
 #endif
 
   DWIN_ICON_Show(ICON, ICON_Speed, 113, 383);
-  DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 3, 116 + 2 * STAT_CHR_W, 388, feedrate_percentage);
+  DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 3, 116 + 2 * STAT_CHR_W, 388, motion.feedrate_percentage);
   DWIN_Draw_String(false, false, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 116 + 5 * STAT_CHR_W + 2, 386, F("%"));
 
 #if HAS_FAN
@@ -5542,7 +5535,7 @@ void Draw_Status_Area(bool with_update)
 #endif
 
   DWIN_ICON_Show(ICON, ICON_Speed, 99, 245);
-  DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 3, 99 + 2 * STAT_CHR_W, 247, feedrate_percentage);
+  DWIN_Draw_IntValue(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 3, 99 + 2 * STAT_CHR_W, 247, motion.feedrate_percentage);
   DWIN_Draw_String(false, false, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 99 + 5 * STAT_CHR_W + 2, 247, F("%"));
 
 #if HAS_FAN
@@ -5603,9 +5596,9 @@ void Draw_Mid_Status_Area(bool with_update)
 #endif
 
   DWIN_ICON_Show(ICON, ICON_Speed, ICON_SPEED_X, ICON_SPEED_Y);
-  // DWIN_Draw_IntValue(true, true, 0, DWIN_MIDDLE_FONT_STAT, Color_White, Color_Bg_Black, 3,NUM_SPEED_X ,ICON_SPEED_Y, feedrate_percentage);
+  // DWIN_Draw_IntValue(true, true, 0, DWIN_MIDDLE_FONT_STAT, Color_White, Color_Bg_Black, 3,NUM_SPEED_X ,ICON_SPEED_Y, motion.feedrate_percentage);
   // DWIN_Draw_String(false, false, DWIN_MIDDLE_FONT_STAT, Color_White, Color_Bg_Black, NUM_SPEED_X + 4*MENU_CHR_W, ICON_SPEED_Y, F("%"));
-  DWIN_Draw_IntValue_N0SPACE(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 3, 99 + 2 * STAT_CHR_W + 2, NUM_SPEED_Y, feedrate_percentage);
+  DWIN_Draw_IntValue_N0SPACE(true, true, 0, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 3, 99 + 2 * STAT_CHR_W + 2, NUM_SPEED_Y, motion.feedrate_percentage);
   DWIN_Draw_String(false, false, DWIN_FONT_STAT, Color_White, Color_Bg_Black, 99 + 5 * STAT_CHR_W, NUM_SPEED_Y - 1, F("%"));
 
 #if HAS_FAN
@@ -5638,7 +5631,7 @@ void Draw_PStats_Menu()
 {
   Clear_Main_Window();
   HMI_flag.Refresh_bottom_flag = true; // Flag does not refresh bottom parameters
-  char buffer[22];                     // Buffer for time formatting
+  char totalTime[22], longestJob[22], filamentUsed[16];
 
   // Retrieve print statistics
   printStatistics stats = print_job_timer.getStats();
@@ -5649,15 +5642,16 @@ void Draw_PStats_Menu()
 
   // Convert print time durations to strings
   duration_t elapsed = stats.printTime;
-  elapsed.toString(buffer);
-  String totalTime = buffer; // Convert char array to String
+  elapsed.toString(totalTime);
+  const uint8_t totalTimeLen = strlen(totalTime);
 
   elapsed = stats.longestPrint;
-  elapsed.toString(buffer);
-  String longestJob = buffer;
+  elapsed.toString(longestJob);
+  const uint8_t longestJobLen = strlen(longestJob);
 
-  // Convert filament used to string
-  String filamentUsed = String(stats.filamentUsed / 1000) + "m";
+  // Convert filament used to string in meters
+  snprintf(filamentUsed, sizeof(filamentUsed), "%lum", (unsigned long)(stats.filamentUsed / 1000UL));
+  const uint8_t filamentUsedLen = strlen(filamentUsed);
 
   // Back option
   Draw_Back_First();
@@ -5679,19 +5673,19 @@ void Draw_PStats_Menu()
   // Total Time
   DWIN_Draw_Small_Label(MBASE(4), F("Total Time"));
   DWIN_ICON_Not_Filter_Show(ICON, ICON_Info, 20, MBASE(4));
-  DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, (DWIN_WIDTH - totalTime.length() * MENU_CHR_W) / 2, (MBASE(4) + 20), F(totalTime.c_str()));
+  DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, (DWIN_WIDTH - totalTimeLen * MENU_CHR_W) / 2, (MBASE(4) + 20), totalTime);
   DWIN_Draw_Line(Line_Color, 16, MBASE(4) + 38, BLUELINE_X, MBASE(4) + 38);
 
   // Longest Job
   DWIN_Draw_Small_Label(MBASE(5) + 10, F("Longest Job"));
   DWIN_ICON_Not_Filter_Show(ICON, ICON_Info, 20, MBASE(5) + 10);
-  DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, (DWIN_WIDTH - longestJob.length() * MENU_CHR_W) / 2, (MBASE(5) + 30), F(longestJob.c_str()));
+  DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, (DWIN_WIDTH - longestJobLen * MENU_CHR_W) / 2, (MBASE(5) + 30), longestJob);
   DWIN_Draw_Line(Line_Color, 16, MBASE(5) + 45, BLUELINE_X, MBASE(5) + 45);
 
   // Filament Used
   DWIN_Draw_Small_Label(MBASE(6) + 20, F("Filament Used"));
   DWIN_ICON_Not_Filter_Show(ICON, ICON_Info, 20, MBASE(6) + 20);
-  DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, (DWIN_WIDTH - longestJob.length() * MENU_CHR_W) / 2, (MBASE(6) + 40), F(filamentUsed.c_str()));
+  DWIN_Draw_String(false, false, font6x12, Color_White, Color_Bg_Black, (DWIN_WIDTH - filamentUsedLen * MENU_CHR_W) / 2, (MBASE(6) + 40), filamentUsed);
   DWIN_Draw_Line(Line_Color, 16, MBASE(6) + 55, BLUELINE_X, MBASE(6) + 55);
 }
 
@@ -5951,7 +5945,7 @@ void HMI_Level_Menu(){
         break;
       case 1: // Start Auto Z-Offset
         Popup_Window_Home();
-        gcode.process_subcommands_now(PSTR("M8015 S0"));
+        gcode.process_subcommands_now(F("M8015 S0"));
         break;
       case 2: // Start Bed Leveling
         Popup_Window_Home();
@@ -6400,7 +6394,7 @@ void HMI_Printing()
         break;
       case 1:
         ICON_Tune();
-        if (printingIsPaused())
+        if (marlin.printingIsPaused())
         {
           ICON_Continue();
         }
@@ -6410,7 +6404,7 @@ void HMI_Printing()
         }
         break;
       case 2:
-        if (printingIsPaused())
+        if (marlin.printingIsPaused())
         {
 
           ICON_Continue();
@@ -6432,13 +6426,13 @@ void HMI_Printing()
       {
       case 0:
         ICON_Tune();
-        if (printingIsPaused())
+        if (marlin.printingIsPaused())
           ICON_Continue();
         else
           ICON_Pause();
         break;
       case 1:
-        if (printingIsPaused())
+        if (marlin.printingIsPaused())
           ICON_Continue();
         else
           ICON_Pause();
@@ -6491,7 +6485,7 @@ void HMI_Printing()
           queue.inject("M24");
           // RUN_AND_WAIT_GCODE_CMD("M24", true);
           // queue.enqueue_now_P(PSTR("M24"));
-          // gcode.process_subcommands_now(PSTR("M24"));
+          // gcode.process_subcommands_now(F("M24"));
           Goto_PrintProcess();
         }
         else
@@ -6601,7 +6595,7 @@ void HMI_PauseOrStop()
         {
           if (HMI_flag.home_flag)
             planner.synchronize();                 // Wait for planner moves to finish!
-          wait_for_heatup = wait_for_user = false; // Stop waiting for heating/user
+          marlin.end_waiting(); // Stop waiting for heating/user
 
           HMI_flag.disallow_recovery_flag = true; // Data recovery is not allowed
           print_job_timer.stop();
@@ -6833,7 +6827,7 @@ void HMI_Filament()
             HMI_flag.filement_resume_flag = false;
             // SERIAL_ECHOLN("M79 S3");
             print_job_timer.start();
-            gcode.process_subcommands_now(PSTR("M24"));
+            gcode.process_subcommands_now(F("M24"));
             Goto_PrintProcess();
             // Pause interface
             ICON_Pause();
@@ -6843,7 +6837,7 @@ void HMI_Filament()
             if ((!HMI_flag.remove_card_flag) && (!temp_remove_card_flag))
             {
               pause_resume_feedstock(FEEDING_DEF_DISTANCE, FEEDING_DEF_SPEED);
-              gcode.process_subcommands_now(PSTR("M24"));
+              gcode.process_subcommands_now(F("M24"));
               Goto_PrintProcess();
             }
           }
@@ -6861,12 +6855,12 @@ void HMI_Filament()
       //  Goto_PrintProcess(); //rock_21010914
       if (HMI_flag.home_flag)
         planner.synchronize();                 // Wait for planner moves to finish!
-      wait_for_heatup = wait_for_user = false; // Stop waiting for heating/user
+      marlin.end_waiting(); // Stop waiting for heating/user
       // Data recovery is not allowed
       HMI_flag.disallow_recovery_flag = true;
       // Rock 20211017
       queue.clear();
-      quickstop_stepper();
+      motion.quickstop_stepper();
       print_job_timer.stop();
       thermalManager.disable_all_heaters();
       print_job_timer.reset();
@@ -6892,7 +6886,7 @@ void HMI_Filament()
         HMI_flag.cloud_printing_flag = false;
         SERIAL_ECHOLN("M79 S4");
         // rock_20211022  tell wif_box print stop
-        // gcode.process_subcommands_now(PSTR("M79 S4"));
+        // gcode.process_subcommands_now(F("M79 S4"));
       }
     }
     // Material break recovery flag cleared
@@ -6919,7 +6913,7 @@ void HMI_Remove_card()
       // #if ENABLED(PAUSE_HEAT)
       //   char cmd[20];
       // #endif
-      gcode.process_subcommands_now(PSTR("M24"));
+      gcode.process_subcommands_now(F("M24"));
       Goto_PrintProcess();
       // Recovery.info.sd printing flag=remove card flag;
     }
@@ -7707,12 +7701,12 @@ void HMI_Prepare()
       checkkey = AxisMove;
       select_axis.reset();
       Draw_Move_Menu();
-      gcode.process_subcommands_now(PSTR("G92 E0"));
-      DWIN_Draw_Signed_Float(font8x16, Color_Bg_Black, 3, UNITFDIGITS, VALUERANGE_X, MBASE(1), current_position.x * MINUNITMULT);
-      DWIN_Draw_Signed_Float(font8x16, Color_Bg_Black, 3, UNITFDIGITS, VALUERANGE_X, MBASE(2), current_position.y * MINUNITMULT);
-      DWIN_Draw_Signed_Float(font8x16, Color_Bg_Black, 3, UNITFDIGITS, VALUERANGE_X, MBASE(3), current_position.z * MINUNITMULT);
+      gcode.process_subcommands_now(F("G92 E0"));
+      DWIN_Draw_Signed_Float(font8x16, Color_Bg_Black, 3, UNITFDIGITS, VALUERANGE_X, MBASE(1), motion.position.x * MINUNITMULT);
+      DWIN_Draw_Signed_Float(font8x16, Color_Bg_Black, 3, UNITFDIGITS, VALUERANGE_X, MBASE(2), motion.position.y * MINUNITMULT);
+      DWIN_Draw_Signed_Float(font8x16, Color_Bg_Black, 3, UNITFDIGITS, VALUERANGE_X, MBASE(3), motion.position.z * MINUNITMULT);
 #if HAS_HOTEND
-      HMI_ValueStruct.Move_E_scaled = current_position.e * MINUNITMULT;
+      HMI_ValueStruct.Move_E_scaled = motion.position.e * MINUNITMULT;
       DWIN_Draw_Signed_Float(font8x16, Color_Bg_Black, 3, 1, VALUERANGE_X, MBASE(4), HMI_ValueStruct.Move_E_scaled);
 #endif
 
@@ -7720,7 +7714,7 @@ void HMI_Prepare()
     case PREPARE_CASE_DISA: // Disable steppers
       queue.inject_P(PSTR("M84"));
       // rock_20211224 Solve the problem of artificially dropping the Z axis and causing the platform to crash.
-      gcode.process_subcommands_now(PSTR("G92.9 Z0"));
+      gcode.process_subcommands_now(F("G92.9 Z0"));
       break;
     case PREPARE_CASE_HOME: // Homing
       // HMI_flag.power_back_to_zero_flag = true; //rock_20230914
@@ -7734,7 +7728,7 @@ void HMI_Prepare()
       checkkey = Last_Prepare;
       // checkkey = AUTO_OUT_FEEDSTOCK;
       Popup_Window_Home();
-      gcode.process_subcommands_now(PSTR("G28"));
+      gcode.process_subcommands_now(F("G28"));
       checkkey = Last_Prepare;
       // checkkey = AUTO_IN_FEEDSTOCK;
       index_prepare = select_prepare.now;
@@ -7745,7 +7739,7 @@ void HMI_Prepare()
       checkkey = Last_Prepare; // Prevent interface switching during the zero return process.
       // checkkey = AUTO_IN_FEEDSTOCK;
       Popup_Window_Home();
-      gcode.process_subcommands_now(PSTR("G28"));
+      gcode.process_subcommands_now(F("G28"));
       checkkey = Last_Prepare; // Prevent interface switching during the zero return process.
       // checkkey = AUTO_OUT_FEEDSTOCK;
       //  index_prepare = MROWS;
@@ -7847,9 +7841,9 @@ void HMI_Prepare()
     case PREPARE_CASE_CUSTOM_EXTRUDE: // Pressure height
       // checkkey = Last_Prepare;
       Popup_Window_Home();
-      gcode.process_subcommands_now(PSTR("G28")); // home
+      gcode.process_subcommands_now(F("G28")); // home
       delay(200);
-      gcode.process_subcommands_now(PSTR("G1 X-15 Z40 F3500")); // raise Z
+      gcode.process_subcommands_now(F("G1 X-15 Z40 F3500")); // raise Z
       checkkey = CExtrude_Menu;
       select_cextr.reset();
       Draw_CExtrude_Menu();
@@ -8296,7 +8290,7 @@ void HMI_Leveling()
       }
       else
       {
-        gcode.process_subcommands_now(PSTR("M420 S0"));
+        gcode.process_subcommands_now(F("M420 S0"));
         checkkey = Level_Value_Edit;
         // select_level.reset();
         // xy_int8_t mesh_Count = {0, 0};
@@ -8308,7 +8302,7 @@ void HMI_Leveling()
     }
     else // Click OK
     {
-      gcode.process_subcommands_now(PSTR("M420 S1"));
+      gcode.process_subcommands_now(F("M420 S1"));
       // LevelingBilinear bd;
       bedlevel.refresh_bed_level();
       settings.save(); // Save the edited leveling data to eeprom
@@ -8349,10 +8343,10 @@ void HMI_AxisMove()
     if (encoder_diffState == ENCODER_DIFF_ENTER)
     {
       HMI_flag.ETempTooLow_flag = false;
-      HMI_ValueStruct.Move_X_scaled = current_position.x * MINUNITMULT; // Rock 20210827
-      HMI_ValueStruct.Move_Y_scaled = current_position.y * MINUNITMULT; // Rock 20210827
-      HMI_ValueStruct.Move_Z_scaled = current_position.z * MINUNITMULT;
-      HMI_ValueStruct.Move_E_scaled = current_position.e * MINUNITMULT;
+      HMI_ValueStruct.Move_X_scaled = motion.position.x * MINUNITMULT; // Rock 20210827
+      HMI_ValueStruct.Move_Y_scaled = motion.position.y * MINUNITMULT; // Rock 20210827
+      HMI_ValueStruct.Move_Z_scaled = motion.position.z * MINUNITMULT;
+      HMI_ValueStruct.Move_E_scaled = motion.position.e * MINUNITMULT;
       Draw_Move_Menu();
       // DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Color_Bg_Black, 3, 1, VALUERANGE_X, MBASE(1), HMI_ValueStruct.Move_X_scaled);
       DWIN_Draw_Signed_Float(font8x16, Color_Bg_Black, 3, UNITFDIGITS, VALUERANGE_X, MBASE(1), HMI_ValueStruct.Move_X_scaled);
@@ -8392,21 +8386,21 @@ void HMI_AxisMove()
       break;
     case 1: // X axis move
       checkkey = Move_X;
-      HMI_ValueStruct.Move_X_scaled = current_position.x * MINUNITMULT;
+      HMI_ValueStruct.Move_X_scaled = motion.position.x * MINUNITMULT;
       // DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Select_Color, 3, 1, VALUERANGE_X, MBASE(1), HMI_ValueStruct.Move_X_scaled);
       DWIN_Draw_Signed_Float(font8x16, Select_Color, 3, UNITFDIGITS, VALUERANGE_X, MBASE(1), HMI_ValueStruct.Move_X_scaled);
       EncoderRate.enabled = true;
       break;
     case 2: // Y axis move
       checkkey = Move_Y;
-      HMI_ValueStruct.Move_Y_scaled = current_position.y * MINUNITMULT;
+      HMI_ValueStruct.Move_Y_scaled = motion.position.y * MINUNITMULT;
       // DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Select_Color, 3, 1, VALUERANGE_X, MBASE(2), HMI_ValueStruct.Move_Y_scaled);
       DWIN_Draw_Signed_Float(font8x16, Select_Color, 3, UNITFDIGITS, VALUERANGE_X, MBASE(2), HMI_ValueStruct.Move_Y_scaled);
       EncoderRate.enabled = true;
       break;
     case 3: // Z axis move
       checkkey = Move_Z;
-      HMI_ValueStruct.Move_Z_scaled = current_position.z * MINUNITMULT;
+      HMI_ValueStruct.Move_Z_scaled = motion.position.z * MINUNITMULT;
       // DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, Select_Color, 3, 1, VALUERANGE_X, MBASE(3), HMI_ValueStruct.Move_Z_scaled);
       DWIN_Draw_Signed_Float(font8x16, Select_Color, 3, UNITFDIGITS, VALUERANGE_X, MBASE(3), HMI_ValueStruct.Move_Z_scaled);
       EncoderRate.enabled = true;
@@ -8423,7 +8417,7 @@ void HMI_AxisMove()
       }
 #endif
       checkkey = Extruder;
-      HMI_ValueStruct.Move_E_scaled = current_position.e * MINUNITMULT;
+      HMI_ValueStruct.Move_E_scaled = motion.position.e * MINUNITMULT;
       DWIN_Draw_Signed_Float(font8x16, Select_Color, 3, 1, VALUERANGE_X, MBASE(4), HMI_ValueStruct.Move_E_scaled);
       EncoderRate.enabled = true;
       break;
@@ -8431,8 +8425,8 @@ void HMI_AxisMove()
 
     case 5:
     { // Probe deploy
-      gcode.process_subcommands_now(PSTR("G0 Z40 F7000"));
-      gcode.process_subcommands_now(PSTR("G4 P1000"));
+      gcode.process_subcommands_now(F("G0 Z40 F7000"));
+      gcode.process_subcommands_now(F("G4 P1000"));
       bool r = probe.deploy();
       if (!r)
         {
@@ -8449,8 +8443,8 @@ void HMI_AxisMove()
 
     case 6:
     { // Probe Stow
-      gcode.process_subcommands_now(PSTR("G0 Z40 F7000"));
-      gcode.process_subcommands_now(PSTR("G4 P1000"));
+      gcode.process_subcommands_now(F("G0 Z40 F7000"));
+      gcode.process_subcommands_now(F("G4 P1000"));
       bool r2 = probe.stow();
       if (!r2)
         {
@@ -9271,10 +9265,6 @@ void Draw_HM_PID_Set()
     Draw_Back_First();
     LOOP_L_N(i, 5)
     Draw_Menu_Line(i + 1, ICON_HM_PID_NOZZ_P + i);
-    auto say_max_speed = [](const uint16_t row)
-    {
-      DWIN_ICON_Show(HMI_flag.language, LANGUAGE_MaxSpeed, 70, row);
-    };
     // The value read from Eeprom is displayed on the screen.
     HMI_ValueStruct.HM_PID_Value[1] = PID_PARAM(Kp, 0);
     HMI_ValueStruct.HM_PID_Value[2] = unscalePID_i(PID_PARAM(Ki, 0));
@@ -9309,10 +9299,6 @@ void Draw_Auto_PID_Set()
     DWIN_ICON_Not_Filter_Show(ICON, ICON_Auto_PID_Bed, 26, MBASE(1) - 3);
     DWIN_ICON_Not_Filter_Show(ICON, ICON_Auto_PID_Nozzle, 26, MBASE(2) - 3);
 
-    auto say_max_speed = [](const uint16_t row)
-    {
-      DWIN_ICON_Show(HMI_flag.language, LANGUAGE_MaxSpeed, 70, row);
-    };
     DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Auto_Set_Bed_PID, 60 - 5, MBASE(1) + JPN_OFFSET);
     DWIN_ICON_Show(HMI_flag.language, LANGUAGE_Auto_Set_Nozzle_PID, 60 - 5, MBASE(2) + JPN_OFFSET);
   }
@@ -9334,10 +9320,6 @@ void Draw_Max_Speed_Menu()
   if (HMI_flag.language < Language_Max)
   {
     DWIN_ICON_Show(HMI_flag.language, LANGUAGE_mspeed_title, TITLE_X, TITLE_Y); // sports
-    auto say_max_speed = [](const uint16_t row)
-    {
-      DWIN_ICON_Show(HMI_flag.language, LANGUAGE_MaxSpeed, 70, row);
-    };
     DWIN_ICON_Show(HMI_flag.language, LANGUAGE_MAX_SPEEDX, 42, MBASE(1) + JPN_OFFSET);
     DWIN_ICON_Show(HMI_flag.language, LANGUAGE_MAX_SPEEDY, 42, MBASE(2) + JPN_OFFSET);
     DWIN_ICON_Show(HMI_flag.language, LANGUAGE_MAX_SPEEDZ, 42, MBASE(3) + JPN_OFFSET); // "Max speed"
@@ -9913,9 +9895,9 @@ void HMI_AdvSet()
     case ADVSET_CASE_HOMEOFF: // Home Offsets
       checkkey = HomeOff;
       select_item.reset();
-      HMI_ValueStruct.Home_OffX_scaled = home_offset[X_AXIS] * 10;
-      HMI_ValueStruct.Home_OffY_scaled = home_offset[Y_AXIS] * 10;
-      HMI_ValueStruct.Home_OffZ_scaled = home_offset[Z_AXIS] * 10;
+      HMI_ValueStruct.Home_OffX_scaled = motion.home_offset[X_AXIS] * 10;
+      HMI_ValueStruct.Home_OffY_scaled = motion.home_offset[Y_AXIS] * 10;
+      HMI_ValueStruct.Home_OffZ_scaled = motion.home_offset[Z_AXIS] * 10;
       Draw_HomeOff_Menu();
       break;
 #endif
@@ -10018,7 +10000,7 @@ void HMI_HomeOffN(const AxisEnum axis, float &posScaled, const_float_t lo, const
     {
       checkkey = HomeOff;
       EncoderRate.enabled = false;
-      set_home_offset(axis, posScaled / 10);
+      motion.set_home_offset(axis, posScaled / 10);
       DWIN_Draw_Signed_Float(font8x16, Color_Bg_Black, 3, 1, VALUERANGE_X, MBASE(select_item.now), posScaled);
       return;
     }
@@ -10186,7 +10168,7 @@ void HMI_ThumbPrint()
         break;
       case 1:
         ICON_Tune();
-        if (printingIsPaused())
+        if (marlin.printingIsPaused())
         {
           ICON_Continue();
         }
@@ -10196,7 +10178,7 @@ void HMI_ThumbPrint()
         }
         break;
       case 2:
-        if (printingIsPaused())
+        if (marlin.printingIsPaused())
         {
 
           ICON_Continue();
@@ -10218,13 +10200,13 @@ void HMI_ThumbPrint()
       {
       case 0:
         ICON_Tune();
-        if (printingIsPaused())
+        if (marlin.printingIsPaused())
           ICON_Continue();
         else
           ICON_Pause();
         break;
       case 1:
-        if (printingIsPaused())
+        if (marlin.printingIsPaused())
           ICON_Continue();
         else
           ICON_Pause();
@@ -10327,7 +10309,7 @@ void HMI_ThumbTune() {
     case TUNE_CASE_SPEED: // Print speed
       HMI_flag.Refresh_bottom_flag = true;
       checkkey = ThumbPrintSpeed;
-      HMI_ValueStruct.print_speed = feedrate_percentage;
+      HMI_ValueStruct.print_speed = motion.feedrate_percentage;
       DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, THUMB_MBASE(TUNE_CASE_SPEED + ThumbMROWS - thumb_index_tune) + PRINT_SET_OFFSET, HMI_ValueStruct.print_speed);
       EncoderRate.enabled = true;
       break;
@@ -10457,7 +10439,7 @@ void HMI_Tune()
     break;
     case TUNE_CASE_SPEED: // Print speed
       checkkey = PrintSpeed;
-      HMI_ValueStruct.print_speed = feedrate_percentage;
+      HMI_ValueStruct.print_speed = motion.feedrate_percentage;
       DWIN_Draw_IntValue(true, true, 0, font8x16, Color_White, Select_Color, 3, VALUERANGE_X, MBASE(TUNE_CASE_SPEED + MROWS - index_tune) + PRINT_SET_OFFSET, HMI_ValueStruct.print_speed);
       EncoderRate.enabled = true;
       break;
@@ -11189,6 +11171,8 @@ void HMI_Init()
   // PRINT_LOG("HMI_ValueStruct.Auto_PID_Value[1]:", HMI_ValueStruct.Auto_PID_Value[1], "HMI_ValueStruct.Auto_PID_Value[2]:", HMI_ValueStruct.Auto_PID_Value[2]);
 }
 
+void MarlinUI::init_lcd() { HMI_Init(); }
+
 void DWIN_Update()
 {
   HMI_SDCardUpdate(); // SD card update
@@ -11305,8 +11289,7 @@ void Remove_card_window_check(void)
 
 void EachMomentUpdate()
 {
-  static float card_Index = 0;
-  static bool heat_dir = false, heat_dir_bed = false, high_dir = false;
+    static bool heat_dir = false, heat_dir_bed = false, high_dir = false;
   static uint8_t heat_index = BG_NOZZLE_MIN, bed_heat_index = BG_BED_MIN;
   static millis_t next_var_update_ms = 0, next_rts_update_ms = 0, next_heat_flash_ms = 0, next_heat_bed_flash_ms = 0, next_high_ms = 0, next_move_file_name_ms = 0;
   const millis_t ms = millis();
@@ -11488,10 +11471,10 @@ void EachMomentUpdate()
         }
   #endif
       }
-      else if (HMI_flag.pause_flag != printingIsPaused())
+      else if (HMI_flag.pause_flag != marlin.printingIsPaused())
       {
         // print status update
-        HMI_flag.pause_flag = printingIsPaused();
+        HMI_flag.pause_flag = marlin.printingIsPaused();
         if (!HMI_flag.filement_resume_flag)
         {
           if (HMI_flag.pause_flag)
@@ -11512,7 +11495,7 @@ void EachMomentUpdate()
   }
 
   // pause after homing
-  if (HMI_flag.pause_action && printingIsPaused() && !planner.has_blocks_queued())
+  if (HMI_flag.pause_action && marlin.printingIsPaused() && !planner.has_blocks_queued())
   {
     if (!HMI_flag.cutting_line_flag)
     {
@@ -11529,14 +11512,14 @@ void EachMomentUpdate()
     }
   }
   // Whether online printing is paused
-  if (HMI_flag.online_pause_flag && printingIsPaused() && !planner.has_blocks_queued())
+  if (HMI_flag.online_pause_flag && marlin.printingIsPaused() && !planner.has_blocks_queued())
   {
     HMI_flag.online_pause_flag = false;
     queue.inject_P(PSTR("G1 F1200 X0 Y0"));
   }
 
   // cutting after homing
-  if (HMI_flag.remove_card_flag && printingIsPaused() && !planner.has_blocks_queued())
+  if (HMI_flag.remove_card_flag && marlin.printingIsPaused() && !planner.has_blocks_queued())
   {
 // HMI_flag.remove_card_flag = false;
 #if ENABLED(PAUSE_HEAT)
@@ -11556,7 +11539,7 @@ void EachMomentUpdate()
   }
 
   // cutting after homing  || HMI_flag.cloud_printing_flag
-  if (HMI_flag.cutting_line_flag && printingIsPaused() && (!planner.has_blocks_queued() || HMI_flag.filement_resume_flag))
+  if (HMI_flag.cutting_line_flag && marlin.printingIsPaused() && (!planner.has_blocks_queued() || HMI_flag.filement_resume_flag))
   {
     // Prevent hmi flag.filement resume flag from being set to 1 and continue to wait for the planner to be empty.
     if (!planner.has_blocks_queued())
@@ -11672,7 +11655,7 @@ void EachMomentUpdate()
   {
     // Print Stop
     dwin_abort_flag = false;
-    HMI_ValueStruct.print_speed = feedrate_percentage = 100;
+    HMI_ValueStruct.print_speed = motion.feedrate_percentage = 100;
     dwin_zoffset = BABY_Z_VAR;
     select_page.set(0);
     Goto_MainMenu(); // Rock 20210831
@@ -12649,7 +12632,7 @@ void HMI_Auto_Bed_PID(void)
   //   timeout_ms = ms + 1000;
   //   SERIAL_ECHOLNPGM("HMI_Auto_Bed_PID");
   // }
-  static char cmd[30] = {0}, str_1[7] = {0}, str_2[7] = {0}, str_3[7] = {0}, sP[16], sI[16], sD[16];
+  static char cmd[80] = {0}, sP[16], sI[16], sD[16];
   if ((checkkey == AUTO_SET_BED_PID) || (checkkey == AUTO_SET_NOZZLE_PID))
   {
     // refresh data
@@ -12668,7 +12651,6 @@ void HMI_Auto_Bed_PID(void)
         switch (checkkey)
         {
         case AUTO_SET_NOZZLE_PID:
-          sprintf_P(cmd, PSTR("M301 P%s I%s D%s"), dtostrf(auto_pid.p, 1, 2, str_1), dtostrf(auto_pid.i, 1, 2, str_2), dtostrf(auto_pid.d, 1, 2, str_3));
           dtostrf(thermalManager.temp_hotend[0].pid.p(), 1, 2, sP);
           dtostrf(thermalManager.temp_hotend[0].pid.i(), 1, 2, sI);
           dtostrf(thermalManager.temp_hotend[0].pid.d(), 1, 2, sD);
@@ -12677,7 +12659,6 @@ void HMI_Auto_Bed_PID(void)
           gcode.process_subcommands_now(cmd);
           break;
         case AUTO_SET_BED_PID:
-          sprintf_P(cmd, PSTR("M304 P%s I%s D%s"), dtostrf(auto_pid.p, 1, 2, str_1), dtostrf(auto_pid.i, 1, 2, str_2), dtostrf(auto_pid.d, 1, 2, str_3));
           dtostrf(thermalManager.temp_bed.pid.p(), 1, 2, sP);
           dtostrf(thermalManager.temp_bed.pid.i(), 1, 2, sI);
           dtostrf(thermalManager.temp_bed.pid.d(), 1, 2, sD);
@@ -12690,7 +12671,7 @@ void HMI_Auto_Bed_PID(void)
         }
         memset(cmd, 0, sizeof(cmd));
         // settings save
-        gcode.process_subcommands_now(PSTR("M500"));
+        gcode.process_subcommands_now(F("M500"));
         Save_Auto_PID_Value();
         // save PID
         checkkey = AUTO_SET_PID;
@@ -12914,7 +12895,7 @@ void DWIN_CompletedHoming()
 
   else if (checkkey == Back_Main)
   {
-    HMI_ValueStruct.print_speed = feedrate_percentage = 100;
+    HMI_ValueStruct.print_speed = motion.feedrate_percentage = 100;
     planner.finish_and_disable();
     Goto_MainMenu();
   }

@@ -1779,7 +1779,8 @@ int16_t TURN_OFF_TIME = 5;
 static void Auto_Turnof_Function()
 {
   // 按钮无动作超时
-  if(millis()-lMs_lcd_delay > (1000 * 60 * TURN_OFF_TIME))
+  const millis_t turnoff_timeout_ms = MIN_TO_MS(millis_t(TURN_OFF_TIME));
+  if (millis() - lMs_lcd_delay > turnoff_timeout_ms)
   {
     if(!LCD_TURNOFF_FLAG)   // 没有熄灭屏
     {

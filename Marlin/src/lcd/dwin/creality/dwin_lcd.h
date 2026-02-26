@@ -53,12 +53,6 @@ typedef struct _model_information_t
 {
   char filament[15];
   char height[15];
-  char MINX[15];
-  char MINY[15];
-  char MINZ[15];
-  char MAXX[15];
-  char MAXY[15];
-  char MAXZ[15];
 }model_information_t;
 
 extern model_information_t model_information;

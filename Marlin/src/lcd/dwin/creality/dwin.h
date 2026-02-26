@@ -934,18 +934,8 @@ void make_name_without_ext(char *dst, char *src, size_t maxlen);
 
 #define SizeofDatabuf       26
 
-typedef struct CardRecord
-{
-  int recordcount;
-  int Filesum;
-  unsigned long addr[FileNum];
-  char Cardshowfilename[FileNum][FileNameLen];
-  char Cardfilename[FileNum][FileNameLen];
-}CRec;
-
 extern bool DWIN_lcd_sd_status;
 extern bool pause_action_flag ;
-extern CRec CardRecbuf;
 
 
 

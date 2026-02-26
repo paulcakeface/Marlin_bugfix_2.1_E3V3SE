@@ -1024,7 +1024,15 @@ void Temperature::factory_reset() {
         // Use the result? (As with "M303 U1")
         if (set_result){
           SERIAL_ECHOLNPGM("Applying new PID settings.");
-          GHV(_set_chamber_pid(tune_pid), _set_bed_pid(tune_pid), _set_hotend_pid(heater_id, tune_pid));
+          if (ischamber) {
+            TERN_(PIDTEMPCHAMBER, _set_chamber_pid(tune_pid));
+          }
+          else if (isbed) {
+            TERN_(PIDTEMPBED, _set_bed_pid(tune_pid));
+          }
+          else {
+            _set_hotend_pid(heater_id, tune_pid);
+          }
         }    
         goto EXIT_M303;
       }
