@@ -209,7 +209,7 @@ bool load_filament(const float slow_load_length/*=0*/, const float fast_load_len
     first_impatient_beep(max_beep_count);
 
     KEEPALIVE_STATE(PAUSED_FOR_USER);
-    wait_for_user = true;    // LCD click or M108 will clear this
+    Marlin::wait_for_user = true;    // LCD click or M108 will clear this
 
     #if ENABLED(HOST_PROMPT_SUPPORT)
       if(serial_connection_active){
@@ -225,7 +225,7 @@ bool load_filament(const float slow_load_length/*=0*/, const float fast_load_len
     TERN_(EXTENSIBLE_UI, ExtUI::onUserConfirmRequired(GET_TEXT_F(MSG_FILAMENTLOAD)));
 
     
-    while (wait_for_user) {
+    while (Marlin::wait_for_user) {
       impatient_beep(max_beep_count);
       #if ALL(HAS_FILAMENT_SENSOR, FILAMENT_CHANGE_RESUME_ON_INSERT)
         #if MULTI_FILAMENT_SENSOR
@@ -330,7 +330,7 @@ bool load_filament(const float slow_load_length/*=0*/, const float fast_load_len
              
           }
           // Extrude filament to get into hotend
-          unscaled_e_move(40, ADVANCED_PAUSE_PURGE_FEEDRATE);
+          Motion::unscaled_e_move(40, ADVANCED_PAUSE_PURGE_FEEDRATE);
           
         }
 
@@ -346,13 +346,13 @@ bool load_filament(const float slow_load_length/*=0*/, const float fast_load_len
             if (show_lcd) {
               // Show "Purge More" / "Resume" menu and wait for reply
               KEEPALIVE_STATE(PAUSED_FOR_USER);
-              wait_for_user = false;
+              Marlin::wait_for_user = false;
               #if HAS_LCD_MENU
                 ui.pause_show_message(PAUSE_MESSAGE_OPTION); // Also sets PAUSE_RESPONSE_WAIT_FOR
               #else
                 pause_menu_response = PAUSE_RESPONSE_WAIT_FOR;
               #endif
-              while (pause_menu_response == PAUSE_RESPONSE_WAIT_FOR) idle_no_sleep();
+              while (pause_menu_response == PAUSE_RESPONSE_WAIT_FOR) Marlin::idle_no_sleep();
             }
           }
         #endif
@@ -366,7 +366,7 @@ bool load_filament(const float slow_load_length/*=0*/, const float fast_load_len
           if (show_lcd) ui.pause_show_message(PAUSE_MESSAGE_PURGE);
 
           // Extrude filament to get into hotend
-          unscaled_e_move(40, ADVANCED_PAUSE_PURGE_FEEDRATE);
+          Motion::unscaled_e_move(40, ADVANCED_PAUSE_PURGE_FEEDRATE);
         }
     }
 

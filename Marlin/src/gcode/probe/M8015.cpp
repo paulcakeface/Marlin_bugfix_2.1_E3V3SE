@@ -16,7 +16,7 @@
 #include "../../feature/bedlevel/bedlevel.h"
 #include "../../feature/bedlevel/abl/bbl.h"
 #include "../../module/AutoOffset.h"
-#include "../../lcd/e3v2/creality/dwin.h"
+#include "../../lcd/dwin/creality/dwin.h"
 
 
 /**
@@ -36,7 +36,7 @@ void GcodeSuite::M8015()
   }
   bedlevel.refresh_bed_level(); // Refresh logical partition values
 
-  if (axis_is_trusted(Z_AXIS))
+  if (Motion::axis_is_trusted(Z_AXIS))
   {
     DISABLE_AXIS_Z();   // Release the z-axis motor. If not released, the second adjustment data will be abnormal and cannot be cleared.
     probe.offset.z = 0; // Clear data to prevent secondary overlapping of data

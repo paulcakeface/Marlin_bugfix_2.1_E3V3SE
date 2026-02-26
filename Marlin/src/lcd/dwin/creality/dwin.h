@@ -712,7 +712,7 @@ typedef struct
   uint16_t Auto_PID_Value[3] = {0, 100, 260}; // 1: Hot bed temperature; 2 Nozzle temperature
   float HM_PID_Temp_Value  = 0;
   float Temp_Leveling_Value=0;
-  float HM_PID_Value[7]  = {0,DEFAULT_Kp,DEFAULT_Ki,DEFAULT_Kd,DEFAULT_bedKp,DEFAULT_bedKi,DEFAULT_bedKd};
+  float HM_PID_Value[7]  = {0,DEFAULT_KP,DEFAULT_KI,DEFAULT_KD,DEFAULT_BED_KP,DEFAULT_BED_KI,DEFAULT_BED_KD};
   #if HAS_HOTEND
     float Move_E_scaled   = 0;
   #endif

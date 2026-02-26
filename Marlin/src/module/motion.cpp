@@ -73,7 +73,7 @@
   #include "../feature/bedlevel/bdl/bdl.h"
 #endif
 
-Motion motion;
+// Motion motion;
 
 // Relative Mode. Enable with G91, disable with G90.
 bool Motion::relative_mode; // = false

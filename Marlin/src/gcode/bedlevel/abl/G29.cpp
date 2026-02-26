@@ -51,8 +51,8 @@
 #if ENABLED(EXTENSIBLE_UI)
   #include "../../../lcd/extui/ui_api.h"
 #elif ENABLED(DWIN_CREALITY_LCD)
-  #include "../../../lcd/e3v2/creality/dwin.h"
-  #include "../../../lcd/e3v2/creality/ui_position.h"
+  #include "../../../lcd/dwin/creality/dwin.h"
+  #include "../../../lcd/dwin/creality/ui_position.h"
   
 #elif ENABLED(SOVOL_SV06_RTS)
   #include "../../../lcd/sovol_rts/sovol_rts.h"
@@ -270,7 +270,7 @@ G29_TYPE GcodeSuite::G29() {
     process_subcommands_now(TERN(CAN_SET_LEVELING_AFTER_G28, F("G28L0"), FPSTR(G28_STR)));
 
   // Don't allow auto-leveling without homing first
-  if (homing_needed_error()){
+  if (Motion::homing_needed_error()){
     // Fixed a bug where the leveling interface would not disappear when not connected to BLtouch
     // rock_20211013 Solved the problem that the automatic leveling card does not exit to the main interface when there is no crtouch.
     #if ENABLED(DWIN_CREALITY_LCD)
@@ -829,7 +829,7 @@ G29_TYPE GcodeSuite::G29() {
 
           abl.reenable = false; // Don't re-enable after modifying the mesh
           HMI_flag.G29_level_not_normal=false; //g29 leveling is abnormal
-          idle_no_sleep();
+          Marlin::idle_no_sleep();
 
         } // inner
       } // outer

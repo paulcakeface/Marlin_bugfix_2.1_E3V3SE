@@ -2,7 +2,7 @@
 #include "../../MarlinCore.h"
 #include "../gcode.h"
 #include "../parser.h"
-#include "../../lcd/e3v2/creality/dwin.h"
+#include "../../lcd/dwin/creality/dwin.h"
 #include "../../lcd/marlinui.h"
 
 #include <stdio.h>

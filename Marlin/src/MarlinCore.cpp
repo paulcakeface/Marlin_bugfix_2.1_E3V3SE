@@ -76,8 +76,8 @@
 #if HAS_DWIN_E3V2
   #include "lcd/dwin/common/encoder.h"
   #if ENABLED(DWIN_CREALITY_LCD)
-    #include "lcd/e3v2/creality/dwin.h"
-    #include "lcd/e3v2/creality/dwin_lcd.h"
+    #include "lcd/dwin/creality/dwin.h"
+    #include "lcd/dwin/creality/dwin_lcd.h"
 
   #elif ENABLED(DWIN_CREALITY_LCD_JYERSUI)
     #include "lcd/dwin/jyersui/dwin.h"

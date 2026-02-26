@@ -652,7 +652,8 @@ inline float home_bump_mm(const AxisEnum axis) {
   void restore_homing_current(const AxisEnum axis);
 #endif
 
-extern Motion motion;
+class Motion;         
+extern class Motion motion;
 
 // External conversion methods (motion.h)
 inline void toLogical(xy_pos_t &raw)   { motion.toLogical(raw); }

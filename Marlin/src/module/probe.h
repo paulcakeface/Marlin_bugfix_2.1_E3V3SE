@@ -163,14 +163,14 @@ public:
        */
       static bool can_reach(const float rx, const float ry, const bool probe_relative=true) {
         if (probe_relative) {
-          return motion.can_reach(rx - offset_xy.x, ry - offset_xy.y)
+          return Motion::can_reach(rx - offset_xy.x, ry - offset_xy.y)
               && COORDINATE_OKAY(rx, min_x() - fslop, max_x() + fslop)
               && COORDINATE_OKAY(ry, min_y() - fslop, max_y() + fslop)
               && obstacle_check(rx, ry)
               && obstacle_check(rx - offset_xy.x, ry - offset_xy.y);
         }
         else {
-          return motion.can_reach(rx, ry)
+          return Motion::can_reach(rx, ry)
               && COORDINATE_OKAY(rx + offset_xy.x, min_x() - fslop, max_x() + fslop)
               && COORDINATE_OKAY(ry + offset_xy.y, min_y() - fslop, max_y() + fslop)
               && obstacle_check(rx, ry)
@@ -223,7 +223,7 @@ public:
       #if ENABLED(DWIN_ZHOME_MENU)     
         do_z_clearance(CZ_AFTER_HOMING, true, true); // Move down still permitted
       #else
-        do_z_clearance(Z_AFTER_PROBING, true, true); // Move down still
+        Motion::do_z_clearance(Z_AFTER_HOMING, true, true); // Move down still
       #endif
     #endif
   }

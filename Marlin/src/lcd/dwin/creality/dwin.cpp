@@ -240,13 +240,13 @@ constexpr float default_max_jerk[] = {DEFAULT_XJERK, DEFAULT_YJERK, DEFAULT_ZJER
 
 uint8_t Cloud_Progress_Bar = 0; // The cloud prints the transmitted progress bar data
 
-float default_nozzle_ptemp = DEFAULT_Kp;
-float default_nozzle_itemp = DEFAULT_Ki;
-float default_nozzle_dtemp = DEFAULT_Kd;
+float default_nozzle_ptemp = DEFAULT_KP;
+float default_nozzle_itemp = DEFAULT_KI;
+float default_nozzle_dtemp = DEFAULT_KD;
 
-float default_hotbed_ptemp = DEFAULT_bedKp;
-float default_hotbed_itemp = DEFAULT_bedKi;
-float default_hotbed_dtemp = DEFAULT_bedKd;
+float default_hotbed_ptemp = DEFAULT_BED_KP;
+float default_hotbed_itemp = DEFAULT_BED_KI;
+float default_hotbed_dtemp = DEFAULT_BED_KD;
 uint16_t auto_bed_pid = 100, auto_nozzle_pid = 260;
 
 #if ENABLED(PAUSE_HEAT)

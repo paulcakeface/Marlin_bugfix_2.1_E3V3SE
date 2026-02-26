@@ -797,9 +797,7 @@ private:
   #if ENABLED(HOST_PROMPT_SUPPORT)
     static void M876();
   #endif
-  #if ENABLED(HOST_PROMPT_SUPPORT)
-      static void M876();
-  #endif
+  
 
   static void M110();
   static void M111();
