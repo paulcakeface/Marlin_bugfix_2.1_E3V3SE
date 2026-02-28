@@ -282,6 +282,9 @@
  * M672 - Set/Reset Duet Smart Effector's sensitivity. (Requires DUET_SMART_EFFECTOR and SMART_EFFECTOR_MOD_PIN)
  * M701 - Load filament (Requires FILAMENT_LOAD_UNLOAD_GCODES)
  * M702 - Unload filament (Requires FILAMENT_LOAD_UNLOAD_GCODES)
+ * M770 - Calibrate load-cell scale (Requires USE_AUTOZ_TOOL_2)
+ * M771 - Reset load-cell scale calibration (Requires USE_AUTOZ_TOOL_2)
+ * M772 - Read load-cell scale value (Requires USE_AUTOZ_TOOL_2)
  *
  *** PRUSA_MMU3 ***
  * M704 - Preload to MMU
@@ -1232,6 +1235,14 @@ private:
     static void M701();
     static void M702();
   #endif
+
+  // Temporarily disabled: load-cell scale M-codes for validation runs.
+  // Re-enable together with src/gcode/feature/M770_M772.cpp and src/feature/loadcell_scale.cpp.
+  // #if ENABLED(USE_AUTOZ_TOOL_2)
+  //   static void M770();
+  //   static void M771();
+  //   static void M772();
+  // #endif
 
   #if HAS_PRUSA_MMU3
     static void M704();

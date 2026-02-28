@@ -2944,7 +2944,7 @@ void Temperature::updateTemperaturesFromRawValues() {
       // MAXTEMP_ERROR(H_BED, temp_bed.celsius);
       maxtemp_error(H_BED);
 
-    uint8_t threshold_error = 10; // 10 raw units threshold for bed mintemp error
+    uint8_t threshold_error = 30; // 30 raw units threshold for bed mintemp error
     uint8_t error_counter = 0;
 
     if (temp_bed.target > 0 && !is_bed_preheating() && TP_CMP(BED, temp_sensor_range_bed.raw_min, temp_bed.getraw())){

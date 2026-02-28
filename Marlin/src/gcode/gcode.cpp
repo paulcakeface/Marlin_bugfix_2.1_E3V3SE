@@ -1020,6 +1020,14 @@ void GcodeSuite::process_parsed_command(bool no_ok/*=false*/) {
         case 702: M702(); break;                                  // M702: Unload Filament
       #endif
 
+      // Temporarily disabled: load-cell scale M-codes for validation runs.
+      // Re-enable together with src/gcode/feature/M770_M772.cpp and src/feature/loadcell_scale.cpp.
+      // #if ENABLED(USE_AUTOZ_TOOL_2)
+      //   case 770: M770(); break;                                  // M770: Calibrate load-cell scale
+      //   case 771: M771(); break;                                  // M771: Reset load-cell scale calibration
+      //   case 772: M772(); break;                                  // M772: Read load-cell scale value
+      // #endif
+
       #if HAS_PRUSA_MMU3
         case 704: M704(); break;                                  // M704: Preload to MMU
         case 705: M705(); break;                                  // M705: Eject filament

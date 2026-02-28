@@ -339,8 +339,8 @@
  * Thermal Protection parameters for the bed are just as above for hotends.
  */
 #if TEMP_SENSOR_BED && ENABLED(THERMAL_PROTECTION_BED)
-  #define THERMAL_PROTECTION_BED_PERIOD        180 // (seconds)
-  #define THERMAL_PROTECTION_BED_HYSTERESIS     2 // (°C)
+  #define THERMAL_PROTECTION_BED_PERIOD        240 // (seconds)
+  #define THERMAL_PROTECTION_BED_HYSTERESIS     3 // (°C)
 
   /**
    * As described above, except for the bed (M140/M190/M303).
@@ -1218,7 +1218,7 @@
                                                 //     smoothing acceleration peaks, which may also smooth curved surfaces.
   #endif
 
-  #define FTM_POLYS                             // Disable POLY5/6 to save ~3k of Flash. Preserves TRAPEZOIDAL.
+  //#define FTM_POLYS                             // Disable POLY5/6 to save ~3k of Flash. Preserves TRAPEZOIDAL.
   #if ENABLED(FTM_POLYS)
     #define FTM_TRAJECTORY_TYPE TRAPEZOIDAL     // Block acceleration profile (TRAPEZOIDAL, POLY5, POLY6)
                                                 // TRAPEZOIDAL: Continuous Velocity. Max acceleration is respected.
@@ -1812,7 +1812,7 @@
    * Reinit the LCD after SD Card insert/remove or when entering the menu.
    * Required for some LCDs that use shared SPI with an external SD Card reader.
    */
-  #define REINIT_NOISY_LCD
+  //#define REINIT_NOISY_LCD
 
   // The standard SD detect circuit reads LOW when media is inserted and HIGH when empty.
   // Enable this option and set to HIGH if your SD cards are incorrectly detected.

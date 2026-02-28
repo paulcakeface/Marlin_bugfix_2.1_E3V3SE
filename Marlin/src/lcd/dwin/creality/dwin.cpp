@@ -140,7 +140,7 @@ constexpr uint16_t TROWS = 6, MROWS = TROWS - 1, // Total rows, and other-than-B
 #define font_offset 19
 #define BABY_Z_VAR TERN(HAS_BED_PROBE, probe.offset.z, dwin_zoffset)
 
-char shift_name[LONG_FILENAME_LENGTH + 1];
+char shift_name[101];
 char current_file_name[30];
 static char *print_name = card.longest_filename();
 static uint8_t print_len_name = strlen(print_name);
@@ -5344,7 +5344,7 @@ void Draw_SDItem(const uint16_t item, int16_t row = -1)
 #endif
 
   // Draw the file/folder with name aligned left
-  char str[strlen(name) + 1];
+  char str[MENU_CHAR_LIMIT + 1];
   make_name_without_ext(str, name);
   Draw_Menu_Line(row, card.flag.filenameIsDir ? ICON_Folder : ICON_File, str);
 }
@@ -5427,12 +5427,14 @@ void HMI_SDCardUpdate()
   }
   if (DWIN_lcd_sd_status != card.isMounted()) // Flag.mounted
   {
+    bool need_lcd_update = false;
     DWIN_lcd_sd_status = card.isMounted();
     if (DWIN_lcd_sd_status)
     {
       if (checkkey == SelectFile)
       {
         Redraw_SD_List();
+        need_lcd_update = true;
       }
     }
     else
@@ -5441,6 +5443,7 @@ void HMI_SDCardUpdate()
       if (checkkey == SelectFile)
       {
         Redraw_SD_List();
+        need_lcd_update = true;
       }
 
       #if ENABLED(DWIN_RENDER_THUMBNAIL)
@@ -5454,9 +5457,11 @@ void HMI_SDCardUpdate()
         card.abortFilePrintSoon();
         // wait_for_heatup = wait_for_user = false;
         dwin_abort_flag = true; //Reset feedrate, return to Home
+        need_lcd_update = true;
       }
     }
-    DWIN_UpdateLCD();
+    if (need_lcd_update)
+      DWIN_UpdateLCD();
   }
   else
   {
@@ -6159,7 +6164,7 @@ static void Image_Preview_Information_Show(uint8_t ret)
     Draw_Show_G_Select_Highlight(true);
     
     char *const name = card.longest_filename();
-    char str[strlen(name) + 1];
+    char str[MENU_CHAR_LIMIT + 1];
     // Cancel the suffix. For example: filename.gcode and remove .gocde.
     make_name_without_ext(str, name);
     
@@ -6347,7 +6352,7 @@ void HMI_SelectFile()
             Draw_Show_G_Select_Highlight(true);
       
             char *const name = card.longest_filename();
-            char str[strlen(name) + 1];
+            char str[MENU_CHAR_LIMIT + 1];
             // Cancel the suffix. For example: filename.gcode and remove .gocde.
             make_name_without_ext(str, name);
             Draw_Title(str);
@@ -6696,7 +6701,7 @@ void HMI_PauseOrStop()
               Draw_Show_G_Select_Highlight(true);
         
               char *const name = card.longest_filename();
-              char str[strlen(name) + 1];
+              char str[MENU_CHAR_LIMIT + 1];
               // Cancel the suffix. For example: filename.gcode and remove .gocde.
               make_name_without_ext(str, name);
               Draw_Title(str);
@@ -12651,17 +12656,17 @@ void HMI_Auto_Bed_PID(void)
         switch (checkkey)
         {
         case AUTO_SET_NOZZLE_PID:
-          dtostrf(thermalManager.temp_hotend[0].pid.p(), 1, 2, sP);
-          dtostrf(thermalManager.temp_hotend[0].pid.i(), 1, 2, sI);
-          dtostrf(thermalManager.temp_hotend[0].pid.d(), 1, 2, sD);
+          dtostrf(auto_pid.p, 1, 4, sP);
+          dtostrf(auto_pid.i, 1, 4, sI);
+          dtostrf(auto_pid.d, 1, 4, sD);
           sprintf_P(cmd, PSTR("M301 P%s I%s D%s"), sP, sI, sD);
           // Set nozzle temperature data
           gcode.process_subcommands_now(cmd);
           break;
         case AUTO_SET_BED_PID:
-          dtostrf(thermalManager.temp_bed.pid.p(), 1, 2, sP);
-          dtostrf(thermalManager.temp_bed.pid.i(), 1, 2, sI);
-          dtostrf(thermalManager.temp_bed.pid.d(), 1, 2, sD);
+          dtostrf(auto_pid.p, 1, 4, sP);
+          dtostrf(auto_pid.i, 1, 4, sI);
+          dtostrf(auto_pid.d, 1, 4, sD);
           sprintf_P(cmd, PSTR("M304 P%s I%s D%s"), sP, sI, sD);
           // Set hotbed temperature data
           gcode.process_subcommands_now(cmd);

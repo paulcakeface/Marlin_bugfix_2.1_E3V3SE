@@ -199,6 +199,63 @@ static float median_of(float *vals, int n) {
   return 0.5f * (vals[n/2 - 1] + vals[n/2]);
 }
 
+// Robust location estimate from multiple bed points.
+// 1) Start from median (high breakdown-point),
+// 2) Estimate scale with MAD,
+// 3) Reject gross outliers,
+// 4) Compute a weighted mean with:
+//    - Huber residual weight (less influence from noisy points),
+//    - Spatial weight (closer to load-cell reference contributes more).
+static float robust_offset_from_points(const float *vals, const xyz_float_t *pts, const uint8_t n) {
+  if (!n) return NAN;
+  if (n == 1) return vals[0];
+
+  float work[5], abs_dev[5];
+  for (uint8_t i = 0; i < n; ++i) work[i] = vals[i];
+  const float z_med = median_of(work, n);
+
+  for (uint8_t i = 0; i < n; ++i) abs_dev[i] = fabsf(vals[i] - z_med);
+  const float mad = median_of(abs_dev, n);
+  const float sigma = _MAX(mad * 1.4826f, 0.01f); // Keep a minimum scale for tiny spreads
+
+  constexpr float HUBER_K = 2.5f;
+  constexpr float INLIER_K = 3.0f;
+  constexpr float DIST_SCALE_MM = 80.0f;
+  const float inlier_gate = _MAX(INLIER_K * sigma, ZOFFSET_COMPARE);
+  const float inv_dist_scale2 = 1.0f / (DIST_SCALE_MM * DIST_SCALE_MM);
+  const xyz_float_t press_ref = PRESS_XYZ_POS;
+
+  float sum_w = 0, sum_wz = 0;
+  uint8_t inliers = 0;
+  for (uint8_t i = 0; i < n; ++i) {
+    const float ri = fabsf(vals[i] - z_med);
+    if (ri > inlier_gate) continue;
+
+    ++inliers;
+    const float wr = (ri <= HUBER_K * sigma || ri <= 0.0001f) ? 1.0f : (HUBER_K * sigma / ri);
+    const float dx = pts[i].x - press_ref.x;
+    const float dy = pts[i].y - press_ref.y;
+    const float ws = 1.0f / (1.0f + (dx * dx + dy * dy) * inv_dist_scale2);
+    const float w = wr * ws;
+
+    sum_w += w;
+    sum_wz += w * vals[i];
+  }
+
+  if (!inliers || sum_w <= 0) return z_med;
+
+  float z_est = sum_wz / sum_w;
+
+  // Guardrail: if weights drag the estimate too far from median, clamp shift.
+  const float max_shift = _MAX(0.25f, 2.0f * sigma);
+  if (fabsf(z_est - z_med) > max_shift)
+    z_est = z_med + (z_est > z_med ? max_shift : -max_shift);
+
+  PRINTF("***ROBUST_Z: n=%d in=%d med=%s mad=%s sig=%s est=%s***\n",
+         (int)n, (int)inliers, getStr(z_med), getStr(mad), getStr(sigma), getStr(z_est));
+  return z_est;
+}
+
 // probeTimes(0, basePos_mm, 0.02, -10, 0, MIN_HOLD, MAX_HOLD));
 float ProbeAcq::probeTimes(int max_times, xyz_float_t rdy_pos, float step_mm, float min_dis_mm, float max_z_err, int min_hold, int max_hold) {
   ProbeAcq pa;
@@ -680,7 +737,7 @@ static float Multiple_Hight_At(xyz_float_t basePos, bool isRunProByPress, bool i
 
 /*
  *Function Name: getZOffset(float*outOffset)
- *Purpose: now measures in 5 points and uses median discarding 0/invalid
+ *Purpose: measure multiple points and estimate Z offset with robust statistics
  */
 bool getZOffset(bool isNozzleClr, bool isRunProByPress, bool isRunProByTouch, float *outOffset)
 {
@@ -723,6 +780,7 @@ bool getZOffset(bool isNozzleClr, bool isRunProByPress, bool isRunProByTouch, fl
 
   // Measure each point using the same robust routine (Multiple_Hight_) but centered on the coordinate
   float vals[5] = {0};
+  xyz_float_t valid_pts[5] = {};
   uint8_t vcount = 0;
 
   for (uint8_t i = 0; i < 5; ++i)
@@ -732,6 +790,7 @@ bool getZOffset(bool isNozzleClr, bool isRunProByPress, bool isRunProByTouch, fl
     // Filters invalid values ​​(≈0, out of range)
     if (is_valid_offset(zoff)) {
       vals[vcount++] = zoff;
+      valid_pts[vcount - 1] = Probes[i];
       PRINTF("***POINT[%d @ %s,%s] => zOffset=%s (kept)\n", i, getStr(Probes[i].x), getStr(Probes[i].y), getStr(zoff));
     } else {
       PRINTF("***POINT[%d @ %s,%s] => zOffset=%s (discarded)\n", i, getStr(Probes[i].x), getStr(Probes[i].y), getStr(zoff));
@@ -744,8 +803,7 @@ bool getZOffset(bool isNozzleClr, bool isRunProByPress, bool isRunProByTouch, fl
     return false;
   }
 
-  // Median valid
-  float work[5];
+  // Final robust estimate (median fallback internal)
 #elif ENABLED(D_ROUTINE_AUTO_OFFSET)
   // Points requested
   const xyz_float_t Probes[4] = {
@@ -757,6 +815,7 @@ bool getZOffset(bool isNozzleClr, bool isRunProByPress, bool isRunProByTouch, fl
 
   // Measure each point using the same robust routine (Multiple_Hight_) but centered on the coordinate
   float vals[4] = {0};
+  xyz_float_t valid_pts[4] = {};
   uint8_t vcount = 0;
 
   for (uint8_t i = 0; i < 4; ++i)
@@ -766,6 +825,7 @@ bool getZOffset(bool isNozzleClr, bool isRunProByPress, bool isRunProByTouch, fl
     // Filters invalid values ​​(≈0, out of range)
     if (is_valid_offset(zoff)) {
       vals[vcount++] = zoff;
+      valid_pts[vcount - 1] = Probes[i];
       PRINTF("***POINT[%d @ %s,%s] => zOffset=%s (kept)\n", i, getStr(Probes[i].x), getStr(Probes[i].y), getStr(zoff));
     } else {
       PRINTF("***POINT[%d @ %s,%s] => zOffset=%s (discarded)\n", i, getStr(Probes[i].x), getStr(Probes[i].y), getStr(zoff));
@@ -778,23 +838,18 @@ bool getZOffset(bool isNozzleClr, bool isRunProByPress, bool isRunProByTouch, fl
     return false;
   }
 
-  // Median valid
-  float work[4];
+  // Final robust estimate (median fallback internal)
 
 #endif
 
-
-  for (uint8_t i=0;i<vcount;++i) work[i] = vals[i];
-  const float z_med = median_of(work, vcount);
-
-  *outOffset = z_med;
+  *outOffset = robust_offset_from_points(vals, valid_pts, vcount);
 
 #if ENABLED(X_ROUTINE_AUTO_OFFSET)
     SERIAL_ECHOLNPGM_P("=== Z Offset Measurement Completed (5 points) ===");
-    SERIAL_ECHOLNPGM("OUTPUT_ZOFFSET(5pt MEDIAN): ", *outOffset);
+    SERIAL_ECHOLNPGM("OUTPUT_ZOFFSET(5pt ROBUST): ", *outOffset);
 #elif ENABLED(D_ROUTINE_AUTO_OFFSET)
     SERIAL_ECHOLNPGM_P("=== Z Offset Measurement Completed (4 points) ===");
-    SERIAL_ECHOLNPGM("OUTPUT_ZOFFSET(4pt MEDIAN): ", *outOffset);
+    SERIAL_ECHOLNPGM("OUTPUT_ZOFFSET(4pt ROBUST): ", *outOffset);
 #endif
  
 if ((*outOffset > ZOFFSET_VALUE_MAX) || (*outOffset < ZOFFSET_VALUE_MIN))

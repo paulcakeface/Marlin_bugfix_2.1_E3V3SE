@@ -637,7 +637,7 @@ void CardReader::manage_media() {
          (isSDCardSelected()     && (vdiff & INSERT_SD))
       || (isFlashDriveSelected() && (vdiff & INSERT_USB))
     #else
-      stat // == INSERT_MEDIA
+      old_real != INSERT_NONE && stat == INSERT_NONE
     #endif
   ) {
     flag.workDirIsRoot = true;          // Return to root on release

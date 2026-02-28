@@ -2,7 +2,7 @@
  * Config.h - Marlin Firmware distilled configuration
  * Usage: Place this file in the 'Marlin' folder with the name 'Config.h'.
  *
- * Exported by Marlin build on 2026-02-26 at 01:28:51.
+ * Exported by Marlin build on 2026-02-28 at 02:25:46.
  */
 
 //
@@ -139,7 +139,6 @@
 //
 // Motion Control
 //
-#define FTM_TRAJECTORY_TYPE                      TRAPEZOIDAL
 #define FTM_SHAPING_DEFAULT_FREQ_E               21.0f
 #define FT_MOTION
 #define FTM_SHAPING_DEFAULT_FREQ_Y               42.0f
@@ -151,14 +150,12 @@
 #define FTM_DIR_CHANGE_HOLD_X
 #define FTM_DIR_CHANGE_HOLD_Y
 #define FTM_DIR_CHANGE_HOLD_Z
-#define FTM_POLY6_ACCELERATION_OVERSHOOT         1.875f
 #define FTM_SHAPER_ZVD
 #define FTM_SHAPER_2HEI
 #define FTM_DEFAULT_SHAPER_E                     ftMotionShaper_NONE
 #define FTM_DEFAULT_SHAPER_X                     ftMotionShaper_NONE
 #define FTM_DEFAULT_SHAPER_Y                     ftMotionShaper_3HEI
 #define FTM_DEFAULT_SHAPER_Z                     ftMotionShaper_NONE
-#define FTM_POLYS
 #define FTM_SHAPER_ZVDD
 #define FTM_SHAPER_EI
 #define FTM_SHAPER_MZV
@@ -245,7 +242,7 @@
 #define HOTEND_OVERSHOOT                         10
 #define AUTOTEMP
 #define AUTOTEMP_OLDWEIGHT                       0.98
-#define THERMAL_PROTECTION_BED_HYSTERESIS        2
+#define THERMAL_PROTECTION_BED_HYSTERESIS        3
 #define WATCH_BED_TEMP_INCREASE                  2
 #define WATCH_BED_TEMP_PERIOD                    180
 #define WATCH_TEMP_INCREASE                      2
@@ -256,7 +253,7 @@
 #define BED_MAXTEMP                              125
 #define AUTOTEMP_FACTOR                          0.1f
 #define AUTOTEMP_MIN                             210
-#define THERMAL_PROTECTION_BED_PERIOD            180
+#define THERMAL_PROTECTION_BED_PERIOD            240
 #define AUTOTEMP_MAX                             250
 
 //
@@ -380,7 +377,6 @@
 #define LONG_FILENAME_WRITE_SUPPORT
 #define POWER_LOSS_RECOVERY
 #define LONG_FILENAME_HOST_SUPPORT
-#define REINIT_NOISY_LCD
 #define SD_FINISHED_STEPPERRELEASE               true
 #define SD_FINISHED_RELEASECOMMAND               "G1 X0 Y215\nM84"
 #define BOOTSCREEN_TIMEOUT                       3000
