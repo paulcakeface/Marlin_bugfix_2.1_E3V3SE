@@ -28,7 +28,7 @@
 #include "../../lcd/marlinui.h"
 #include "../../sd/cardreader.h"
 #include "../../libs/numtostr.h"
-#include "../../lcd/e3v2/creality/dwin.h"
+#include "../../lcd/dwin/creality/dwin.h"
 
 /**
  * M73: Set Print Progress

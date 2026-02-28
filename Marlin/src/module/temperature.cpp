@@ -51,7 +51,7 @@
 #endif
 
 #if ENABLED(DWIN_CREALITY_LCD)
-  #include "../lcd/e3v2/creality/dwin.h"
+  #include "../lcd/dwin/creality/dwin.h"
 #elif ENABLED(SOVOL_SV06_RTS)
   #include "../lcd/sovol_rts/sovol_rts.h"
 #endif
@@ -1061,7 +1061,7 @@ void Temperature::factory_reset() {
         // Use the result? (As with "M303 U1")
         if (set_result){
           SERIAL_ECHOLNPGM("Applying new PID settings.");
-          GHV(_set_chamber_pid(tune_pid), _set_bed_pid(tune_pid), _set_hotend_pid(heater_id, tune_pid));
+          PER_CBH(_set_chamber_pid(tune_pid), _set_bed_pid(tune_pid), _set_hotend_pid(heater_id, tune_pid));
         }    
         goto EXIT_M303;
       }

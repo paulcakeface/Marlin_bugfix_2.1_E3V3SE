@@ -80,16 +80,16 @@
 #endif
 
 #if ENABLED(DWIN_LCD_PROUI)
-  #include "../lcd/e3v2/proui/dwin.h"
-  #include "../lcd/e3v2/proui/bedlevel_tools.h"
+  #include "../lcd/dwin/proui/dwin.h"
+  #include "../lcd/dwin/proui/bedlevel_tools.h"
 #endif
 
 #if ENABLED(EXTENSIBLE_UI)
   #include "../lcd/extui/ui_api.h"
 #elif ENABLED(DWIN_CREALITY_LCD_JYERSUI)
-  #include "../lcd/e3v2/jyersui/dwin.h"
+  #include "../lcd/dwin/jyersui/dwin.h"
 #elif ENABLED(DWIN_CREALITY_LCD)
-  #include "../lcd/e3v2/creality/dwin.h"
+  #include "../lcd/dwin/creality/dwin.h"
 #endif
 
 #if ENABLED(HOST_PROMPT_SUPPORT)
@@ -759,7 +759,7 @@ uint16_t MarlinSettings::datasize() { return sizeof(SettingsData); }
 #endif
 
 void MarlinSettings::postprocess() {
-  xyze_pos_t oldpos = current_position;
+  xyze_pos_t oldpos = motion.position;
 
   // steps per s2 needs to be updated to agree with units per s2
   planner.refresh_acceleration_rates();
@@ -795,12 +795,12 @@ void MarlinSettings::postprocess() {
   TERN_(EXTENSIBLE_UI, ExtUI::onPostprocessSettings());
 
   // Refresh mm_per_step with the reciprocal of axis_steps_per_mm
-  // and init stepper.count[], planner.position[] with current_position
+  // and init stepper.count[], planner.position[] with current position
   planner.refresh_positioning();
 
   // Various factors can change the current position
-  if (oldpos != current_position)
-    report_current_position();
+  if (oldpos != motion.position)
+    motion.report_position();
 
   // Moved as last update due to interference with NeoPixel init
   // TERN_(HAS_LCD_CONTRAST, ui.refresh_contrast());

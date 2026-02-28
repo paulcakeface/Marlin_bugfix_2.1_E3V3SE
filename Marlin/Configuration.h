@@ -752,13 +752,13 @@
   #if ENABLED(PID_PARAMS_PER_HOTEND)
     // Specify up to one value per hotend here, according to your setup.
     // If there are fewer values, the last one applies to the remaining hotends.
-    #define DEFAULT_Kp_LIST {  22.20,  22.20 }
-    #define DEFAULT_Ki_LIST {   1.08,   1.08 }
-    #define DEFAULT_Kd_LIST { 114.00, 114.00 }
+    #define DEFAULT_KP_LIST {  22.20,  22.20 }
+    #define DEFAULT_KI_LIST {   1.08,   1.08 }
+    #define DEFAULT_KD_LIST { 114.00, 114.00 }
   #else
-    #define DEFAULT_Kp 20.49
-    #define DEFAULT_Ki 3.93
-    #define DEFAULT_Kd 26.68
+    #define DEFAULT_KP 20.49
+    #define DEFAULT_KI 3.93
+    #define DEFAULT_KD 26.68
 
   #endif
 #else
@@ -857,9 +857,9 @@
 
   // 120V 250W silicone heater into 4mm borosilicate (MendelMax 1.5+)
   // from FOPDT model - kp=.39 Tp=405 Tdead=66, Tc set to 79.2, aggressive factor of .15 (vs .1, 1, 10)
-  #define DEFAULT_bedKp 123.71
-  #define DEFAULT_bedKi 14.29
-  #define DEFAULT_bedKd 713.77
+  #define DEFAULT_BED_KP 123.71
+  #define DEFAULT_BED_KI 14.29
+  #define DEFAULT_BED_KD 713.77
 
 
   // FIND YOUR OWN: "M303 E-1 C8 S90" to run autotune on the bed at 90 degreesC for 8 cycles.
@@ -1464,6 +1464,10 @@
  * See https://github.com/synthetos/TinyG/wiki/Jerk-Controlled-Motion-Explained
  */
 #define S_CURVE_ACCELERATION
+#if ENABLED(S_CURVE_ACCELERATION)
+  // Define to use 4th instead of 6th order motion curve
+  //#define S_CURVE_FACTOR 0.25    // Initial and final acceleration factor, ideally 0.1 to 0.4.
+#endif
 
 //===========================================================================
 //============================= Z Probe Options =============================

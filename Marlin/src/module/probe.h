@@ -155,14 +155,14 @@ public:
        */
       static bool can_reach(const float rx, const float ry, const bool probe_relative=true) {
         if (probe_relative) {
-          return position_is_reachable(rx - offset_xy.x, ry - offset_xy.y)
+          return motion.can_reach(rx - offset_xy.x, ry - offset_xy.y)
               && COORDINATE_OKAY(rx, min_x() - fslop, max_x() + fslop)
               && COORDINATE_OKAY(ry, min_y() - fslop, max_y() + fslop)
               && obstacle_check(rx, ry)
               && obstacle_check(rx - offset_xy.x, ry - offset_xy.y);
         }
         else {
-          return position_is_reachable(rx, ry)
+          return motion.can_reach(rx, ry)
               && COORDINATE_OKAY(rx + offset_xy.x, min_x() - fslop, max_x() + fslop)
               && COORDINATE_OKAY(ry + offset_xy.y, min_y() - fslop, max_y() + fslop)
               && obstacle_check(rx, ry)
@@ -209,16 +209,16 @@ public:
 
   static void use_probing_tool(const bool=true) IF_DISABLED(DO_TOOLCHANGE_FOR_PROBING, {});
 
-  static void move_z_after_probing() {
-    DEBUG_SECTION(mzah, "move_z_after_probing", DEBUGGING(LEVELING));
-    #ifdef Z_AFTER_PROBING
-      #if ENABLED(DWIN_ZHOME_MENU)     
-        do_z_clearance(CZ_AFTER_HOMING, true, true); // Move down still permitted
-      #else
-        do_z_clearance(Z_AFTER_PROBING, true, true); // Move down still
+    static void move_z_after_probing() {
+      DEBUG_SECTION(mzah, "move_z_after_probing", DEBUGGING(LEVELING));
+      #ifdef Z_AFTER_PROBING
+        #if ENABLED(DWIN_ZHOME_MENU)     
+          motion.do_z_clearance(CZ_AFTER_HOMING, true, true); // Move down still permitted
+        #else
+          motion.do_z_clearance(Z_AFTER_PROBING, true, true); // Move down still
+        #endif
       #endif
-    #endif
-  }
+    }
 
   static bool can_reach(const xy_pos_t &pos, const bool probe_relative=true) { return can_reach(pos.x, pos.y, probe_relative); }
 

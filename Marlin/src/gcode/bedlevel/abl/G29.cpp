@@ -51,8 +51,8 @@
 #if ENABLED(EXTENSIBLE_UI)
   #include "../../../lcd/extui/ui_api.h"
 #elif ENABLED(DWIN_CREALITY_LCD)
-  #include "../../../lcd/e3v2/creality/dwin.h"
-  #include "../../../lcd/e3v2/creality/ui_position.h"
+  #include "../../../lcd/dwin/creality/dwin.h"
+  #include "../../../lcd/dwin/creality/ui_position.h"
   
 #elif ENABLED(SOVOL_SV06_RTS)
   #include "../../../lcd/sovol_rts/sovol_rts.h"
@@ -270,7 +270,7 @@ G29_TYPE GcodeSuite::G29() {
     process_subcommands_now(TERN(CAN_SET_LEVELING_AFTER_G28, F("G28L0"), FPSTR(G28_STR)));
 
   // Don't allow auto-leveling without homing first
-  if (homing_needed_error()){
+  if (motion.homing_needed_error()) {
     // Fixed a bug where the leveling interface would not disappear when not connected to BLtouch
     // rock_20211013 Solved the problem that the automatic leveling card does not exit to the main interface when there is no crtouch.
     #if ENABLED(DWIN_CREALITY_LCD)
@@ -325,14 +325,14 @@ G29_TYPE GcodeSuite::G29() {
           G29_RETURN(false, false);
         }
 
-        const float rz = parser.seenval('Z') ? RAW_Z_POSITION(parser.value_linear_units()) : current_position.z;
+        const float rz = parser.seenval('Z') ? motion.raw_z(parser.value_linear_units()) : motion.position.z;
         if (!WITHIN(rz, -10, 10)) {
           SERIAL_ERROR_MSG("Bad Z value");
           G29_RETURN(false, false);
         }
 
-        const float rx = RAW_X_POSITION(parser.linearval('X', NAN)),
-                    ry = RAW_Y_POSITION(parser.linearval('Y', NAN));
+        const float rx = motion.raw_x(parser.linearval('X', NAN)),
+                    ry = motion.raw_y(parser.linearval('Y', NAN));
         int8_t i = parser.byteval('I', -1), j = parser.byteval('J', -1);
 
         #pragma GCC diagnostic push
@@ -355,7 +355,7 @@ G29_TYPE GcodeSuite::G29() {
           TERN_(EXTENSIBLE_UI, ExtUI::onMeshUpdate(i, j, rz));
           if (abl.reenable) {
             set_bed_leveling_enabled(true);
-            report_current_position();
+            motion.report_position();
           }
         }
         G29_RETURN(false, false);
@@ -415,13 +415,6 @@ G29_TYPE GcodeSuite::G29() {
 
     #if ABL_USES_GRID
 
-      constexpr feedRate_t min_probe_feedrate_mm_s = XY_PROBE_FEEDRATE_MIN;
-      xy_probe_feedrate_mm_s = MMM_TO_MMS(parser.linearval('S', XY_PROBE_FEEDRATE));
-      if (xy_probe_feedrate_mm_s < min_probe_feedrate_mm_s) {
-        xy_probe_feedrate_mm_s = min_probe_feedrate_mm_s;
-        SERIAL_ECHOLNPGM(GCODE_ERR_MSG("Feedrate (S) too low. (Using ", min_probe_feedrate_mm_s, ")"));
-      }
-
       const float x_min = probe.min_x(), x_max = probe.max_x(),
                   y_min = probe.min_y(), y_max = probe.max_y();
 
@@ -466,7 +459,7 @@ G29_TYPE GcodeSuite::G29() {
     TERN_(EXTENSIBLE_UI, ExtUI::onLevelingStart());
 
     if (!faux) {
-      remember_feedrate_scaling_off();
+      motion.remember_feedrate_scaling_off();
 
       #if ENABLED(PREHEAT_BEFORE_LEVELING)
         #if ENABLED(SOVOL_SV06_RTS)
@@ -483,7 +476,7 @@ G29_TYPE GcodeSuite::G29() {
 
     // Position bed horizontally and Z probe vertically.
     #if HAS_SAFE_BED_LEVELING
-      xyze_pos_t safe_position = current_position;
+      xyze_pos_t safe_position = motion.position;
       #ifdef SAFE_BED_LEVELING_START_X
         safe_position.x = SAFE_BED_LEVELING_START_X;
       #endif
@@ -521,7 +514,7 @@ G29_TYPE GcodeSuite::G29() {
 
     // Deploy certain probes before starting probing
     #if ENABLED(BLTOUCH) || ALL(HAS_Z_SERVO_PROBE, Z_SERVO_INTERMEDIATE_STOW)
-      do_z_clearance(Z_CLEARANCE_DEPLOY_PROBE);
+      motion.do_z_clearance(Z_CLEARANCE_DEPLOY_PROBE);
     #elif HAS_BED_PROBE
       if (probe.deploy()) { // (returns true on deploy failure)
         set_bed_leveling_enabled(abl.reenable);
@@ -584,7 +577,7 @@ G29_TYPE GcodeSuite::G29() {
 
       // For G29 after adjusting Z.
       // Save the previous Z before going to the next point
-      abl.measured_z = current_position.z;
+      abl.measured_z = motion.position.z;
 
       #if ENABLED(AUTO_BED_LEVELING_LINEAR)
 
@@ -751,7 +744,7 @@ G29_TYPE GcodeSuite::G29() {
               // Put a G1 move into the buffer
               // TODO: Instead of G1, we can just add the move directly to the planner...
               //  {
-              //  destination = current_position; destination = abl.probePos;
+              //  destination = motion.position; destination = abl.probePos;
               //  REMEMBER(fr, feedrate_mm_s, XY_PROBE_FEEDRATE_MM_S);
               //  prepare_line_to_destination();
               //  }
@@ -779,12 +772,12 @@ G29_TYPE GcodeSuite::G29() {
             for (;;) {
               pos = planner.get_axis_position_mm(axis);
               if (inInc > 0 ? (pos >= cmp) : (pos <= cmp)) break;
-              idle_no_sleep();
+              marlin.idle_no_sleep();
             }
             //if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM_P(axis == Y_AXIS ? PSTR("Y=") : PSTR("X=", pos);
 
             safe_delay(4);
-            abl.measured_z = current_position.z - bdl.read();
+            abl.measured_z = motion.position.z - bdl.read();
             if (DEBUGGING(LEVELING)) SERIAL_ECHOLNPGM("x_cur ", planner.get_axis_position_mm(X_AXIS), " z ", abl.measured_z);
 
           #else // !BD_SENSOR_PROBE_NO_STOP
@@ -829,7 +822,7 @@ G29_TYPE GcodeSuite::G29() {
 
           abl.reenable = false; // Don't re-enable after modifying the mesh
           HMI_flag.G29_level_not_normal=false; //g29 leveling is abnormal
-          idle_no_sleep();
+          marlin.idle_no_sleep();
 
         } // inner
       } // outer
@@ -883,7 +876,7 @@ G29_TYPE GcodeSuite::G29() {
    * return or loop before this point.
    */
 
-  if (DEBUGGING(LEVELING)) DEBUG_POS("> probing complete", current_position);
+  if (DEBUGGING(LEVELING)) DEBUG_POS("> probing complete", motion.position);
 
   #if ENABLED(PROBE_MANUALLY)
     g29_in_progress = false;
@@ -995,24 +988,24 @@ G29_TYPE GcodeSuite::G29() {
         // Correct the current XYZ position based on the tilted plane.
         //
 
-        if (DEBUGGING(LEVELING)) DEBUG_POS("G29 uncorrected XYZ", current_position);
+        if (DEBUGGING(LEVELING)) DEBUG_POS("G29 uncorrected XYZ", motion.position);
 
-        xyze_pos_t converted = current_position;
+        xyze_pos_t converted = motion.position;
         planner.force_unapply_leveling(converted); // use conversion machinery
 
         // Use the last measured distance to the bed, if possible
-        if ( NEAR(current_position.x, abl.probePos.x - probe.offset_xy.x)
-          && NEAR(current_position.y, abl.probePos.y - probe.offset_xy.y)
+        if ( NEAR(motion.position.x, abl.probePos.x - probe.offset_xy.x)
+          && NEAR(motion.position.y, abl.probePos.y - probe.offset_xy.y)
         ) {
-          const float simple_z = current_position.z - abl.measured_z;
+          const float simple_z = motion.position.z - abl.measured_z;
           if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("Probed Z", simple_z, "  Matrix Z", converted.z, "  Discrepancy ", simple_z - converted.z);
           converted.z = simple_z;
         }
 
-        // The rotated XY and corrected Z are now current_position
-        current_position = converted;
+        // The rotated XY and corrected Z are now motion.position
+        motion.position = converted;
 
-        if (DEBUGGING(LEVELING)) DEBUG_POS("G29 corrected XYZ", current_position);
+        if (DEBUGGING(LEVELING)) DEBUG_POS("G29 corrected XYZ", motion.position);
 
         abl.reenable = true;
       }
@@ -1033,7 +1026,7 @@ G29_TYPE GcodeSuite::G29() {
   } // !isnan(abl.measured_z)
 
   // Restore state after probing
-  if (!faux) restore_feedrate_and_scaling();
+  if (!faux) motion.restore_feedrate_and_scaling();
 
   TERN_(HAS_BED_PROBE, probe.move_z_after_probing());
 
@@ -1104,7 +1097,7 @@ G29_TYPE GcodeSuite::G29() {
 
   probe.use_probing_tool(false);
 
-  report_current_position();
+  motion.report_position();
 
   G29_RETURN(isnan(abl.measured_z), true);
 }

@@ -25,7 +25,7 @@
  * Release version. Leave the Marlin version or apply a custom scheme.
  */
 #ifndef SHORT_BUILD_VERSION
-  #define SHORT_BUILD_VERSION "v2.1.x krasnaya_4"
+  #define SHORT_BUILD_VERSION "bugfix-2.1.x"
 #endif
 
 /**
@@ -42,7 +42,7 @@
  * version was tagged.
  */
 #ifndef STRING_DISTRIBUTION_DATE
-  #define STRING_DISTRIBUTION_DATE "2026-01-06"
+  #define STRING_DISTRIBUTION_DATE "2026-02-28"
 #endif
 
 /**
@@ -73,7 +73,7 @@
  * Define a generic printer name to be output to the LCD after booting Marlin.
  */
 #ifndef MACHINE_NAME
-  #define MACHINE_NAME "Ender-3V3 SE"
+  #define MACHINE_NAME "3D Printer"
 #endif
 
 /**
@@ -82,7 +82,7 @@
  * providing the source code to your customers.)
  */
 #ifndef SOURCE_CODE_URL
-  #define SOURCE_CODE_URL "https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE"
+  #define SOURCE_CODE_URL "github.com/MarlinFirmware/Marlin"
 #endif
 
 /**
@@ -97,7 +97,7 @@
    * documentation about a specific Marlin release. Displayed in the Info Menu.
    */
 #ifndef WEBSITE_URL
-  #define WEBSITE_URL "https://github.com/navaismo"
+  #define WEBSITE_URL "marlinfw.org"
 #endif
 
 /**
