@@ -13,6 +13,7 @@
 #define __AUTO_OFFSET_H__
 
 #include "../inc/MarlinConfig.h"
+#include "../MarlinCore.h"
 #include "probe.h"
 #include "motion.h"
 #include "planner.h"
@@ -91,7 +92,7 @@
 #define ZOFFSET_VALUE_MIN   -5
 #define ZOFFSET_VALUE_MAX   0
 //Get the xyz coordinates of the current nozzle
-#define GET_CURRENT_POS()               current_position
+#define GET_CURRENT_POS()               motion.position
 //Detect whether the gcode instruction contains the given parameters
 #define GET_PARSER_SEEN(c)              parser.seen(c)
 //Get the value int type of the given parameter in the gcode instruction
@@ -105,11 +106,11 @@
 //Delay us (microseconds)
 #define TIME_DELAY_US(dUs)              DELAY_US(dUs)
 //Marlin's idle() main loop
-#define MARLIN_CORE_IDLE()              idle()
+#define MARLIN_CORE_IDLE()              marlin.idle()
 //Update watchdog
 #define REFRESH_WATCHDOG()              {HAL_watchdog_refresh();}
 //Block the execution of a gcode instruction
-#define RUN_AND_WAIT_GCODE_CMD(gcode, isWait)   planner.synchronize();queue.inject_P(PSTR((gcode))); queue.advance(); if(isWait) {planner.synchronize();}
+#define RUN_AND_WAIT_GCODE_CMD(gcode, isWait) do { planner.synchronize(); queue.inject_P(PSTR((gcode))); queue.advance(); if (isWait) planner.synchronize(); } while (0)
 
 //Set gpio working mode
 #define GPIO_SET_MODE(pin, isOut)       {if((isOut)>0) SET_OUTPUT((pin)); else SET_INPUT_PULLUP((pin));}
@@ -166,7 +167,7 @@
 //Detect whether the motor is running, return true to indicate that it is running, and return false to indicate that the operation is completed.
 #define AXIS_XYZE_STATUS()              (planner.has_blocks_queued() || planner.cleaning_buffer_counter)    
 //Set the current z-axis coordinate to the home point (0 point)
-#define SET_NOW_POS_Z_IS_HOME()         {set_axis_is_at_home(Z_AXIS);sync_plan_position();}
+#define SET_NOW_POS_Z_IS_HOME()         {motion.set_axis_is_at_home(Z_AXIS);motion.sync_plan_position();}
 
 //Use cr touch to measure the z value of a given point
 #define PROBE_PPINT_BY_TOUCH(x, y)      probe.probe_at_point(x, y, PROBE_PT_RAISE, 0, false, true)
@@ -179,13 +180,13 @@
 }
 
 //Block and perform xy axis movement to the given position
-#define DO_BLOCKING_MOVE_TO_XY(x_mm, y_mm, spd_mm_s)    do_blocking_move_to_xy((x_mm), (y_mm), (spd_mm_s))
+#define DO_BLOCKING_MOVE_TO_XY(x_mm, y_mm, spd_mm_s)    motion.blocking_move_xy((x_mm), (y_mm), (spd_mm_s))
 //Jam and perform z-axis motion to the given position
-#define DO_BLOCKING_MOVE_TO_Z(z_mm, spd_mm_s)           do_blocking_move_to_z((z_mm), (spd_mm_s))
+#define DO_BLOCKING_MOVE_TO_Z(z_mm, spd_mm_s)           motion.blocking_move_z((z_mm), (spd_mm_s))
 
 #define DO_BLOCKING_MOVE_TO_XYZ(x_mm, y_mm, z_mm,spd_mm_s)   do{ \
-    current_position.set(x_mm, y_mm, z_mm); \
-    line_to_current_position(spd_mm_s); \
+    motion.position.set(x_mm, y_mm, z_mm); \
+    motion.goto_current_position(spd_mm_s); \
     planner.synchronize(); \
   }while(0)
 /***End***/

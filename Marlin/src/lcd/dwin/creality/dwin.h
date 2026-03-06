@@ -86,7 +86,7 @@ enum processID : uint8_t {
   PrintProcess,
   AxisMove,
   TemperatureID,
-  Motion,
+  MotionMenu,
   Info,
   Pstats,
   Tune,
@@ -467,7 +467,7 @@ extern enum DC_language current_language;
   #define LANGUAGE_PLASetup         47
   #define LANGUAGE_ABSSetup         48
   #define LANGUAGE_Temp_Title       49
-  // Motion
+  // MotionMenu
   #define LANGUAGE_X                50
   #define LANGUAGE_Y                51
   #define LANGUAGE_Z                52

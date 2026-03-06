@@ -1038,8 +1038,8 @@ G29_TYPE GcodeSuite::G29() {
 
    settings.save();
   // auto home
-  process_subcommands_now(PSTR("G28"));
-  process_subcommands_now(PSTR("G1 Z10"));  //After leveling is completed, go to the stage to 10mm
+  process_subcommands_now(F("G28"));
+  process_subcommands_now(F("G1 Z10"));  //After leveling is completed, go to the stage to 10mm
 
   #if DISABLED(SHOW_GRID_VALUES)  //Do not display grid values
     #if ENABLED(DWIN_CREALITY_LCD)

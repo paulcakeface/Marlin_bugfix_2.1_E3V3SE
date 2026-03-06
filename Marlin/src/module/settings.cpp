@@ -778,7 +778,7 @@ void MarlinSettings::postprocess() {
   #endif
 
   // Software endstops depend on home_offset
-  LOOP_NUM_AXES(i) update_software_endstops((AxisEnum)i);
+  LOOP_NUM_AXES(i) motion.update_software_endstops((AxisEnum)i);
 
   TERN_(ENABLE_LEVELING_FADE_HEIGHT, set_z_fade_height(new_z_fade_height, false)); // false = no report
 
@@ -975,11 +975,11 @@ void MarlinSettings::postprocess() {
       _FIELD_TEST(home_offset);
 
       #if HAS_SCARA_OFFSET
-        EEPROM_WRITE(scara_home_offset);
+        EEPROM_WRITE(motion.scara_home_offset);
+      #elif HAS_HOME_OFFSET
+        EEPROM_WRITE(motion.home_offset);
       #else
-        #if !HAS_HOME_OFFSET
-          const xyz_pos_t home_offset{0};
-        #endif
+        const xyz_pos_t home_offset{0};
         EEPROM_WRITE(home_offset);
       #endif
     }
@@ -992,7 +992,7 @@ void MarlinSettings::postprocess() {
       #if HAS_HOTEND_OFFSET
         // Skip hotend 0 which must be 0
         for (uint8_t e = 1; e < HOTENDS; ++e)
-          EEPROM_WRITE(hotend_offset[e]);
+          EEPROM_WRITE(motion.hotend_offset[e]);
       #endif
     }
 
@@ -2091,11 +2091,11 @@ void MarlinSettings::postprocess() {
         _FIELD_TEST(home_offset);
 
         #if HAS_SCARA_OFFSET
-          EEPROM_READ(scara_home_offset);
+          EEPROM_READ(motion.scara_home_offset);
+        #elif HAS_HOME_OFFSET
+          EEPROM_READ(motion.home_offset);
         #else
-          #if !HAS_HOME_OFFSET
-            xyz_pos_t home_offset;
-          #endif
+          xyz_pos_t home_offset;
           EEPROM_READ(home_offset);
         #endif
       }
@@ -2108,7 +2108,7 @@ void MarlinSettings::postprocess() {
         #if HAS_HOTEND_OFFSET
           // Skip hotend 0 which must be 0
           for (uint8_t e = 1; e < HOTENDS; ++e)
-            EEPROM_READ(hotend_offset[e]);
+            EEPROM_READ(motion.hotend_offset[e]);
         #endif
       }
 
@@ -3499,15 +3499,15 @@ void MarlinSettings::reset() {
   // Home Offset
   //
   #if HAS_SCARA_OFFSET
-    scara_home_offset.reset();
+    motion.scara_home_offset.reset();
   #elif HAS_HOME_OFFSET
-    home_offset.reset();
+    motion.home_offset.reset();
   #endif
 
   //
   // Hotend Offsets
   //
-  TERN_(HAS_HOTEND_OFFSET, reset_hotend_offsets());
+  TERN_(HAS_HOTEND_OFFSET, motion.reset_hotend_offsets());
 
   //
   // Spindle Acceleration

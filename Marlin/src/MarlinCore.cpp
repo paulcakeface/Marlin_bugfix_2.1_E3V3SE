@@ -77,6 +77,7 @@
   #include "lcd/dwin/common/encoder.h"
   #if ENABLED(DWIN_CREALITY_LCD)
     #include "lcd/dwin/creality/dwin.h"
+    #include "lcd/dwin/creality/dwin_lcd.h"
   #elif ENABLED(DWIN_CREALITY_LCD_JYERSUI)
     #include "lcd/dwin/jyersui/dwin.h"
   #elif ENABLED(SOVOL_SV06_RTS)
@@ -868,7 +869,7 @@ void Marlin::idle(const bool no_stepper_sleep/*=false*/) {
   #if ENABLED(SOVOL_SV06_RTS)
     RTS_Update();
   #else
-    ui.update();
+    TERN(DWIN_CREALITY_LCD, DWIN_Update(), ui.update());
   #endif
 
   // Run i2c Position Encoders
@@ -929,7 +930,11 @@ void Marlin::kill(FSTR_P const lcd_error/*=nullptr*/, FSTR_P const lcd_component
   if (lcd_error) { SERIAL_ECHO_START(); SERIAL_ECHOLN(lcd_error); }
 
   #if HAS_DISPLAY
-    ui.kill_screen(lcd_error ?: GET_TEXT_F(MSG_KILLED), lcd_component ?: FPSTR(NUL_STR));
+    #if ENABLED(DWIN_CREALITY_LCD)
+      // Creality DWIN handles fatal-state rendering separately.
+    #else
+      ui.kill_screen(lcd_error ?: GET_TEXT_F(MSG_KILLED), lcd_component ?: FPSTR(NUL_STR));
+    #endif
   #else
     UNUSED(lcd_error); UNUSED(lcd_component);
   #endif
@@ -1658,7 +1663,14 @@ void setup() {
     SERIAL_ECHO_TERNARY(err, "BL24CXX Check ", "failed", "succeeded", "!\n");
   #endif
 
-  #if ENABLED(SOVOL_SV06_RTS)
+  #if ENABLED(DWIN_CREALITY_LCD)
+    delay(800);   // Required delay (since boot?)
+    SERIAL_ECHOPGM("\nDWIN handshake ");
+    if (DWIN_Handshake()) SERIAL_ECHOLNPGM("ok."); else SERIAL_ECHOLNPGM("error.");
+    DWIN_UpdateLCD();     // Show bootscreen (first image)
+    Encoder_Configuration();
+    HMI_Init();
+  #elif ENABLED(SOVOL_SV06_RTS)
     SETUP_RUN(rts.init());
   #endif
 
@@ -1743,6 +1755,29 @@ void setup() {
  *    card, host, or by direct injection. The queue will continue to fill
  *    as long as idle() or manage_inactivity() are being called.
  */
+
+#if HAS_DWIN_E3V2
+  millis_t lMs_lcd_delay = 0;
+  bool LCD_TURNOFF_FLAG = false;
+#endif
+
+#if ENABLED(DWIN_CREALITY_LCD)
+  int16_t DIMM_SCREEN_BRIGHTNESS = 175;
+  int16_t MAX_SCREEN_BRIGHTNESS = 230;
+  int16_t TURN_OFF_TIME = 5;
+#endif
+
+#if ENABLED(ENABLE_AUTO_OFF_DISPLAY) && ENABLED(DWIN_CREALITY_LCD)
+  static void Auto_Turnof_Function() {
+    if (millis() - lMs_lcd_delay > (1000UL * 60UL * TURN_OFF_TIME)) {
+      if (!LCD_TURNOFF_FLAG) {
+        DWIN_Backlight_SetLuminance(DIMM_SCREEN_BRIGHTNESS);
+        LCD_TURNOFF_FLAG = true;
+      }
+    }
+  }
+#endif
+
 void loop() {
   do {
     marlin.idle();
@@ -1759,6 +1794,10 @@ void loop() {
     #endif
 
     endstops.event_handler();
+
+    #if ENABLED(ENABLE_AUTO_OFF_DISPLAY) && ENABLED(DWIN_CREALITY_LCD)
+      Auto_Turnof_Function();
+    #endif
 
     TERN_(HAS_TFT_LVGL_UI, printer_state_polling());
 
