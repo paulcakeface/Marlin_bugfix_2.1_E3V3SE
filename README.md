@@ -141,7 +141,7 @@ Flash: [====      ]  42.8% (used 220244 bytes from 514288 bytes)
 This branch is focused to work with host support like Octoprint and has features to support serial commands.
 
 - Branch: [**for_Octoprint**](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/tree/for_Octoprint)
-  - Release tag: [Belaya_4](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_4)
+  - Release tag: [Belaya_6](https://github.com/navaismo/Marlin_bugfix_2.1_E3V3SE/releases/tag/Belaya_6)
 
 - The Binary provided will contain just the following features:
 
