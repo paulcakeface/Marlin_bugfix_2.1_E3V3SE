@@ -571,6 +571,25 @@
 // @section fans
 
 /**
+ * Part Cooling Fan Pins
+ * Override the default part cooling fan pins for each fan index.
+ * Allows remapping which physical fan pin is used for part cooling.
+ * By default: FAN0 -> FAN0_PIN, FAN1 -> FAN1_PIN, etc.
+ */
+//#define PART_COOLING_FAN0_PIN   FAN0_PIN
+//#define PART_COOLING_FAN1_PIN   FAN1_PIN
+//#define PART_COOLING_FAN2_PIN   FAN2_PIN
+//#define PART_COOLING_FAN3_PIN   FAN3_PIN
+//#define PART_COOLING_FAN4_PIN   FAN4_PIN
+//#define PART_COOLING_FAN5_PIN   FAN5_PIN
+//#define PART_COOLING_FAN6_PIN   FAN6_PIN
+//#define PART_COOLING_FAN7_PIN   FAN7_PIN
+//#define PART_COOLING_FAN8_PIN   FAN8_PIN
+//#define PART_COOLING_FAN9_PIN   FAN9_PIN
+//#define PART_COOLING_FAN10_PIN  FAN10_PIN
+//#define PART_COOLING_FAN11_PIN  FAN11_PIN
+
+/**
  * Controller Fan
  * To cool down the stepper drivers and MOSFETs.
  *
@@ -1585,7 +1604,7 @@
       #define XATC_Z_OFFSETS { 0, 0, 0 }    // Z offsets for X axis sample points
     #endif
 
-  #endif
+  #endif // HAS_BED_PROBE
 
   // Include a page of printer information in the LCD Main Menu
   //#define LCD_INFO_MENU
@@ -2635,7 +2654,6 @@
   //#define ARC_SEGMENTS_PER_SEC 50   // Use the feedrate to choose the segment length
   #define N_ARC_CORRECTION       25   // Number of interpolated segments between corrections
   //#define ARC_P_CIRCLES             // Enable the 'P' parameter to specify complete circles
-  //#define SF_ARC_FIX                // Enable only if using SkeinForge with "Arc Point" fillet procedure
 #endif
 
 // G5 Bézier Curve Support with XYZE destination and IJPQ offsets
@@ -3585,7 +3603,13 @@
     //#define SPI_ENDSTOPS              // TMC2130, TMC2240, and TMC5160
     //#define IMPROVE_HOMING_RELIABILITY
     //#define SENSORLESS_STALLGUARD_DELAY   0 // (ms) Delay to allow drivers to settle
-  #endif
+
+    #if HAS_MARLINUI_MENU
+      // Convenient homing menu items next to Sensorless Homing edit items
+      //#define SENSORLESS_HOMING_TEST_MENU_ITEMS
+    #endif
+
+  #endif // SENSORLESS_HOMING || SENSORLESS_PROBING
 
   // @section tmc/config
 
@@ -4277,9 +4301,9 @@
 #define HOST_ACTION_COMMANDS
 #if ENABLED(HOST_ACTION_COMMANDS)
   //#define HOST_PAUSE_M76                // Tell the host to pause in response to M76
-  #define HOST_PROMPT_SUPPORT           // Initiate host prompts to get user feedback
+  #define HOST_PROMPT_SUPPORT             // Initiate host prompts to get user feedback
   #if ENABLED(HOST_PROMPT_SUPPORT)
-    #define HOST_STATUS_NOTIFICATIONS   // Send some status messages to the host as notifications
+    #define HOST_STATUS_NOTIFICATIONS     // Send some status messages to the host as notifications
   #endif
   //#define HOST_START_MENU_ITEM          // Add a menu item that tells the host to start
   //#define HOST_SHUTDOWN_MENU_ITEM       // Add a menu item that tells the host to shut down
