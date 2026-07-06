@@ -1970,7 +1970,7 @@
 
 #define Z_AFTER_HOMING         10   // (mm) Height to move to after homing (if Z was homed)
 
-// #define DWIN_ZHOME_MENU             // Enable LCD Menu to Configure Z Height after Homing 
+//#define DWIN_ZHOME_MENU             // Enable LCD Menu to Configure Z Height after Homing 
 #if ENABLED(DWIN_ZHOME_MENU)
   extern uint8_t CZ_AFTER_HOMING; 
 #endif
